@@ -1,7 +1,6 @@
 package Perinci::CmdLine::Lite;
 
 use 5.010001;
-use Moo;
 
 # DATE
 # VERSION
@@ -36,26 +35,6 @@ sub format_result {
         $log->tracef("Formatting output with %s", $format);
         $self->{_fres} = Perinci::Result::Format::format(
             $self->{_res}, $format);
-    }
-}
-
-# format array item as row
-sub format_row {
-    require Data::Format::Pretty::Console;
-    state $dfpc = Data::Format::Pretty::Console->new({interactive=>0});
-
-    my ($self, $row) = @_;
-    my $ref = ref($row);
-    # we catch common cases to be faster (avoid dfpc's structure identification)
-    if (!$ref) {
-        # simple scalar
-        return ($row // "") . "\n";
-    } elsif ($ref eq 'ARRAY' && !(grep {ref($_)} @$row)) {
-        # an array of scalars
-        return join("\t", map { $dfpc->_format_cell($_) } @$row) . "\n";
-    } else {
-        # otherwise, just feed it to dfpc
-        return $dfpc->_format($row);
     }
 }
 
@@ -1616,7 +1595,6 @@ To run this program:
  % foo --help ;# display help message
  % foo --version ;# display version
  % foo --bar aa ;# run function and display the result
- % foo --bar aa --debug ;# turn on debug output
  % foo --baz x  ;# fail because required argument 'bar' not specified
 
 To do bash tab completion:
@@ -1628,6 +1606,8 @@ To do bash tab completion:
 
 
 =head1 DESCRIPTION
+
+B<NOTE: This module is experimental.>
 
 Perinci::CmdLine::Lite (hereby P::C::Lite) module offers a lightweight (low
 startup overhead, minimal dependencies) alternative to L<Perinci::CmdLine>
@@ -1647,7 +1627,10 @@ access Perl modules on the filesystem. Also not (currently) supported are:
 
 =item * Logging
 
-Something more lightweight than L<Log::Any::App> will be considered.
+Something more lightweight than L<Log::Any::App> will be considered. If you want
+logging, you can do something like this:
+
+ % DEBUG=1 PERL5OPT=-MLog::Any::App
 
 =item * Progress indicator
 
@@ -1669,16 +1652,20 @@ Something more lightweight than L<Log::Any::App> will be considered.
 
 =back
 
+=item * These environment variables are not (yet) supported
 
-=head1 INCOMPATIBILITIES
+ PERINCI_CMDLINE_COLOR_THEME
+ PERINCI_CMDLINE_SERVER
+ PROGRESS
+ PAGER
+ COLOR
+ UTF8
 
-=over
-
-=item * Some attributes not supported
+ DEBUG, VERBOSE, QUIET, TRACE, and so on
 
 =item * In passsing command-line object to functions, Perinci::CmdLine::Lite object is passed
 
-Functions might expect a L<Perinci::CmdLine> instance.
+Some functions might expect a L<Perinci::CmdLine> instance.
 
 =back
 
@@ -1690,29 +1677,6 @@ Functions might expect a L<Perinci::CmdLine> instance.
 =item * PERINCI_CMDLINE_PROGRAM_NAME => STR
 
 Can be used to set CLI program name.
-
-=item * PERINCI_CMDLINE_COLOR_THEME => STR
-
-Can be used to set C<color_theme>.
-
-=item * PROGRESS => BOOL
-
-Explicitly turn the progress bar on/off.
-
-=item * PAGER => STR
-
-Like in other programs, can be set to select the pager program (when
-C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
-C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
-is active.
-
-=item * COLOR => INT
-
-Please see L<SHARYANTO::Role::TermAttrs>.
-
-=item * UTF8 => BOOL
-
-Please see L<SHARYANTO::Role::TermAttrs>.
 
 =back
 
