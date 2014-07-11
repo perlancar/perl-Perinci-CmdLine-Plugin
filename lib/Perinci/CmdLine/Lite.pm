@@ -1,12 +1,16 @@
 package Perinci::CmdLine::Lite;
 
 use 5.010001;
-use Mo;
+
 
 # DATE
 # VERSION
 
+use Mo;
 extends 'Perinci::CmdLine::Base';
+
+# when base class has errors, we need to use this to get meaningful error
+#use parent 'Perinci::CmdLine::Base';
 
 # compared to pericmd, i want to avoid using internal attributes like
 # $self->{_format}, $self->{_res}, etc.
@@ -14,7 +18,15 @@ extends 'Perinci::CmdLine::Base';
 sub BUILD {
     my ($self, $args) = @_;
 
-    # set default common_opts
+    if (!$self->{actions}) {
+        $self->{actions} = {
+            call => {},
+            version => {},
+            subcommands => {},
+            help => {},
+        };
+    }
+
     if (!$self->{common_opts}) {
         my $co = {
             version => {
@@ -47,16 +59,97 @@ sub BUILD {
         }
         $self->{common_opts} = $co;
     }
+
+    $self->{formats} //= [qw/text text-simple text-pretty json/];
+}
+
+sub format_result {
+    my ($self, $res, $format, $meta) = @_;
+    if ($format =~ /\Atext(-simple|-pretty)?\z/) {
+        my $is_pretty = $format eq 'text-pretty' ? 1 :
+            $format eq 'text-simple' ? 0 : (-t STDOUT);
+        no warnings 'uninitialized';
+        if ($res->[0] != 200) {
+            return "ERROR $res->[0]: $res->[1]\n";
+        } else {
+            require Data::Check::Structure;
+            my $data = $res->[2];
+            my $max = 5;
+            if (!ref($data)) {
+                $data //= "";
+                $data .= "\n" unless $data =~ /\n\z/;
+                return $data;
+            } elsif (Data::Check::Structure::is_aos($data, {max=>$max})) {
+                if ($is_pretty) {
+                    require Text::Table::Tiny;
+                    $data = [map {[$_]} @$data];
+                    return Text::Table::Tiny::table(rows=>$data) . "\n";
+                } else {
+                    return join("", map {"$_\n"} @$data);
+                }
+            } elsif (Data::Check::Structure::is_aoaos($data, {max=>$max})) {
+                if ($is_pretty) {
+                    require Text::Table::Tiny;
+                    return Text::Table::Tiny::table(rows=>$data) . "\n";
+                } else {
+                    return join("", map {join("\t", @$_)."\n"} @$data);
+                }
+            } elsif (Data::Check::Structure::is_hos($data, {max=>$max})) {
+                if ($is_pretty) {
+                    require Text::Table::Tiny;
+                    $data = [map {[$_, $data->{$_}]} sort keys %$data];
+                    unshift @$data, ["key", "value"];
+                    return Text::Table::Tiny::table(rows=>$data) . "\n";
+                } else {
+                    return join("", map {"$_\t$data->{$_}\n"} sort keys %$data);
+                }
+            } elsif (Data::Check::Structure::is_aohos($data, {max=>$max})) {
+                # collect all mentioned fields
+                my %fieldnames;
+                for my $row (@$data) {
+                    $fieldnames{$_}++ for keys %$row;
+                }
+                my @fieldnames = sort keys %fieldnames;
+                my $newdata = [];
+                for my $row (@$data) {
+                    push @$newdata, [map {$row->{$_}} @fieldnames];
+                }
+                if ($is_pretty) {
+                    unshift @$newdata, \@fieldnames;
+                    require Text::Table::Tiny;
+                    return Text::Table::Tiny::table(rows=>$newdata) . "\n";
+                } else {
+                    return join("", map {join("\t", @$_)."\n"} @$newdata);
+                }
+            } else {
+                $format = 'json-pretty';
+            }
+        }
+    }
+
+    warn "Unknown format '$format', fallback to json-pretty"
+        unless $format =~ /\Ajson(-pretty)?\z/;
+    state $cleanser = do {
+        require Data::Clean::JSON;
+        Data::Clean::JSON->get_cleanser;
+    };
+    $cleanser->clean_in_place($res);
+    state $json = do {
+        require JSON;
+        JSON->new->allow_nonref;
+    };
+    if ($format eq 'json') {
+        return $json->encode($res);
+    } else {
+        return $json->pretty->encode($res);
+    }
 }
 
 sub display_result {
-    require Data::Check::Structure;
-
-    my ($self, $res) = @_;
-    # XXX implement
+    my ($self, $res, $fres) = @_;
+    print $fres;
 }
 
-# XXX
 sub run_subcommands {
     my ($self) = @_;
 
@@ -71,6 +164,19 @@ sub run_subcommands {
         say "  $_->{name} $_->{url}";
     }
     0;
+}
+
+sub _get_meta {
+    my ($self, $url) = @_;
+    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w+)\z!
+        or die [500, "Unsupported/bad URL '$url'"];
+    my ($mod, $func) = ($1, $2);
+    require "$mod.pm";
+    $mod =~ s!/!::!g;
+    no strict 'refs';
+    require Perinci::Sub::Normalize;
+    Perinci::Sub::Normalize::normalize_function_metadata(
+        ${"$mod\::SPEC"}{$func});
 }
 
 # XXX
@@ -110,29 +216,21 @@ sub run_version {
     0;
 }
 
-# XXX
-sub run_completion {
-}
+sub hook_after_get_meta {
+    require Perinci::Object;
 
-# XXX
-# some common opts can be added only after we get the function metadata
-sub _add_common_opts_after_meta {
-    my $self = shift;
+    my ($self, $meta) = @_;
 
-    if (risub($self->{_meta})->can_dry_run) {
+    if (Perinci::Object::risub($meta)->can_dry_run) {
         $self->common_opts->{dry_run} = {
             getopt  => 'dry-run',
             summary => "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {
                 $self->{_dry_run} = 1;
-                $ENV{VERBOSE} = 1;
+                #$ENV{VERBOSE} = 1;
             },
         };
     }
-
-    # update the cached getopt specs
-    my @go_opts = $self->_gen_go_specs_from_common_opts;
-    $self->{_go_specs_common} = \@go_opts;
 }
 
 # XXX
@@ -185,82 +283,14 @@ sub run_call {
     }
 }
 
-# XXX
-sub parse_opts {
-}
+sub hook_before_run {}
 
-# XXX
-# set $self->{_subcommand} for convenience, it can be taken from subcommands(),
-# or, in the case of app with a single command, {name=>'', url=>$self->url()}.
-sub _set_subcommand {
-}
-
-sub run {
-    my ($self) = @_;
-
-    #
-    # workaround: detect (1) if we're being invoked for bash completion, get
-    # @ARGV from parsing COMP_LINE/COMP_POINT instead, since @ARGV given by bash
-    # is messed up / different
-    #
-
-    if ($ENV{COMP_LINE}) {
-        require Complete::Bash;
-        my ($words, $cword) = Complete::Bash::parse_cmdline();
-        @ARGV = @$words;
-        $self->{_comp_parse_res} = [$words, $cword]; # store for run_completion()
-    }
-
-    $self->parse_common_opts;
-    $self->_set_subcommand;
-    $self->parse_opts;
-
-    #
-    # finally invoke the appropriate run_*() action method(s)
-    #
-
-    my $exit_code;
-    while (@{$self->{_actions}}) {
-        my $action = shift @{$self->{_actions}};
-        #$log->tracef("Trying action $action");
-
-        unless ($ENV{COMP_LINE}) {
-            # determine whether to binmode(STDOUT,":utf8")
-            my $utf8 = $ENV{UTF8};
-            if (!defined($utf8)) {
-                my $am = $self->action_metadata->{$action};
-                $utf8 //= $am->{use_utf8};
-            }
-            if (!defined($utf8) && $self->{_subcommand}) {
-                $utf8 //= $self->{_subcommand}{use_utf8};
-            }
-            $utf8 //= $self->use_utf8;
-            if ($utf8) {
-                binmode(STDOUT, ":utf8");
-            }
-        }
-
-        my $meth = "run_$action";
-        unless ($self->can($meth)) {
-            $self->_err("Unknown action '$action'");
-        }
-        #$log->tracef("-> %s()", $meth);
-        $exit_code = $self->$meth;
-        #$log->tracef("<- %s(), return=%s", $meth, $exit_code);
-        last if defined $exit_code;
-    }
-    $self->format_result;
-    $self->display_result;
-
-    #$log->tracef("<- CmdLine's run(), exit code=%s", $exit_code);
-
-    exit $exit_code;
-}
+sub hook_after_run {}
 
 1;
 # ABSTRACT: A lightweight Rinci/Riap-based command-line application framework
 
-=for Pod::Coverage ^(.*)$
+=for Pod::Coverage ^(hook_.+|)$
 
 =head1 SYNOPSIS
 
