@@ -205,15 +205,25 @@ sub run_version {
 sub get_meta {
     my ($self, $url) = @_;
 
-    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w+)\z!
+    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w*)\z!
         or die [500, "Unsupported/bad URL '$url'"];
     my ($mod, $func) = ($1, $2);
     require "$mod.pm";
     $mod =~ s!/!::!g;
-    no strict 'refs';
+
+    my $meta;
+    {
+        no strict 'refs';
+        if (length $func) {
+            $meta = ${"$mod\::SPEC"}{$func}
+                or die [500, "No metadata for '$url'"];
+        } else {
+            $meta = ${"$mod\::SPEC"}{':package'} // {v=>1.1};
+        }
+        $meta->{entity_v} //= ${"$mod\::VERSION"};
+    }
+
     require Perinci::Sub::Normalize;
-    my $meta = ${"$mod\::SPEC"}{$func};
-    die [500, "No metadata for '$url'"] unless $meta;
     $meta = Perinci::Sub::Normalize::normalize_function_metadata($meta);
 
     require Perinci::Object;
