@@ -1,16 +1,15 @@
 package Perinci::CmdLine::Lite;
 
-use 5.010001;
-
-
 # DATE
 # VERSION
 
-use Mo;
-extends 'Perinci::CmdLine::Base';
+use 5.010001;
 
-# when base class has errors, we need to use this to get meaningful error
-#use parent 'Perinci::CmdLine::Base';
+#use Mo; extends 'Perinci::CmdLine::Base';
+
+# when debugging, use this instead of the above because Mo doesn't give clear
+# error message if base class has errors.
+use parent 'Perinci::CmdLine::Base';
 
 # compared to pericmd, i want to avoid using internal attributes like
 # $self->{_format}, $self->{_res}, etc.
@@ -166,19 +165,6 @@ sub run_subcommands {
     0;
 }
 
-sub _get_meta {
-    my ($self, $url) = @_;
-    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w+)\z!
-        or die [500, "Unsupported/bad URL '$url'"];
-    my ($mod, $func) = ($1, $2);
-    require "$mod.pm";
-    $mod =~ s!/!::!g;
-    no strict 'refs';
-    require Perinci::Sub::Normalize;
-    Perinci::Sub::Normalize::normalize_function_metadata(
-        ${"$mod\::SPEC"}{$func});
-}
-
 # XXX
 sub run_version {
     my ($self) = @_;
@@ -216,11 +202,21 @@ sub run_version {
     0;
 }
 
-sub hook_after_get_meta {
+sub get_meta {
+    my ($self, $url) = @_;
+
+    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w+)\z!
+        or die [500, "Unsupported/bad URL '$url'"];
+    my ($mod, $func) = ($1, $2);
+    require "$mod.pm";
+    $mod =~ s!/!::!g;
+    no strict 'refs';
+    require Perinci::Sub::Normalize;
+    my $meta = ${"$mod\::SPEC"}{$func};
+    die [500, "No metadata for '$url'"] unless $meta;
+    $meta = Perinci::Sub::Normalize::normalize_function_metadata($meta);
+
     require Perinci::Object;
-
-    my ($self, $meta) = @_;
-
     if (Perinci::Object::risub($meta)->can_dry_run) {
         $self->common_opts->{dry_run} = {
             getopt  => 'dry-run',
@@ -231,6 +227,8 @@ sub hook_after_get_meta {
             },
         };
     }
+
+    $meta;
 }
 
 # XXX
@@ -286,6 +284,10 @@ sub run_call {
 sub hook_before_run {}
 
 sub hook_after_run {}
+
+sub hook_after_parse_opts {}
+
+sub hook_after_select_subcommand {}
 
 1;
 # ABSTRACT: A lightweight Rinci/Riap-based command-line application framework
