@@ -31,29 +31,36 @@ sub BUILD {
             version => {
                 getopt  => 'version|v',
                 summary => 'Show program version',
-                handler => sub { $self->run_version; exit 0 },
+                handler => sub { $self->selected_action('version') },
             },
             help => {
                 getopt  => 'help|h|?',
                 summary => 'Show help message',
-                handler => sub { $self->run_help; exit 0 },
+                handler => sub { $self->selected_action('help') },
             },
             format => {
                 getopt  => 'format=s',
                 summary => 'Set output format (text/text-simple/text-pretty/json/json-pretty)',
-                handler => sub { $self->{format} = $_[1] },
+                handler => sub { $self->selected_format($_[1]) },
             },
             json => {
                 getopt  => 'json',
                 summary => 'Set output format to json',
-                handler => sub { $self->{format} = 'json' },
+                handler => sub { $self->selected_format('json') },
             },
         };
         if ($self->subcommands) {
             $co->{subcommands} = {
-                getopt  => 'json',
-                summary => 'Set output format to json',
-                handler => sub { $self->run_subcommands; exit 0 },
+                getopt  => 'subcommands',
+                summary => 'List available subcommands',
+                handler => sub { $self->selected_action('subcommands') },
+            };
+        }
+        if ($self->default_subcommand) {
+            $co->{cmd} = {
+                getopt  => 'cmd=s',
+                summary => 'Select subcommand',
+                handler => sub { $self->select_subcommand($_[1]) },
             };
         }
         $self->{common_opts} = $co;
@@ -150,7 +157,7 @@ sub display_result {
 }
 
 sub run_subcommands {
-    my ($self) = @_;
+    my ($self, $args, $meta) = @_;
 
     if (!$self->subcommands) {
         say "There are no subcommands.";
@@ -159,57 +166,42 @@ sub run_subcommands {
 
     say "Available subcommands:";
     my $subcommands = $self->list_subcommands;
-    for (@$subcommands) {
-        say "  $_->{name} $_->{url}";
-    }
-    0;
+    [200, "OK",
+     join("",
+          (map { "  $_->{name} $_->{url}" } @$subcommands),
+      )];
 }
 
-# XXX
 sub run_version {
-    my ($self) = @_;
+    my ($self, $args, $meta) = @_;
 
-    my $url = $self->{_subcommand} && $self->{_subcommand}{url} ?
-        $self->{_subcommand}{url} : $self->url;
-    my $res = $self->_pa->request(meta => $url);
-    my ($ver, $date);
-    if ($res->[0] == 200) {
-        $ver = $res->[2]{entity_v} // "?";
-        $date = $res->[2]{entity_date};
-    } else {
-        #$log->warnf("Can't request 'meta' action on %s: %d - %s",
-        #            $url, $res->[0], $res->[1]);
-        $ver = '?';
-        $date = undef;
-    }
-
-    say __x(
-        "{program} version {version}",
-        program => $self->_color('program_name',
-                                 $self->_program_and_subcommand_name),
-        version => $self->_color('emphasis', $ver)) .
-            ($date ? " ($date)" : "");
-    {
-        no strict 'refs';
-        say "  ", __x(
-            "{program} version {version}",
-            program => $self->_color('emphasis', "Perinci::CmdLine"),
-            version => $self->_color('emphasis',
-                                     $Perinci::CmdLine::VERSION || "dev"))
-            . ($Perinci::CmdLine::DATE ? " ($Perinci::CmdLine::DATE)" : "");
-    }
-
-    0;
+    [200, "OK",
+     join("",
+          $self->get_program_and_subcommand_name,
+          " version ", ($meta->{entity_v} // "?"),
+          ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
+          "\n",
+          "  ", __PACKAGE__,
+          " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
+          ($Perinci::CmdLine::Lite::DATE ? " ($Perinci::CmdLine::Lite::DATE)":''),
+      )];
 }
 
-sub get_meta {
-    my ($self, $url) = @_;
+sub __require_url {
+    my ($url) = @_;
 
     $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w*)\z!
         or die [500, "Unsupported/bad URL '$url'"];
     my ($mod, $func) = ($1, $2);
     require "$mod.pm";
     $mod =~ s!/!::!g;
+    ($mod, $func);
+}
+
+sub get_meta {
+    my ($self, $url) = @_;
+
+    my ($mod, $func) = __require_url($url);
 
     my $meta;
     {
@@ -220,7 +212,8 @@ sub get_meta {
         } else {
             $meta = ${"$mod\::SPEC"}{':package'} // {v=>1.1};
         }
-        $meta->{entity_v} //= ${"$mod\::VERSION"};
+        $meta->{entity_v}    //= ${"$mod\::VERSION"};
+        $meta->{entity_date} //= ${"$mod\::DATE"};
     }
 
     require Perinci::Sub::Normalize;
@@ -232,7 +225,7 @@ sub get_meta {
             getopt  => 'dry-run',
             summary => "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {
-                $self->{_dry_run} = 1;
+                $self->dry_run(1);
                 #$ENV{VERBOSE} = 1;
             },
         };
@@ -245,50 +238,17 @@ sub get_meta {
 sub run_help {
     my ($self) = @_;
 
-    say "Help message";
-    0;
+    [200, "OK", "Help message"];
 }
 
 sub run_call {
-    my ($self) = @_;
-    my $sc = $self->{_subcommand};
-    my %fargs = %{$self->{_args} // {}};
-    $fargs{-cmdline} = $self if $sc->{pass_cmdline_object} //
-        $self->pass_cmdline_object;
+    my ($self, $args, $meta) = @_;
 
-    my $tx_id;
+    my $scd = $self->selected_subcommand_data;
+    my ($mod, $func) = __require_url($scd->{url});
 
-    my $dry_run = $self->{_dry_run};
-    my $using_tx = !$dry_run && $self->undo && ($sc->{undo} // 1);
-
-    # currently we don't attempt to insert tx_id or dry_run when using argv,
-    # we'll just give up
-    if ($self->{_send_argv} && ($dry_run || $using_tx)) {
-        my $res = $self->{_getargs_result};
-        $self->_err("Failed parsing arguments (2): $res->[0] - $res->[1]");
-    }
-
-    # call function
-    if ($self->{_send_argv}) {
-        $self->{_res} = $self->_pa->request(
-            call => $self->{_subcommand}{url},
-            {argv=>$self->{_orig_argv}}, # XXX tx_id, dry_run (see above)
-        );
-    } else {
-        #$log->tracef("Calling function via _pa with arguments: %s", \%fargs);
-        $self->{_res} = $self->_pa->request(
-            call => $self->{_subcommand}{url},
-            {args=>\%fargs, tx_id=>$tx_id, dry_run=>$dry_run});
-    }
-    #$log->tracef("call res=%s", $self->{_res});
-
-    my $resmeta = $self->{_res}[3] // {};
-    if (defined $resmeta->{"cmdline.exit_code"}) {
-        return $resmeta->{"cmdline.exit_code"};
-    } else {
-        return $self->{_res}[0] =~ /\A(?:200|304)\z/ ?
-            0 : $self->{_res}[0] - 300;
-    }
+    no strict 'refs';
+    &{"$mod\::$func"}(%$args);
 }
 
 sub hook_before_run {}
@@ -403,7 +363,6 @@ logging, you can do something like this:
  cmdline.display_result
  cmdline.page_result
  cmdline.pager
- cmdline.exit_code
 
 =item * PCLite uses simpler formatting
 
