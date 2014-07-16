@@ -4,12 +4,14 @@ package Perinci::CmdLine::Lite;
 # VERSION
 
 use 5.010001;
+# use strict; # already enabled by Mo
+# use warnings; # already enabled by Mo
 
-#use Mo; extends 'Perinci::CmdLine::Base';
+use Mo; extends 'Perinci::CmdLine::Base';
 
 # when debugging, use this instead of the above because Mo doesn't give clear
 # error message if base class has errors.
-use parent 'Perinci::CmdLine::Base';
+#use parent 'Perinci::CmdLine::Base';
 
 # compared to pericmd, i want to avoid using internal attributes like
 # $self->{_format}, $self->{_res}, etc.
@@ -31,36 +33,57 @@ sub BUILD {
             version => {
                 getopt  => 'version|v',
                 summary => 'Show program version',
-                handler => sub { $self->selected_action('version') },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{action} = 'version';
+                    $r->{skip_parse_subcommand_argv} = 1;
+                },
             },
             help => {
                 getopt  => 'help|h|?',
                 summary => 'Show help message',
-                handler => sub { $self->selected_action('help') },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{action} = 'help';
+                    $r->{skip_parse_subcommand_argv} = 1;
+                },
             },
             format => {
                 getopt  => 'format=s',
                 summary => 'Set output format (text/text-simple/text-pretty/json/json-pretty)',
-                handler => sub { $self->selected_format($_[1]) },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{format} = $val;
+                },
             },
             json => {
                 getopt  => 'json',
                 summary => 'Set output format to json',
-                handler => sub { $self->selected_format('json') },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{format} = 'json';
+                },
             },
         };
         if ($self->subcommands) {
             $co->{subcommands} = {
                 getopt  => 'subcommands',
                 summary => 'List available subcommands',
-                handler => sub { $self->selected_action('subcommands') },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{action} = 'subcommands';
+                    $r->{skip_parse_subcommand_argv} = 1;
+                },
             };
         }
         if ($self->default_subcommand) {
             $co->{cmd} = {
                 getopt  => 'cmd=s',
                 summary => 'Select subcommand',
-                handler => sub { $self->select_subcommand($_[1]) },
+                handler => sub {
+                    my ($r, $go, $val) = @_;
+                    $r->{subcommand_name} = $val;
+                },
             };
         }
         $self->{common_opts} = $co;
@@ -69,8 +92,19 @@ sub BUILD {
     $self->{formats} //= [qw/text text-simple text-pretty json/];
 }
 
-sub format_result {
-    my ($self, $res, $format, $meta) = @_;
+sub hook_before_run {}
+
+sub hook_after_parse_argv {}
+
+sub hook_after_select_subcommand {}
+
+sub hook_format_result {
+    my ($self, $r) = @_;
+
+    my $res    = $r->{res};
+    my $format = $r->{format} // 'text';
+    my $meta   = $r->{meta};
+
     if ($format =~ /\Atext(-simple|-pretty)?\z/) {
         my $is_pretty = $format eq 'text-pretty' ? 1 :
             $format eq 'text-simple' ? 0 : (-t STDOUT);
@@ -151,41 +185,12 @@ sub format_result {
     }
 }
 
-sub display_result {
-    my ($self, $res, $fres) = @_;
-    print $fres;
+sub hook_display_result {
+    my ($self, $r) = @_;
+    print $r->{fres};
 }
 
-sub run_subcommands {
-    my ($self, $args, $meta) = @_;
-
-    if (!$self->subcommands) {
-        say "There are no subcommands.";
-        return 0;
-    }
-
-    say "Available subcommands:";
-    my $subcommands = $self->list_subcommands;
-    [200, "OK",
-     join("",
-          (map { "  $_->{name} $_->{url}" } @$subcommands),
-      )];
-}
-
-sub run_version {
-    my ($self, $args, $meta) = @_;
-
-    [200, "OK",
-     join("",
-          $self->get_program_and_subcommand_name,
-          " version ", ($meta->{entity_v} // "?"),
-          ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
-          "\n",
-          "  ", __PACKAGE__,
-          " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
-          ($Perinci::CmdLine::Lite::DATE ? " ($Perinci::CmdLine::Lite::DATE)":''),
-      )];
-}
+sub hook_after_run {}
 
 sub __require_url {
     my ($url) = @_;
@@ -225,7 +230,8 @@ sub get_meta {
             getopt  => 'dry-run',
             summary => "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {
-                $self->dry_run(1);
+                my ($r, $go, $val) = @_;
+                $r->{dry_run} = 1;
                 #$ENV{VERBOSE} = 1;
             },
         };
@@ -234,7 +240,39 @@ sub get_meta {
     $meta;
 }
 
-# XXX
+sub run_subcommands {
+    my ($self, $r) = @_;
+
+    if (!$self->subcommands) {
+        say "There are no subcommands.";
+        return 0;
+    }
+
+    say "Available subcommands:";
+    my $subcommands = $self->list_subcommands;
+    [200, "OK",
+     join("",
+          (map { "  $_->{name} $_->{url}" } @$subcommands),
+      )];
+}
+
+sub run_version {
+    my ($self, $r) = @_;
+
+    my $meta = $r->{meta};
+
+    [200, "OK",
+     join("",
+          $self->get_program_and_subcommand_name($r),
+          " version ", ($meta->{entity_v} // "?"),
+          ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
+          "\n",
+          "  ", __PACKAGE__,
+          " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
+          ($Perinci::CmdLine::Lite::DATE ? " ($Perinci::CmdLine::Lite::DATE)":''),
+      )];
+}
+
 sub run_help {
     my ($self) = @_;
 
@@ -242,22 +280,14 @@ sub run_help {
 }
 
 sub run_call {
-    my ($self, $args, $meta) = @_;
+    my ($self, $r) = @_;
 
-    my $scd = $self->selected_subcommand_data;
+    my $scd = $r->{subcommand_data};
     my ($mod, $func) = __require_url($scd->{url});
 
     no strict 'refs';
-    &{"$mod\::$func"}(%$args);
+    &{"$mod\::$func"}(%{ $r->{args} });
 }
-
-sub hook_before_run {}
-
-sub hook_after_run {}
-
-sub hook_after_parse_opts {}
-
-sub hook_after_select_subcommand {}
 
 1;
 # ABSTRACT: A lightweight Rinci/Riap-based command-line application framework
@@ -273,27 +303,33 @@ See L<Perinci::CmdLine::Manual::Examples>.
 
 B<NOTE: This module is still experimental.>
 
-Perinci::CmdLine::Lite (hereby P::C::Lite) module offers a lightweight (low
-startup overhead, minimal dependencies) alternative to L<Perinci::CmdLine>
-(hereby P::C). It offers a subset of functionality and a pretty compatible API.
+Perinci::CmdLine::Lite (hereby P::C::Lite) is a lightweight (low startup
+overhead, minimal dependencies) alternative to L<Perinci::CmdLine> (hereby
+P::C). It offers a subset of functionality and a compatible API. Unless you use
+the unsupported features of P::C, P::C::Lite is a drop-in replacement for P::C
+(also see L<Perinci::CmdLine::Any> for automatic fallback).
 
 The main difference is that, to keep dependencies minimal and startup overhead
 small, P::C::Lite does not access code and metadata through the L<Riap> client
 library L<Perinci::Access> layer, but instead accesses Perl modules/packages
-directly. This means B<no remote URL support>, you can only access Perl modules
-on the filesystem. Below is summary of the differences:
+directly.
+
+Below is summary of the differences between P::C::Lite and P::C:
 
 =over
 
-=item * As mentioned above, no remote URL support
+=item * No remote URL support
+
+Only code in Perl packages on the filesystem is available.
 
 =item * No automatic validation from schema
 
-As code generation by L<Data::Sah> currently adds some startup overhead.
+As code wrapping and schema code generation by L<Data::Sah> currently adds some
+startup overhead.
 
 =item * P::C::Lite starts much faster
 
-The target is under 0.05-0.1s, while P::C can start between 0.2-0.5s.
+The target is under 0.05s, while P::C can start between 0.2-0.5s.
 
 =item * P::C::Lite does not support color themes
 
