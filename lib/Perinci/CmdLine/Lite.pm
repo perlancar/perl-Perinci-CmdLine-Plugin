@@ -266,114 +266,76 @@ sub hook_after_select_subcommand {}
 
 =head1 SYNOPSIS
 
-In your command-line script:
-
- #!/usr/bin/perl
- use Perinci::CmdLine::Lite; # or Perinci::CmdLine::Any
-
- our %SPEC;
- $SPEC{foo} = {
-     v => 1.1,
-     summary => 'Does foo to your computer',
-     args => {
-         bar => {
-             summary=>'Barrr',
-             req=>1,
-             schema=>['str*', {in=>[qw/aa bb cc/]}],
-         },
-         baz => {
-             summary=>'Bazzz',
-             schema=>'str',
-         },
-     },
- };
- sub foo {
-     my %args = @_;
-     $log->debugf("Arguments are %s", \%args);
-     [200, "OK", $args{bar} . ($args{baz} ? "and $args{baz}" : "")];
- }
-
- Perinci::CmdLine::Lite->new(url => '/main/foo')->run;
-
-To run this program:
-
- % foo --help ;# display help message
- % foo --version ;# display version
- % foo --bar aa ;# run function and display the result
- % foo --baz x  ;# fail because required argument 'bar' not specified
-
-To do bash tab completion:
-
- % complete -C foo foo ;# can be put in ~/.bashrc
- % foo <tab> ;# completes to --help, --version, --bar, --baz and others
- % foo --b<tab> ;# completes to --bar and --baz
- % foo --bar <tab> ;# completes to aa, bb, cc
+See L<Perinci::CmdLine::Manual::Examples>.
 
 
 =head1 DESCRIPTION
 
 B<NOTE: This module is still experimental.>
 
-Perinci::CmdLine::Lite (hereby PCLite) module offers a lightweight (low startup
-overhead, minimal dependencies) alternative to L<Perinci::CmdLine> (hereby PC).
-It offers a subset of functionality and a pretty compatible API. The main
-difference is that, to keep dependencies minimal and startup overhead small,
-PCLite does not access code and metadata through the L<Riap> client library
-L<Perinci::Access> layer, but instead accesses Perl modules/packages directly.
-This means B<no remote URL support>, you can only access Perl modules on the
-filesystem. Below is summary of the differences:
+Perinci::CmdLine::Lite (hereby P::C::Lite) module offers a lightweight (low
+startup overhead, minimal dependencies) alternative to L<Perinci::CmdLine>
+(hereby P::C). It offers a subset of functionality and a pretty compatible API.
+
+The main difference is that, to keep dependencies minimal and startup overhead
+small, P::C::Lite does not access code and metadata through the L<Riap> client
+library L<Perinci::Access> layer, but instead accesses Perl modules/packages
+directly. This means B<no remote URL support>, you can only access Perl modules
+on the filesystem. Below is summary of the differences:
 
 =over
 
 =item * As mentioned above, no remote URL support
 
-Also, no automatic validation from schema, as this currently adds some startup
-overhead.
+=item * No automatic validation from schema
 
-=item * PCLite starts much faster
+As code generation by L<Data::Sah> currently adds some startup overhead.
 
-The target is under 0.05-0.1s, while PC can start between 0.2-0.5s.
+=item * P::C::Lite starts much faster
 
-=item * PCLite does not support color themes
+The target is under 0.05-0.1s, while P::C can start between 0.2-0.5s.
 
-=item * PCLite does not support undo
+=item * P::C::Lite does not support color themes
 
-=item * PCLite does not support logging
+=item * P::C::Lite does not support undo
+
+=item * P::C::Lite does not currently support logging
 
 Something more lightweight than L<Log::Any::App> will be considered. If you want
-logging, you can do something like this:
+to view logging and your function uses L<Log::Any>, you can do something like
+this:
 
  % DEBUG=1 PERL5OPT=-MLog::Any::App app.pl
 
-=item * PCLite does not support progress indicator
+=item * P::C::Lite does not support progress indicator
 
-=item * PCLite does not support I18N
+=item * P::C::Lite does not support I18N
 
-=item * PCLite does not yet support these Rinci function metadata properties
+=item * P::C::Lite does not yet support these Rinci function metadata properties
 
  x.perinci.cmdline.default_format
 
-=item * PCLite does not yet support these Rinci function argument specification properties
+=item * P::C::Lite does not yet support these Rinci function argument specification properties
 
  cmdline_src
 
-=item * PCLite does not yet support these Rinci result metadata properties/attributes
+=item * P::C::Lite does not yet support these Rinci result metadata properties/attributes
 
  is_stream
  cmdline.display_result
  cmdline.page_result
  cmdline.pager
 
-=item * PCLite uses simpler formatting
+=item * P::C::Lite uses simpler formatting
 
 Instead of L<Perinci::Result::Format> (especially the 'text' formats which use
-L<Data::Format::Pretty::Console> and L<Text::ANSITable>), PCLite uses the
-following simple rules that work for a significant portion of common data
-structures:
+L<Data::Format::Pretty::Console> and L<Text::ANSITable>), to keep dependencies
+minimal and formatting quick, P::C::Lite uses the following simple rules that
+work for a significant portion of common data structures:
 
 1) if result is undef, print nothing.
 
-2) if result is scalar, print it.
+2) if result is scalar, print it (with newline automatically added).
 
 3) if result is an array of scalars (check at most 5 first rows), print it one
 line for each element.
@@ -391,9 +353,10 @@ as table.
 
 YAML and the other formats are not supported.
 
-Table is printed using the more lightweight and faster L<Text::TabularDisplay>.
+Table is printed using the more lightweight and much faster
+L<Text::Table::Tiny>.
 
-=item * PCLite does not yet support these environment variables
+=item * P::C::Lite does not yet support these environment variables
 
  PERINCI_CMDLINE_COLOR_THEME
  PERINCI_CMDLINE_SERVER
@@ -404,7 +367,7 @@ Table is printed using the more lightweight and faster L<Text::TabularDisplay>.
 
  DEBUG, VERBOSE, QUIET, TRACE, and so on
 
-=item * In passing command-line object to functions, PCLite object is passed
+=item * In passing command-line object to functions, P::C::Lite object is passed
 
 Some functions might expect a L<Perinci::CmdLine> instance.
 
@@ -424,7 +387,8 @@ Can be used to set CLI program name.
 
 =head1 SEE ALSO
 
-L<Perinci::CmdLine>
+L<Perinci::CmdLine>, L<Perinci::CmdLine::Manual>
+
 
 L<Perinci::CmdLine::Any>
 
