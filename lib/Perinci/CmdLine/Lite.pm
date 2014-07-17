@@ -190,13 +190,28 @@ sub hook_display_result {
 
 sub hook_after_run {}
 
+# copy-pasted from SHARYANTO::Package::Util
+sub __package_exists {
+    no strict 'refs';
+
+    my $pkg = shift;
+
+    return unless $pkg =~ /\A\w+(::\w+)*\z/;
+    if ($pkg =~ s/::(\w+)\z//) {
+        return !!${$pkg . "::"}{$1 . "::"};
+    } else {
+        return !!$::{$pkg . "::"};
+    }
+}
+
 sub __require_url {
     my ($url) = @_;
 
     $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w*)\z!
         or die [500, "Unsupported/bad URL '$url'"];
     my ($mod, $func) = ($1, $2);
-    require "$mod.pm";
+    # skip if package already exists, e.g. 'main'
+    require "$mod.pm" unless __package_exists($mod);
     $mod =~ s!/!::!g;
     ($mod, $func);
 }
