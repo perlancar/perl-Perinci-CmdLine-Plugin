@@ -13,9 +13,6 @@ use Mo; extends 'Perinci::CmdLine::Base';
 # error message if base class has errors.
 #use parent 'Perinci::CmdLine::Base';
 
-# compared to pericmd, i want to avoid using internal attributes like
-# $self->{_format}, $self->{_res}, etc.
-
 sub BUILD {
     my ($self, $args) = @_;
 
@@ -90,6 +87,8 @@ sub BUILD {
     }
 
     $self->{formats} //= [qw/text text-simple text-pretty json/];
+
+    $self->{per_arg_json} //= 1;
 }
 
 sub hook_before_run {}
