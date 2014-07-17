@@ -96,8 +96,6 @@ sub hook_before_run {}
 
 sub hook_after_parse_argv {}
 
-sub hook_after_select_subcommand {}
-
 sub hook_format_result {
     my ($self, $r) = @_;
 
