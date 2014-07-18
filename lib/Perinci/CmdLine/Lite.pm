@@ -336,19 +336,6 @@ Below is summary of the differences between P::C::Lite and P::C:
 
 =over
 
-=item * No remote URL support in P::C::Lite
-
-Instead of using Perinci::Access, P::C::Lite accesses Perl packages on the
-filesystem directly. This means only code on the filesystem is available. (But I
-plan to write another subclass P::C::Lite::HTTP that uses L<HTTP::Tiny> or
-L<HTTP::Tiny::UNIX> for Riap::HTTP support).
-
-=item * No automatic validation from schema in P::C::Lite
-
-Since code wrapping and schema code generation done by L<Perinci::Sub::Wrapper>
-and L<Data::Sah> (which are called automatically by Perinci::Access) adds too
-much startup overhead.
-
 =item * P::C::Lite starts much faster
 
 The target is under 0.05s to make shell tab completion convenient. On the other
@@ -383,6 +370,19 @@ YAML and the other formats are not supported.
 
 Table is printed using the more lightweight and much faster
 L<Text::Table::Tiny>.
+
+=item * No remote URL support in P::C::Lite
+
+Instead of using Perinci::Access, P::C::Lite accesses Perl packages on the
+filesystem directly. This means only code on the filesystem is available. (But I
+plan to write another subclass P::C::Lite::HTTP that uses L<HTTP::Tiny> or
+L<HTTP::Tiny::UNIX> for Riap::HTTP support).
+
+=item * No automatic validation from schema in P::C::Lite
+
+Since code wrapping and schema code generation done by L<Perinci::Sub::Wrapper>
+and L<Data::Sah> (which are called automatically by Perinci::Access) adds too
+much startup overhead.
 
 =item * P::C::Lite does not support color themes
 
