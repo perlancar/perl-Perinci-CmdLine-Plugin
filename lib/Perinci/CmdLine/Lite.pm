@@ -261,10 +261,13 @@ sub run_subcommands {
     }
 
     say "Available subcommands:";
-    my $subcommands = $self->list_subcommands;
+    my $scs = $self->list_subcommands;
+    my $longest = 6;
+    for (keys %$scs) { my $l = length; $longest = $l if $l > $longest }
     [200, "OK",
      join("",
-          (map { "  $_->{name} $_->{url}" } @$subcommands),
+          (map { sprintf("  %-${longest}s  %s\n",$_,$scs->{$_}{summary}//"") }
+               sort keys %$scs),
       )];
 }
 
