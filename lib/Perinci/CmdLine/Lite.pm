@@ -289,9 +289,122 @@ sub run_version {
 }
 
 sub run_help {
-    my ($self) = @_;
+    my ($self, $r) = @_;
 
-    [200, "OK", "Help message"];
+    my @help;
+    my $scn  = $r->{subcommand_name};
+    my $scd  = $r->{subcommand_data};
+    my $meta = $self->get_meta($scd->{url} // $self->{url});
+
+    # summary
+    push @help, $self->get_program_and_subcommand_name($r);
+    {
+        my $sum = ($scd ? $scd->{summary} : undef) //
+            $meta->{summary};
+        last unless $sum;
+        push @help, " - ", $sum;
+    }
+
+    # description
+    push @help, "\n\n";
+    {
+        my $desc = ($scd ? $scd->{description} : undef) //
+            $meta->{description};
+        last unless $desc;
+        $desc =~ s/\A\n+//;
+        $desc =~ s/\n+\z//;
+        push @help, $desc, "\n\n";
+    }
+
+    # options
+    {
+        require Perinci::Sub::GetArgs::Argv;
+        my $co = $self->common_opts;
+        my $co_by_ospec = { map {$co->{$_}{getopt} => $_} keys %$co };
+        my $res = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
+            meta         => $meta,
+            common_opts  => { map {$_ => sub{}} keys %$co_by_ospec },
+            per_arg_json => $self->{per_arg_json},
+            per_arg_yaml => $self->{per_arg_yaml},
+        );
+        my $sms = $res->[3]{'func.specmeta'};
+
+        # first, all common options first
+        my @opts;
+        for my $k (sort(grep {!defined($sms->{$_}{arg})} keys %$sms)) {
+            my $p = $sms->{$k}{parsed};
+            # XXX currently ad-hoc, skip irrelevant common opt
+            next if $scn && $k eq 'subcommands';
+            my $i = 0;
+            my $opt = '';
+            # put short aliases back to the back
+            for (sort {
+                (length($a) > 1 ? 0:1) <=> (length($b) > 1 ? 0:1) ||
+                    $a cmp $b } @{ $p->{opts} }) {
+                $i++;
+                $opt .= ", " if $i > 1;
+                $opt .= (length($_) > 1 ? '--':'-').$_;
+                $opt .= "=$p->{type}" if $p->{type} && $i==1;
+            }
+            push @opts, [$opt, $co->{$co_by_ospec->{ $sms->{$k}{orig_spec} }}{summary}];
+        }
+        my $longest = 6;
+        for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
+        push @help, "Common options:\n" if @opts;
+        for (@opts) {
+            push @help, sprintf("  %-${longest}s  %s\n",
+                                $_->[0], $_->[1] // "");
+        }
+        push @help, "\n" if @opts;
+
+        # now the rest
+        @opts = ();
+        for my $k (sort(grep {defined($sms->{$_}{arg})} keys %$sms)) {
+            my $sm = $sms->{$k};
+            # skip non-code aliases
+            next if $sm->{is_alias} && !$sm->{is_code};
+            my $p = $sm->{parsed};
+            my $i = 0;
+            my $opt = '';
+            # put short aliases back to the back
+            for (sort {
+                (length($a) > 1 ? 0:1) <=> (length($b) > 1 ? 0:1) ||
+                    $a cmp $b } @{ $p->{opts} }) {
+                $i++;
+                $opt .= ", " if $i > 1;
+                $opt .= (length($_) > 1 ? '--':'-').$_;
+                $opt .= "=$p->{type}" if $p->{type} && $i==1;
+            }
+            # add non-code aliases
+            for my $al (@{ $sm->{noncode_aliases} // [] }) {
+                $al =~ s/=.+//; $al = (length($al) > 1 ? "--":"-").$al;
+                $opt .= ", $al";
+            }
+            my $arg = $sm->{arg};
+            my $as = $meta->{args}{$arg};
+            my $sum = ($sm->{is_alias} ? (
+                $as->{cmdline_aliases}{$sm->{alias}}{summary} //
+                    "Alias for $sm->{alias_for}"
+                ) : undef) //
+                    $as->{summary};
+            my $sch = ($sm->{is_alias} ?
+                           $as->{cmdline_aliases}{$sm->{alias}}{schema} : undef) //
+                               $as->{schema};
+            if ($sch && $sch->[1]{in}) {
+                $sum .= " (".join("|", @{ $sch->[1]{in} }).")";
+            }
+            push @opts, [$opt, $sum];
+        }
+        for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
+        push @help, "Options:\n" if @opts;
+        for (@opts) {
+            push @help, sprintf("  %-${longest}s  %s\n",
+                                $_->[0], $_->[1] // "");
+        }
+        push @help, "\n" if @opts;
+    }
+
+    [200, "OK", join("", @help)];
 }
 
 sub run_call {
