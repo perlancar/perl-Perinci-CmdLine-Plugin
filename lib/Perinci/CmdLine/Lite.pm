@@ -289,73 +289,9 @@ sub run_version {
 }
 
 sub run_help {
-    my ($self, $r) = @_;
+    my ($self) = @_;
 
-    my @help;
-    my $scn  = $r->{subcommand_name};
-    my $scd  = $r->{subcommand_data};
-    my $meta = $self->get_meta($scd->{url} // $self->{url});
-
-    # summary
-    push @help, $self->get_program_and_subcommand_name($r);
-    {
-        my $sum = ($scd ? $scd->{summary} : undef) //
-            $meta->{summary};
-        last unless $sum;
-        push @help, " - ", $sum;
-    }
-
-    # description
-    push @help, "\n\n";
-    {
-        my $desc = ($scd ? $scd->{description} : undef) //
-            $meta->{description};
-        last unless $desc;
-        $desc =~ s/\A\n+//;
-        $desc =~ s/\n+\z//;
-        push @help, $desc, "\n\n";
-    }
-
-    # options
-    {
-        require Getopt::Long::Util;
-        require Perinci::Sub::GetArgs::Argv;
-        my $co = $self->common_opts;
-        my $res = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
-            meta         => $meta,
-            common_opts  => { map {$co->{$_}{getopt} => sub{}} keys %$co },
-            per_arg_json => $self->{per_arg_json},
-            per_arg_yaml => $self->{per_arg_yaml},
-        );
-        use DD; dd $res;
-        my $sm = $res->[3]{'func.specmeta'};
-
-        # first, all common options first
-        my @opts;
-        for my $k (grep {!defined($sm->{$_}{arg})} keys %$sm) {
-            my $p = Getopt::Long::Util::parse_getopt_long_opt_spec($k);
-            # XXX currently ad-hoc, skip irrelevant common opt
-            next if $scn && $k eq 'subcommands';
-            my $i = 0;
-            my $opt = '';
-            for (@{ $p->{opts} }) {
-                $i++;
-                $opt .= ", " if $i > 1;
-                $opt .= (length($_) > 1 ? '--':'-').$_;
-                $opt .= "=$p->{type}" if $p->{type} && $i==1;
-            }
-            push @opts, [$opt, $co->{$k}{summary}];
-        }
-        my $longest = 6;
-        for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
-        push @help, "Common options:\n" if @opts;
-        for (@opts) {
-            push @help, sprintf("  %-${longest}s  %s\n",
-                                $_->[0], $_->[1] // "");
-        }
-    }
-
-    [200, "OK", join("", @help)];
+    [200, "OK", "Help message"];
 }
 
 sub run_call {
