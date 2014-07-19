@@ -21,7 +21,7 @@ sub test_run {
 
     my $cmd = $CLASS->new(%{$args{args}}, exit=>0);
 
-    local @ARGV = @{$args{argv}};
+    local @ARGV = @{$args{argv} // []};
     my ($stdout, $stderr);
     my $res;
     eval {
@@ -32,7 +32,7 @@ sub test_run {
     my $eval_err = $@;
     my $exit_code = $res->[3]{'x.perinci.cmdline.base.exit_code'};
 
-    my $name = "test_run: " . ($args{name} // join(" ", @{$args{argv}}));
+    my $name = "test_run: " . ($args{name} // join(" ", @{$args{argv} // []}));
 
     subtest $name => sub {
         if ($args{dies}) {
@@ -66,7 +66,7 @@ sub test_complete {
 
     my $cmd = $CLASS->new(%{$args{args}}, exit=>0);
 
-    local @ARGV = @{$args{argv}};
+    local @ARGV = @{$args{argv} // []};
 
     # $args{comp_line0} contains comp_line with '^' indicating where comp_point
     # should be, the caret will be stripped. this is more convenient than
