@@ -1,0 +1,214 @@
+package Perinci::CmdLine::Manual::FAQ; # just to make podweaver happy
+
+# DATE
+# VERSION
+
+1;
+# ABSTRACT: FAQs
+
+=head1 FAQ
+
+C<P::C> denotes that the answer applies to L<Perinci::CmdLine> only and not
+L<Perinci::CmdLine::Lite>.
+
+=head2 How do I debug my program?
+
+[P::C] You can set environment DEBUG=1 or TRACE=1. See L<Log::Any::App> for more
+details.
+
+=head2 How does Perinci::CmdLine compare with other CLI-app frameworks?
+
+The main difference is that Perinci::CmdLine accesses your code through L<Riap>
+protocol, not directly. This means that aside from local Perl code,
+Perinci::CmdLine can also provide CLI for code in remote hosts/languages. For a
+very rough demo, download and run this PHP Riap::TCP server
+https://github.com/sharyanto/php-Phinci/blob/master/demo/phi-tcpserve-terbilang.php
+on your system. After that, try running:
+
+ % peri-run riap+tcp://localhost:9090/terbilang --help
+ % peri-run riap+tcp://localhost:9090/terbilang 1234
+
+Everything from help message, calling, argument checking, tab completion works
+for remote code as well as local Perl code.
+
+=head2 How to add support for new output format (e.g. XML, HTML)?
+
+See L<Perinci::Result::Format>.
+
+=head2 My function has argument named 'format', but it is blocked by common option '--format'!
+
+To add/remove/rename common options, see the documentation on C<common_opts>
+attribute. In this case, you want:
+
+ delete $cmd->common_opts->{format};
+ #delete $cmd->common_opts->{format_options}; # you might also want this
+
+or perhaps rename it:
+
+ $cmd->common_opts->{output_format} = $cmd->common_opts->{format};
+ delete $cmd->common_opts->{format};
+
+=head2 How to accept input from STDIN (or files)?
+
+If you specify 'cmdline_src' to 'stdin' to a 'str' argument, the argument's
+value will be retrieved from standard input if not specified. Example:
+
+ use Perinci::CmdLine;
+ $SPEC{cmd} = {
+     v => 1.1,
+     args => {
+         arg => {
+             schema => 'str*',
+             cmdline_src => 'stdin',
+         },
+     },
+ };
+ sub cmd {
+     my %args = @_;
+     [200, "OK", "arg is '$args{arg}'"];
+ }
+ Perinci::CmdLine->new(url=>'/main/cmd')->run;
+
+When run from command line:
+
+ % cat file.txt
+ This is content of file.txt
+ % cat file.txt | cmd
+ arg is 'This is content of file.txt'
+
+If your function argument is an array, array of lines will be provided to your
+function. A mechanism to be will be provided in the future (currently not yet
+specified in L<Rinci::function> specification).
+
+=head2 But I don't want the whole file content slurped into string/array, I want streaming!
+
+If your function argument is of type C<stream> or C<filehandle>, an I/O handle
+will be provided to your function instead. But this part is not implemented yet.
+
+Currently, see L<App::dux> for an example on how to accomplish this on function
+argument of type C<array>. Basically in App::dux, you feed an array tied with
+L<Tie::Diamond> as a function argument. Thus you can get lines from file/STDIN
+iteratively with each().
+
+=head2 My function has some cmdline_aliases or cmdline_src defined but I want to change it!
+
+For example, your C<f1> function metadata might look like this:
+
+ package Package::F1;
+ our %SPEC;
+ $SPEC{f1} = {
+     v => 1.1,
+     args => {
+         foo => {
+             cmdline_aliases => { f=> {} },
+         },
+         bar => { ... },
+         fee => { ... },
+     },
+ };
+ sub f1 { ... }
+ 1;
+
+And your command-line script C<f1>:
+
+ #!perl
+ use Perinci::CmdLine;
+ Perinci::CmdLine->new(url => '/Package/F1/f1')->run;
+
+Now you want to create a command-line script interface for this function, but
+with C<-f> as an alias for C<--fee> instead of C<--foo>. This is best done by
+modifying the metadata and creating a wrapper function to do this, e.g. your
+command-line script C<f1> becomes:
+
+ package main;
+ use Perinci::CmdLine;
+ use Package::F1;
+ use Data::Clone;
+ our %SPEC;
+ $SPEC{f1} = clone $Package::F1::SPEC{f1};
+ delete $SPEC{f1}{args}{foo}{cmdline_aliases};
+ $SPEC{f1}{args}{fee}{cmdline_aliases} = {f=>{}};
+ *f1 = \&Package::F1::f1;
+ Perinci::CmdLine->new(url => '/main/f1')->run;
+
+This also demonstrates the convenience of having the metadata as a data
+structure: you can manipulate it however you want. There is also a convenient
+function available in L<Perinci::Sub::Util> when you want to create a modified
+subroutine based on another:
+
+ package main;
+ use Perinci::CmdLine;
+ use Perinci::Sub::Util qw(gen_modified_sub);
+
+ gen_modified_sub(
+     output_name => 'f1',
+     base_name   => 'Package::F1::f1',
+     modify_args => {
+         foo => sub { my $as = shift; delete $as->{cmdline_aliases}   },
+         fee => sub { my $as = shift; $as->{cmdline_aliases} = {f=>{} },
+     },
+ );
+ Perinci::CmdLine->new(url => '/main/f1')->run;
+
+=head2 How to do custom completion for my argument?
+
+By default, L<Perinci::Sub::Complete>'s C<complete_arg_val()> can employ some
+heuristics to complete argument values, e.g. from the C<in> clause or C<max> and
+C<min>:
+
+ $SPEC{set_ticket_status} = {
+     v => 1.1,
+     args => {
+         ticket_id => { ... },
+         status => {
+             schema => ['str*', in => [qw/new open stalled resolved rejected/],
+         },
+     },
+ }
+
+But if you want to supply custom completion, the L<Rinci::function>
+specification allows specifying a C<completion> property for your argument, for
+example:
+
+ use Complete::Util qw(complete_array_elem);
+ $SPEC{del_user} = {
+     v => 1.1,
+     args => {
+         username => {
+             schema => 'str*',
+             req => 1,
+             pos => 0,
+             completion => sub {
+                 my %args = @_;
+
+                 # get list of users from database or whatever
+                 my @users = ...;
+                 complete_array_elem(array=>\@users, word=>$args{word});
+             },
+         },
+         ...
+     },
+ };
+
+You can use completion your command-line program:
+
+ % del-user --username <tab>
+ % del-user <tab> ; # since the 'username' argument has pos=0
+
+=head2 My custom completion does not work, how do I debug it?
+
+Completion works by the shell invoking our (the same) program with C<COMP_LINE>
+and C<COMP_POINT> environment variables. You can do something like this to see
+debugging information:
+
+ % COMP_LINE='myprog --arg x' COMP_POINT=13 PERL5OPT=-MLog::Any::App TRACE=1 myprog --arg x
+
+=head2 My application is OO?
+
+This framework is currently non-OO and function-centric. There are already
+several OO-based command-line frameworks on CPAN.
+
+
+=head1 SEE ALSO
+
+L<Perinci::CmdLine::Manual>

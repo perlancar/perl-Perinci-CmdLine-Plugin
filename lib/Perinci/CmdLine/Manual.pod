@@ -1,0 +1,260 @@
+package Perinci::CmdLine::Manual; # just to make podweaver happy
+
+# DATE
+# VERSION
+
+1;
+# ABSTRACT: Perinci::CmdLine manual
+
+=head1 DESCRIPTION
+
+Perinci::CmdLine is a command-line application framework. It parses command-line
+options and dispatches to one of your specified Perl functions, passing the
+command-line options and arguments to the function. It accesses functions via
+L<Riap> protocol (using the L<Perinci::Access> Riap client library) so you can
+use remote functions transparently. Features:
+
+=over 4
+
+=item * Command-line options parsing
+
+Non-scalar arguments (array, hash, other nested) can also be passed as JSON or
+YAML. For example, if the C<tags> argument is defined as 'array', then all of
+below are equivalent:
+
+ % mycmd --tags-yaml '[foo, bar, baz]'
+ % mycmd --tags-yaml '["foo","bar","baz"]'
+ % mycmd --tags foo --tags bar --tags baz
+
+=item * Help message (utilizing information from metadata, supports translation)
+
+ % mycmd --help
+ % mycmd -h
+ % mycmd -?
+
+=item * Tab completion for bash (including completion from remote code)
+
+ % complete -C mycmd mycmd
+ % mycmd --he<tab> ; # --help
+ % mycmd s<tab>    ; # sub1, sub2, sub3 (if those are the specified subcommands)
+ % mycmd sub1 -<tab> ; # list the options available for sub1 subcommand
+
+Support for other shell might be added in the future upon request.
+
+=item * Undo/redo/history
+
+If the function supports transaction (see L<Rinci::Transaction>,
+L<Riap::Transaction>) the framework will setup transaction and provide command
+to do undo (--undo) and redo (--redo) as well as seeing the undo/transaction
+list (--history) and clearing the list (--clear-history).
+
+=item * Version (--version, -v)
+
+=item * List available subcommands (--subcommands)
+
+=item * Configurable output format (--format, --format-options)
+
+By default C<yaml>, C<json>, C<text>, C<text-simple>, C<text-pretty> are
+recognized.
+
+=back
+
+
+=head1 DISPATCHING
+
+Below is the description of how the framework determines what action and which
+function to call. (Currently lots of internal attributes are accessed directly,
+this might be rectified in the future.)
+
+B<Actions>. The C<_actions> attribute is an array which contains the list of
+potential actions to choose, in order. It will then be filled out according to
+the command-line options specified. For example, if C<--help> is specified,
+C<help> action is shifted to the beginning of C<_actions>. Likewise for
+C<--subcommands>, etc. Finally, the C<call> action (which means an action to
+call our function) is added to this list. After we are finished filling out the
+C<_actions> array, the first action is chosen by running a method called C<<
+run_<ACTION> >>. For example if the chosen action is C<help>, C<run_help()> is
+called. These C<run_*> methods must execute the action, display the output, and
+return an exit code. Program will end with this exit code. A C<run_*> method can
+choose to decline handling the action by returning undef, in which case the next
+action will be tried, and so on until a defined exit code is returned.
+
+B<The 'call' action and determining which subcommand (function) to call>. The
+C<call> action (implemented by C<run_call()>) is the one that actually does the
+real job, calling the function and displaying its result. The C<_subcommand>
+attribute stores information on the subcommand to run, including its Riap URL.
+If there are subcommands, e.g.:
+
+ my $cmd = Perinci::CmdLine->new(
+     subcommands => {
+         sub1 => {
+             url => '/MyApp/func1',
+         },
+         sub2 => {
+             url => '/MyApp/func2',
+         },
+     },
+ );
+
+then which subcommand to run is determined by the command-line argument, e.g.:
+
+ % myapp sub1 ...
+
+then C<_subcommand> attribute will contain C<< {url=>'/MyApp/func1'} >>. When no
+subcommand is specified on the command line, C<run_call()> will decline handling
+the action and returning undef, and the next action e.g. C<help> will be
+executed. But if C<default_subcommand> attribute is set, C<run_call()> will run
+the default subcommand instead.
+
+When there are no subcommands, e.g.:
+
+ my $cmd = Perinci::CmdLine->new(url => '/MyApp/func');
+
+C<_subcommand> will simply contain C<< {url=>'/MyApp/func'} >>.
+
+C<run_call()> will call the function specified in the C<url> in the
+C<_subcommand> using C<Perinci::Access>. (Actually, C<run_help()> or
+C<run_completion()> can be called instead, depending on which action to run.)
+
+
+=head1 LOGGING [P::C]
+
+Logging is done with L<Log::Any> (for producing) and L<Log::Any::App> (for
+displaying to outputs). Loading Log::Any::App will add to startup overhead time,
+so this module tries to be smart when determining whether or not to do logging
+output (i.e. whether or not to load Log::Any::App). Here are the order of rules
+being used:
+
+=over
+
+=item * If running shell completion (C<COMP_LINE> is defined), output is off
+
+Normally, shell completion does not need to show log output.
+
+=item * If LOG environment is defined, use that
+
+You can make a command-line program start a bit faster if you use LOG=0.
+
+=item * If subcommand's log_any_app setting is defined, use that
+
+This allows you, e.g. to turn off logging by default for subcommands that need
+faster startup time. You can still turn on logging for those subcommands by
+LOG=1.
+
+=item * If action metadata's default_log setting is defined, use that
+
+For example, actions like C<help>, C<list>, and C<version> has C<default_log>
+set to 0, for faster startup time. You can still turn on logging for those
+actions by LOG=1.
+
+=item * Use log_any_app attribute setting
+
+=back
+
+
+=head1 UTF8 OUTPUT [P::C]
+
+By default, C<< binmode(STDOUT, ":utf8") >> is issued if utf8 output is desired.
+This is determined by, in order:
+
+=over
+
+=item * Use setting from environment UTF8, if defined.
+
+This allows you to force-disable or force-enable utf8 output.
+
+=item * Use setting from action metadata, if defined.
+
+Some actions like L<help>, L<list>, and L<version> output translated text, so
+they have their C<use_utf8> metadata set to 1.
+
+=item * Use setting from subcommand, if defined.
+
+=item * Use setting from C<use_utf8> attribute.
+
+This attribute comes from L<SHARYANTO::Role::TermAttrs>, its default is
+determined from L<UTF8> environment as well as terminal's capabilities.
+
+=back
+
+
+=head1 COLOR THEMES [P::C]
+
+By default colors are used, but if terminal is detected as not having color
+support, they are turned off. You can also turn off colors by setting COLOR=0 or
+using PERINCI_CMDLINE_COLOR_THEME=Default::no_color.
+
+
+=head1 COMMAND-LINE OPTION/ARGUMENT PARSING
+
+This section describes how Perinci::CmdLine parses command-line
+options/arguments into function arguments. Command-line option parsing is
+implemented by L<Perinci::Sub::GetArgs::Argv>.
+
+For boolean function arguments, use C<--arg> to set C<arg> to true (1), and
+C<--noarg> to set C<arg> to false (0). A flag argument (C<< [bool => {is=>1}]
+>>) only recognizes C<--arg> and not C<--noarg>. For single letter arguments,
+only C<-X> is recognized, not C<--X> nor C<--noX>.
+
+For string and number function arguments, use C<--arg VALUE> or C<--arg=VALUE>
+(or C<-X VALUE> for single letter arguments) to set argument value. Other scalar
+arguments use the same way, except that some parsing will be done (e.g. for date
+type, --arg 1343920342 or --arg '2012-07-31' can be used to set a date value,
+which will be a DateTime object.) (Note that date parsing will be done by
+L<Data::Sah> and currently not implemented yet.)
+
+For arguments with type array of scalar, a series of C<--arg VALUE> is accepted,
+a la L<Getopt::Long>:
+
+ --tags tag1 --tags tag2 ; # will result in tags => ['tag1', 'tag2']
+
+For other non-scalar arguments, also use C<--arg VALUE> or C<--arg=VALUE>, but
+VALUE will be attempted to be parsed using JSON, and then YAML. This is
+convenient for common cases:
+
+ --aoa  '[[1],[2],[3]]'  # parsed as JSON
+ --hash '{a: 1, b: 2}'   # parsed as YAML
+
+For explicit JSON parsing, all arguments can also be set via --ARG-json. This
+can be used to input undefined value in scalars, or setting array value without
+using repetitive C<--arg VALUE>:
+
+ --str-json 'null'    # set undef value
+ --ary-json '[1,2,3]' # set array value without doing --ary 1 --ary 2 --ary 3
+ --ary-json '[]'      # set empty array value
+
+Likewise for explicit YAML parsing:
+
+ --str-yaml '~'       # set undef value
+ --ary-yaml '[a, b]'  # set array value without doing --ary a --ary b
+ --ary-yaml '[]'      # set empty array value
+
+
+=head1 BASH COMPLETION
+
+To do bash completion, first create your script, e.g. C<myscript>, that uses
+Perinci::CmdLine:
+
+ #!/usr/bin/perl
+ use Perinci::CmdLine;
+ Perinci::CmdLine->new(...)->run;
+
+then execute this in C<bash> (or put it in bash startup files like
+C</etc/bash.bashrc> or C<~/.bashrc> for future sessions):
+
+ % complete -C myscript myscript; # myscript must be in PATH
+
+
+=head1 PROGRESS INDICATOR [P::C]
+
+For functions that express that they do progress updating (by setting their
+C<progress> feature to true), Perinci::CmdLine will setup an output, currently
+either L<Progress::Any::Output::TermProgressBar> if program runs interactively,
+or L<Progress::Any::Output::LogAny> if program doesn't run interactively.
+
+
+=head1 SEE ALSO
+
+L<Perinci::CmdLine::Manual::Examples>
+
+L<Perinci::CmdLine::Manual::FAQ>
