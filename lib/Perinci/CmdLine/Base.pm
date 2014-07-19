@@ -98,6 +98,8 @@ sub do_completion {
 
     my ($self, $r) = @_;
 
+    local $r->{in_completion} = 1;
+
     my $word_breaks = "=";
 
     # check whether subcommand is defined. try to search from --cmd, first
@@ -111,7 +113,7 @@ sub do_completion {
             $ENV{COMP_LINE}, $word_breaks);
         shift @$words; # shave program name
         local @ARGV = @$words;
-        $self->_parse_argv1($r, {for_completion=>1});
+        $self->_parse_argv1($r);
     }
 
     # force format to text for completion, because user might type 'cmd --format
@@ -218,9 +220,7 @@ sub do_completion {
 }
 
 sub _parse_argv1 {
-    my ($self, $r, $opts) = @_;
-
-    $opts //= {}; # for_completion: ignore unknown subcommand
+    my ($self, $r) = @_;
 
     # parse common_opts which potentially sets subcommand
     {
@@ -256,7 +256,7 @@ sub _parse_argv1 {
         if (!defined($scn) && $self->{subcommands} && @ARGV) {
             # get from first command-line arg
             if ($ARGV[0] =~ /\A-/) {
-                if ($opts->{for_completion}) {
+                if ($r->{in_completion}) {
                     $scn = shift @ARGV;
                 } else {
                     die [400, "Unknown option: $ARGV[0]"];
@@ -269,7 +269,7 @@ sub _parse_argv1 {
         my $scd;
         if (defined $scn) {
             $scd = $self->get_subcommand_data($scn);
-            unless ($opts->{for_completion}) {
+            unless ($r->{in_completion}) {
                 die [500, "Unknown subcommand: $scn"] unless $scd;
             }
         } elsif (!$r->{action} && $self->{subcommands}) {
