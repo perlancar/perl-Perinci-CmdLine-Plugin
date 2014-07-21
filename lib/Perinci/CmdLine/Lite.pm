@@ -436,7 +436,7 @@ the unsupported features of P::C, P::C::Lite is a drop-in replacement for P::C
 (also see L<Perinci::CmdLine::Any> for automatic fallback).
 
 P::C::Lite stays lightweight by avoiding the use of libraries that have large
-dependencies or add too much to startup overhead. This include
+dependencies or add too much to startup overhead. This includes
 L<Perinci::Access> for metadata access, L<Data::Sah> for validator generation,
 L<Text::ANSITable> for formatting results, and L<Log::Any::App> (which uses
 L<Log::Log4perl>) for logging.
