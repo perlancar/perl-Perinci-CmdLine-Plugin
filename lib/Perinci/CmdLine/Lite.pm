@@ -429,9 +429,6 @@ See L<Perinci::CmdLine::Manual::Examples>.
 
 =head1 DESCRIPTION
 
-B<NOTE: This module is still experimental. Early release, completion not yet
-implemented.>
-
 Perinci::CmdLine::Lite (hereby P::C::Lite) is a lightweight (low startup
 overhead, minimal dependencies) alternative to L<Perinci::CmdLine> (hereby
 P::C). It offers a subset of functionality and a compatible API. Unless you use
