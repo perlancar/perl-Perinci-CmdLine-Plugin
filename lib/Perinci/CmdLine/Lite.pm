@@ -116,6 +116,8 @@ sub hook_format_result {
                 $data //= "";
                 $data .= "\n" unless $data =~ /\n\z/;
                 return $data;
+            } elsif (ref($data) eq 'ARRAY' && !@$data) {
+                return "";
             } elsif (Data::Check::Structure::is_aos($data, {max=>$max})) {
                 if ($is_pretty) {
                     require Text::Table::Tiny;
