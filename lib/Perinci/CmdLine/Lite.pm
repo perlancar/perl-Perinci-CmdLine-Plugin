@@ -414,7 +414,11 @@ sub run_call {
     my ($mod, $func) = __require_url($scd->{url});
 
     no strict 'refs';
-    &{"$mod\::$func"}(%{ $r->{args} });
+    my $res = &{"$mod\::$func"}(%{ $r->{args} });
+    if ($r->{meta}{result_naked}) {
+        $res = [200, "OK (enveloped)", $res];
+    }
+    $res;
 }
 
 1;
