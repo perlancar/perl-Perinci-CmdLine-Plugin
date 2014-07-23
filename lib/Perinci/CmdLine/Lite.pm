@@ -280,7 +280,7 @@ sub run_subcommands {
 sub run_version {
     my ($self, $r) = @_;
 
-    my $meta = $r->{meta};
+    my $meta = $r->{meta} = $self->get_meta($self->url);
 
     [200, "OK",
      join("",
