@@ -118,7 +118,7 @@ sub hook_format_result {
             my $max = 5;
             if (!ref($data)) {
                 $data //= "";
-                $data .= "\n" unless $data =~ /\n\z/;
+                $data .= "\n" unless !length($data) || $data =~ /\n\z/;
                 return $data;
             } elsif (ref($data) eq 'ARRAY' && !@$data) {
                 return "";
