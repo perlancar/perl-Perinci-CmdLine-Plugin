@@ -31,7 +31,7 @@ sub BUILD {
                 getopt  => 'version|v',
                 summary => 'Show program version',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{action} = 'version';
                     $r->{skip_parse_subcommand_argv} = 1;
                 },
@@ -40,7 +40,7 @@ sub BUILD {
                 getopt  => 'help|h|?',
                 summary => 'Show help message',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{action} = 'help';
                     $r->{skip_parse_subcommand_argv} = 1;
                 },
@@ -49,7 +49,7 @@ sub BUILD {
                 getopt  => 'format=s',
                 summary => 'Set output format (text/text-simple/text-pretty/json/json-pretty)',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{format} = $val;
                 },
             },
@@ -57,7 +57,7 @@ sub BUILD {
                 getopt  => 'json',
                 summary => 'Set output format to json',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{format} = 'json';
                 },
             },
@@ -67,7 +67,7 @@ sub BUILD {
                 getopt  => 'subcommands',
                 summary => 'List available subcommands',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{action} = 'subcommands';
                     $r->{skip_parse_subcommand_argv} = 1;
                 },
@@ -78,7 +78,7 @@ sub BUILD {
                 getopt  => 'cmd=s',
                 summary => 'Select subcommand',
                 handler => sub {
-                    my ($r, $go, $val) = @_;
+                    my ($go, $val, $r) = @_;
                     $r->{subcommand_name} = $val;
                 },
             };
@@ -248,7 +248,7 @@ sub get_meta {
             getopt  => 'dry-run',
             summary => "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {
-                my ($r, $go, $val) = @_;
+                my ($go, $val, $r) = @_;
                 $r->{dry_run} = 1;
                 #$ENV{VERBOSE} = 1;
             },
