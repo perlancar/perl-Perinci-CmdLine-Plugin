@@ -1,5 +1,20 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.07     2014-07-23 (SHARYANTO)
+
+         - [Bugfix] A couple of other bug fixes.
+
+         [ENHANCEMENTS]
+
+         - Show previous error in error message.
+
+         - Handle result_naked=1.
+
+         [INTERNAL]
+
+         - Adjust to Perinci::Sub::GetArgs::Argv 0.46.
+
+
 0.06     2014-07-18 (SHARYANTO)
 
          - No new features.
