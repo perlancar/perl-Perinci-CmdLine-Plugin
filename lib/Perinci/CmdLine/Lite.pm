@@ -326,10 +326,10 @@ sub run_help {
     {
         require Perinci::Sub::GetArgs::Argv;
         my $co = $self->common_opts;
-        my $co_by_ospec = { map {$co->{$_}{getopt} => $_} keys %$co };
+        my $co_by_ospec = { map {$co->{$_}{getopt} => $_ } keys %$co };
         my $res = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
             meta         => $meta,
-            common_opts  => { map {$_ => sub{}} keys %$co_by_ospec },
+            common_opts  => $co,
             per_arg_json => $self->{per_arg_json},
             per_arg_yaml => $self->{per_arg_yaml},
         );
