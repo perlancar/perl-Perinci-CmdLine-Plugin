@@ -168,18 +168,15 @@ sub do_completion {
 
     # get all command-line options
 
-    my $co  = $self->common_opts;
-    my $co2 = { map { $co->{$_}{getopt} => sub {} } keys %$co };
     my $meta;
     my $genres;
     {
         require Perinci::Sub::GetArgs::Argv;
 
-        my $co = $self->common_opts;
         $meta = $self->get_meta($scd->{url} // $self->{url});
         $genres = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
             meta         => $meta,
-            common_opts  => $co2,
+            common_opts  => $self->common_opts,
             per_arg_json => $self->{per_arg_json},
             per_arg_yaml => $self->{per_arg_yaml},
         );
@@ -193,7 +190,7 @@ sub do_completion {
             meta            => $meta,
             words           => $words,
             cword           => $cword,
-            common_opts     => $co2,
+            common_opts     => $self->common_opts,
             riap_server_url => $scd->{url},
             riap_uri        => undef,
             riap_client     => $self->riap_client,
@@ -235,7 +232,7 @@ sub _parse_argv1 {
         for my $k (keys %$co) {
             push @go_spec, $co->{$k}{getopt} => sub {
                 my ($go, $val) = @_;
-                $co->{$k}{handler}->($r, $go, $val);
+                $co->{$k}{handler}->($go, $val, $r);
             };
         }
         Getopt::Long::GetOptions(@go_spec);
@@ -326,7 +323,6 @@ sub parse_argv {
 
         $r->{format} //= $meta->{'x.perinci.cmdline.default_format'};
 
-        my $co = $self->common_opts;
         require Perinci::Sub::GetArgs::Argv;
         my $res = Perinci::Sub::GetArgs::Argv::get_args_from_argv(
             argv                => \@ARGV,
@@ -335,8 +331,7 @@ sub parse_argv {
             allow_extra_elems   => 0,
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
-            common_opts         => { map {$co->{$_}{getopt} => sub{}}
-                                         keys %$co },
+            common_opts         => $self->common_opts,
             on_missing_required_args => sub {
                 my %a = @_;
                 my ($an, $aa, $as) = ($a{arg}, $a{args}, $a{spec});
@@ -518,7 +513,8 @@ Required, for Getopt::Long specification.
 
 =item * handler (code)
 
-Required, for Getopt::Long specification.
+Required, for Getopt::Long specification. Note that the handler will receive
+C<<($geopt, $val, $r)>> (an extra C<$r>).
 
 =item * usage (str)
 
