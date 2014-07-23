@@ -344,9 +344,7 @@ sub run_help {
             my $i = 0;
             my $opt = '';
             # put short aliases back to the back
-            for (sort {
-                (length($a) > 1 ? 0:1) <=> (length($b) > 1 ? 0:1) ||
-                    $a cmp $b } @{ $p->{opts} }) {
+            for (@{ $p->{opts} }) {
                 $i++;
                 $opt .= ", " if $i > 1;
                 $opt .= (length($_) > 1 ? '--':'-').$_;
@@ -373,9 +371,7 @@ sub run_help {
             my $i = 0;
             my $opt = '';
             # put short aliases back to the back
-            for (sort {
-                (length($a) > 1 ? 0:1) <=> (length($b) > 1 ? 0:1) ||
-                    $a cmp $b } @{ $p->{opts} }) {
+            for (@{ $p->{opts} }) {
                 $i++;
                 $opt .= ", " if $i > 1;
                 $opt .= (length($_) > 1 ? '--':'-').$_;
