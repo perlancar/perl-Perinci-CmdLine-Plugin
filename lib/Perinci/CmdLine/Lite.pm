@@ -418,7 +418,7 @@ sub run_call {
     no strict 'refs';
     my $res = &{"$mod\::$func"}(%{ $r->{args} });
     if ($r->{meta}{result_naked}) {
-        $res = [200, "OK (enveloped)", $res];
+        $res = [200, "OK (envelope added by ".__PACKAGE__.")", $res];
     }
     $res;
 }
