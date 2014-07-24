@@ -1,5 +1,21 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.08     2014-07-24 (SHARYANTO)
+
+         - Adjust to Getopt::Long::Util 0.46 (required by
+           Perinci::Sub::GetArgs::Argv 0.46) which already sorts options.
+
+         [BUG FIXES]
+
+         - Don't add newline if result is an empty string.
+
+         - Hasn't retrieved meta yet for version action.
+
+         [INTERNAL]
+
+         - Add some tests.
+
+
 0.07     2014-07-23 (SHARYANTO)
 
          - [Bugfix] A couple of bug fixes.
