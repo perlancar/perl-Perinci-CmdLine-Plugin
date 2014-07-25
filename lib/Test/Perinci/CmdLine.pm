@@ -76,7 +76,7 @@ sub test_complete {
     my $comp_point = index($comp_line, '^');
     $comp_point >= 0 or
         die "BUG: comp_line0 should contain ^ to indicate where comp_point is";
-    $comp_point =~ s/\^//;
+    $comp_line =~ s/\^//;
 
     local $ENV{COMP_LINE}  = $comp_line;
     local $ENV{COMP_POINT} = $comp_point;

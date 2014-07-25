@@ -107,6 +107,7 @@ sub do_completion {
 
     my ($words, $cword) = @{ Complete::Bash::parse_cmdline(
         undef, undef, $word_breaks) };
+    shift @$words; $cword--; # strip command name
 
     {
         # @ARGV given by bash is messed up / different. during completion, we
