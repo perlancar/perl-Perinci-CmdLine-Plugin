@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.09     2014-07-25 (SHARYANTO)
+
+         - No functional changes.
+
+         - Adjust to Complete::Bash 0.09 (no more break_cmdline_into_words(),
+           parse_cmdline() no longer strips command name).
+
+
 0.08     2014-07-24 (SHARYANTO)
 
          - Adjust to Getopt::Long::Util 0.46 (required by
