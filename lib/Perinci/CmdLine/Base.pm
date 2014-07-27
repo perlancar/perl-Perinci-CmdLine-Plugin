@@ -13,8 +13,7 @@ use Mo qw'build default';
 
 has actions => ();
 has common_opts => ();
-has custom_completer => ();
-has custom_arg_completer => ();
+has completion => ();
 has default_subcommand => ();
 has get_subcommand_from_arg => (is=>'rw', default=>1);
 has description => ();
@@ -193,8 +192,7 @@ sub do_completion {
             riap_server_url => $scd->{url},
             riap_uri        => undef,
             riap_client     => $self->riap_client,
-            custom_completer     => $self->custom_completer,
-            custom_arg_completer => $self->custom_arg_completer,
+            completion      => $self->completion,
         );
     } else {
         require Complete::Util;
@@ -607,12 +605,7 @@ equivalent to executing the 'shutdown' subcommand:
 
  % cmd shutdown
 
-=head2 custom_arg_completer => code | hash => {of=>code}
-
-Will be passed to L<Perinci::Sub::Complete>'s C<complete_cli_arg()>. See its
-documentation for more details.
-
-=head2 custom_completer => code
+=head2 completion => code
 
 Will be passed to L<Perinci::Sub::Complete>'s C<complete_cli_arg()>. See its
 documentation for more details.
