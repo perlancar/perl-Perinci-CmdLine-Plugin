@@ -352,7 +352,7 @@ sub run_help {
                 $opt .= (length($_) > 1 ? '--':'-').$_;
                 $opt .= "=$p->{type}" if $p->{type} && $i==1;
             }
-            push @opts, [$opt, $co->{$co_by_ospec->{ $sms->{$k}{orig_spec} }}{summary}];
+            push @opts, [$opt, $co->{$co_by_ospec->{$k}}{summary}];
         }
         my $longest = 6;
         for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
