@@ -345,7 +345,6 @@ sub run_help {
             next if $scn && $k eq 'subcommands';
             my $i = 0;
             my $opt = '';
-            # put short aliases back to the back
             for (@{ $p->{opts} }) {
                 $i++;
                 $opt .= ", " if $i > 1;
@@ -372,7 +371,6 @@ sub run_help {
             my $p = $sm->{parsed};
             my $i = 0;
             my $opt = '';
-            # put short aliases back to the back
             for (@{ $p->{opts} }) {
                 $i++;
                 $opt .= ", " if $i > 1;
