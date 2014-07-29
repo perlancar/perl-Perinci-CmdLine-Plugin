@@ -99,21 +99,16 @@ sub do_completion {
 
     local $r->{in_completion} = 1;
 
-    my $word_breaks = "=";
+    my ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, '=') };
+    shift @$words; $cword--; # strip program name
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
-
-    my ($words, $cword) = @{ Complete::Bash::parse_cmdline(
-        undef, undef, $word_breaks) };
-    shift @$words; $cword--; # strip command name
-
     {
         # @ARGV given by bash is messed up / different. during completion, we
         # get ARGV from parsing COMP_LINE/COMP_POINT. this might not be the case
         # with other shells like zsh/fish. XXX detect and support other shell.
         local @ARGV = @$words;
-        shift @ARGV;
         $self->_parse_argv1($r);
     }
 
@@ -121,95 +116,40 @@ sub do_completion {
     # blah -^'.
     $r->{format} = 'text';
 
-    my $scn = $r->{subcommand_name} // "";
     my $scd = $r->{subcommand_data};
+    my $meta = $self->get_meta($scd->{url} // $self->{url});
 
-    # strip subcommand name from first command-line argument because it
-    # interferes with later parsing
-    if ($scd && @$words && $self->subcommands && $scn eq $words->[0]) {
-        shift @$words;
-        $cword--;
-    }
+    require Perinci::Sub::Complete;
+    my $compres = Perinci::Sub::Complete::complete_cli_arg(
+        meta            => $meta,
+        words           => $words,
+        cword           => $cword,
+        common_opts     => $self->common_opts,
+        riap_server_url => $scd->{url},
+        riap_uri        => undef,
+        riap_client     => $self->riap_client,
+        completion      => sub {
+            my %args = @_;
+            my $type = $args{type};
+            # user specifies custom completion routine, so use that first
+            if ($self->completion) {
+                my $res = $self->completion(%args);
+                return $res if $res;
+            }
+            # if subcommand name has not been supplied and we're at arg#0,
+            # complete subcommand name
+            if ($self->subcommands && !$r->{subcommand_name_from} &&
+                    $args{type} eq 'arg' && $args{argpos}==0) {
+                require Complete::Util;
+                return Complete::Util::complete_array_elem(
+                    array => keys %{ $self->list_subcommands },
+                    word=>$words->[$cword]);
+            }
 
-    my $word = $words->[$cword] // "";
-
-    # determine whether we should complete function arg names/values or just
-    # top-level opts + subcommands name
-
-    my $do_arg = 0;
-    {
-        if (!$self->subcommands) {
-            # do_arg because single command
-            $do_arg++; last;
-        }
-
-        # whether user typed 'blah blah ^' or 'blah blah^'
-        my $space_typed = !defined($word);
-
-        # e.g: spanel delete-account ^
-        if ($self->subcommands && $cword > 0 && $space_typed) {
-            # do_arg because last word typed (+space) is subcommand name
-            $do_arg++; last;
-        }
-
-        # e.g: spanel delete-account --format=yaml --acc^
-        # e.g: spanel --cmd delete-account --acc^
-        if ($cword > 0 && !$space_typed && $scd) {
-            # do_arg because subcommand has been defined
-            $do_arg++; last;
-        }
-
-        # not do_arg
-    }
-
-    my $compres;
-
-    # get all command-line options
-
-    my $meta;
-    my $genres;
-    {
-        require Perinci::Sub::GetArgs::Argv;
-
-        $meta = $self->get_meta($scd->{url} // $self->{url});
-        $genres = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
-            meta         => $meta,
-            common_opts  => $self->common_opts,
-            per_arg_json => $self->{per_arg_json},
-            per_arg_yaml => $self->{per_arg_yaml},
-        );
-        if ($genres->[0] != 200) { $compres = []; goto L1 }
-    }
-
-    if ($do_arg) {
-        # Completing subcommand argument names & values ...
-        require Perinci::Sub::Complete;
-        $compres = Perinci::Sub::Complete::complete_cli_arg(
-            meta            => $meta,
-            words           => $words,
-            cword           => $cword,
-            common_opts     => $self->common_opts,
-            riap_server_url => $scd->{url},
-            riap_uri        => undef,
-            riap_client     => $self->riap_client,
-            completion      => $self->completion,
-        );
-    } else {
-        require Complete::Util;
-        # Completing top-level options + subcommand name ...
-        my @ary;
-        push @ary, @{ $genres->[3]{'func.opts'} };
-        my $scs = $self->list_subcommands;
-        push @ary, keys %$scs;
-        $compres = {
-            completion => Complete::Util::complete_array_elem(
-                word=>$word, array=>\@ary,
-            ),
-            escmode=>'option',
-        };
-    }
-
-  L1:
+            # otherwise let periscomp do its thing
+            return undef;
+        },
+    );
     [200, "OK", Complete::Bash::format_completion($compres)];
 }
 
@@ -239,12 +179,15 @@ sub _parse_argv1 {
     # select subcommand and fill subcommand data
     {
         my $scn = $r->{subcommand_name};
+        my $scn_from = $r->{subcommand_name_from};
         if (!defined($scn) && defined($self->{default_subcommand})) {
             # get from default_subcommand
             if ($self->{get_subcommand_from_arg} == 1) {
                 $scn = $self->{default_subcommand};
+                $scn_from = 'default_subcommand';
             } elsif ($self->{get_subcommand_from_arg} == 2 && !@ARGV) {
                 $scn = $self->{default_subcommand};
+                $scn_from = 'default_subcommand';
             }
         }
         if (!defined($scn) && $self->{subcommands} && @ARGV) {
@@ -252,11 +195,13 @@ sub _parse_argv1 {
             if ($ARGV[0] =~ /\A-/) {
                 if ($r->{in_completion}) {
                     $scn = shift @ARGV;
+                    $scn_from = 'arg';
                 } else {
                     die [400, "Unknown option: $ARGV[0]"];
                 }
             } else {
                 $scn = shift @ARGV;
+                $scn_from = 'arg';
             }
         }
 
@@ -282,6 +227,7 @@ sub _parse_argv1 {
             };
         }
         $r->{subcommand_name} = $scn;
+        $r->{subcommand_name_from} = $scn_from;
         $r->{subcommand_data} = $scd;
     }
 
@@ -441,6 +387,28 @@ Selected format to use. Usually set from the common option C<--format>.
 
 Enveloped result of C<parse_argv()>.
 
+=item * subcommand_name => str
+
+Also set by C<parse_argv()>. The subcommand name in effect, either set
+explicitly by user using C<--cmd> or the first command-line argument, or set
+implicitly with the C<default_subcommand> attribute. Undef if there is no
+subcommand name in effect.
+
+=item * subcommand_name_from => str
+
+Also set by C<parse_argv()>. Tells how the C<subcommand_name> request key is
+set. Value is either C<--cmd> (if set through C<--cmd> common option), C<arg>
+(if set through first command-line argument), C<default_subcommand> (if set to
+C<default_subcommand> attribute), or undef if there is no subcommand_name set.
+
+=item * subcommand_data => hash
+
+Also set by C<parse_argv()>. Subcommand data, including its URL, summary (if
+exists), and so on. Note that if there is no subcommand, this will contain data
+for the main command, i.e. URL will be set from C<url> attribute, summary from
+C<summary> attribute, and so on. This is a convenient way to get what URL and
+summary to use, and so on.
+
 =item * skip_parse_subcommand_argv => bool
 
 Checked by C<parse_argv()>. Can be set to 1, e.g. in common option handler for
@@ -448,7 +416,7 @@ C<--help> or C<--version> to skip parsing @ARGV for per-subcommand options.
 
 =item * args => hash
 
-Also taken from C<parse_arg()> result.
+Also taken from C<parse_argv()> result.
 
 =item * meta => hash
 
