@@ -1,5 +1,15 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.10     2014-07-29 (SHARYANTO) (not yet released)
+
+         - Adjust to Perinci::Sub::Complete 0.60.
+
+         [INCOMPATIBLE CHANGES]
+
+         - Rename attributes 'custom_completer' to 'completion', remove
+           'custom_arg_completer'.
+
+
 0.09     2014-07-25 (SHARYANTO)
 
          - No functional changes.
