@@ -301,28 +301,62 @@ sub run_help {
     my ($self, $r) = @_;
 
     my @help;
-    my $scn  = $r->{subcommand_name};
-    my $scd  = $r->{subcommand_data};
-    my $meta = $self->get_meta($scd->{url} // $self->{url});
+    my $scn    = $r->{subcommand_name};
+    my $scd    = $r->{subcommand_data};
+    my $meta   = $self->get_meta($scd->{url} // $self->{url});
+    my $args_p = $meta->{args} // {};
 
     # summary
-    push @help, $self->get_program_and_subcommand_name($r);
+    my $cmdname = $self->get_program_and_subcommand_name($r);
+    push @help, $cmdname;
     {
         my $sum = ($scd ? $scd->{summary} : undef) //
             $meta->{summary};
         last unless $sum;
-        push @help, " - ", $sum;
+        push @help, " - ", $sum, "\n";
+    }
+
+    # usage
+    push @help, "\n";
+    push @help, "Usage:\n";
+    {
+        push @help, "  $cmdname --help (or -h, -?)\n";
+        push @help, "  $cmdname --verbose (or -v)\n";
+        my @args;
+        my %args = %{ $args_p };
+        my $max_pos = -1;
+        for (values %args) {
+            $max_pos = $_->{pos} if defined($_->{pos}) && $_->{pos} > $max_pos;
+        }
+        my $pos = 0;
+        while ($pos <= $max_pos) {
+            my ($arg, $as);
+            for (keys %args) {
+                $as = $args{$_};
+                if (defined($as->{pos}) && $as->{pos}==$pos) { $arg=$_; last }
+            }
+            next unless defined($arg);
+            if ($as->{req}) {
+                push @args, "<$arg>" . ($as->{greedy} ? " ...":"");
+            } else {
+                push @args, "[$arg]" . ($as->{greedy} ? " ...":"");
+            }
+            delete $args{$arg};
+            $pos++;
+        }
+        unshift @args, "[options]" if keys %args;
+        push @help, "  $cmdname ".join(" ", @args)."\n";
     }
 
     # description
-    push @help, "\n\n";
+    push @help, "\n";
     {
         my $desc = ($scd ? $scd->{description} : undef) //
             $meta->{description};
         last unless $desc;
         $desc =~ s/\A\n+//;
         $desc =~ s/\n+\z//;
-        push @help, $desc, "\n\n";
+        push @help, $desc, "\n";
     }
 
     # options
@@ -356,12 +390,11 @@ sub run_help {
         }
         my $longest = 6;
         for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
-        push @help, "Common options:\n" if @opts;
+        push @help, "\nCommon options:\n" if @opts;
         for (@opts) {
             push @help, sprintf("  %-${longest}s  %s\n",
                                 $_->[0], $_->[1] // "");
         }
-        push @help, "\n" if @opts;
 
         # now the rest
         @opts = ();
@@ -384,7 +417,7 @@ sub run_help {
                 $opt .= ", $al";
             }
             my $arg = $sm->{arg};
-            my $as = $meta->{args}{$arg};
+            my $as = $args_p->{$arg};
             my $sum = ($sm->{is_alias} ? (
                 $as->{cmdline_aliases}{$sm->{alias}}{summary} //
                     "Alias for $sm->{alias_for}"
@@ -399,7 +432,7 @@ sub run_help {
             push @opts, [$opt, $sum];
         }
         for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
-        push @help, "Options:\n" if @opts;
+        push @help, "\nOptions:\n" if @opts;
         for (@opts) {
             push @help, sprintf("  %-${longest}s  %s\n",
                                 $_->[0], $_->[1] // "");
