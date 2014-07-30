@@ -418,11 +418,16 @@ sub run_help {
             }
             my $arg = $sm->{arg};
             my $as = $args_p->{$arg};
-            my $sum = ($sm->{is_alias} ? (
-                $as->{cmdline_aliases}{$sm->{alias}}{summary} //
-                    "Alias for $sm->{alias_for}"
-                ) : undef) //
-                    $as->{summary};
+            my $sum = join(
+                "",
+                (defined($as->{pos}) ? "(or via arg #$as->{pos}".
+                     ($as->{greedy} ? "+":"").") " : ""),
+                (($sm->{is_alias} ? (
+                    $as->{cmdline_aliases}{$sm->{alias}}{summary} //
+                        "Alias for $sm->{alias_for}"
+                    ) : undef) //
+                        $as->{summary})
+            );
             my $sch = ($sm->{is_alias} ?
                            $as->{cmdline_aliases}{$sm->{alias}}{schema} : undef) //
                                $as->{schema};
