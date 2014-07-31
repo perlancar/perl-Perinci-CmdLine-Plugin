@@ -454,11 +454,39 @@ sub run_call {
     my $scd = $r->{subcommand_data};
     my ($mod, $func) = __require_url($scd->{url});
 
-    no strict 'refs';
-    my $res = &{"$mod\::$func"}(%{ $r->{args} });
+    # convert args
+    my $aa = $r->{meta}{args_as} // 'hash';
+    my @args;
+    if ($aa =~ /array/) {
+        require Perinci::Sub::ConvertArgs::Array;
+        my $convres = Perinci::Sub::ConvertArgs::Array::convert_args_to_array(
+            args => $r->{args}, meta => $r->{meta},
+        );
+        return $convres unless $convres->[0] == 200;
+        if ($aa =~ /ref/) {
+            @args = ($convres->[2]);
+        } else {
+            @args = @{ $convres->[2] };
+        }
+    } elsif ($aa eq 'hashref') {
+        @args = ({ %{ $r->{args} } });
+    } else {
+        # hash
+        @args = %{ $r->{args} };
+    }
+
+    # call!
+    my $res;
+    {
+        no strict 'refs';
+        $res = &{"$mod\::$func"}(@args);
+    }
+
+    # add envelope
     if ($r->{meta}{result_naked}) {
         $res = [200, "OK (envelope added by ".__PACKAGE__.")", $res];
     }
+
     $res;
 }
 

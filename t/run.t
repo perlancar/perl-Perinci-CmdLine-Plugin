@@ -10,34 +10,40 @@ use Test::Perinci::CmdLine qw(test_complete test_run);
 
 $Test::Perinci::CmdLine::CLASS = 'Perinci::CmdLine::Lite';
 
-test_run(
-    name      => 'help action',
-    args      => {url=>'/Perinci/Examples/noop'},
-    argv      => [qw/--help/],
-    exit_code => 0,
-    output_re => qr/- Do nothing.+^Common options:/ms,
-);
+subtest 'help action' => sub {
+    test_run(
+        name      => 'help action',
+        args      => {url=>'/Perinci/Examples/noop'},
+        argv      => [qw/--help/],
+        exit_code => 0,
+        output_re => qr/- Do nothing.+^Common options:/ms,
+    );
+};
 
-test_run(
-    name      => 'version action',
-    args      => {url=>'/Perinci/Examples/noop'},
-    argv      => [qw/--version/],
-    exit_code => 0,
-    output_re => qr/version \Q$Perinci::Examples::VERSION\E/,
-);
+subtest 'version action' => sub {
+    test_run(
+        name      => 'version action',
+        args      => {url=>'/Perinci/Examples/noop'},
+        argv      => [qw/--version/],
+        exit_code => 0,
+        output_re => qr/version \Q$Perinci::Examples::VERSION\E/,
+    );
+};
 
-test_run(
-    name      => 'subcommands action',
-    args      => {subcommands => {
-        noop => {url=>'/Perinci/Examples/noop'},
-        dies => {url=>'/Perinci/Examples/dies'},
-    }},
-    argv      => [qw/--subcommands/],
-    exit_code => 0,
-    output_re => qr/^Available subcommands:\s+dies\s+noop/ms,
-);
+subtest 'subcommands action' => sub {
+    test_run(
+        name      => 'subcommands action',
+        args      => {subcommands => {
+            noop => {url=>'/Perinci/Examples/noop'},
+            dies => {url=>'/Perinci/Examples/dies'},
+        }},
+        argv      => [qw/--subcommands/],
+        exit_code => 0,
+        output_re => qr/^Available subcommands:\s+dies\s+noop/ms,
+    );
+};
 
-subtest '--format option' => sub {
+subtest 'output formats' => sub {
     test_run(
         name      => '--json',
         args      => {url => '/Perinci/Examples/sum'},
@@ -185,11 +191,87 @@ subtest 'call action' => sub {
         output_re => qr/6/,
     );
     test_run(
-        name      => 'single command',
-        args      => {url=>'/Perinci/Examples/sum'},
-        argv      => [qw/1 2 3/],
+        name      => 'multiple subcommands (subcommand not specified -> help)',
+        args      => {url => '/Perinci/Examples/',
+                      subcommands => {
+                          s => {url=>'/Perinci/Examples/sum'},
+                          m => {url=>'/Perinci/Examples/merge_hash'},
+                      }
+                  },
+        argv      => [qw//],
         exit_code => 0,
-        output_re => qr/6/,
+        output_re => qr/Common options/,
+    );
+    test_run(
+        name      => 'multiple subcommands (subc specified via first cli arg)',
+        args      => {url => '/Perinci/Examples/',
+                      subcommands => {
+                          s => {url=>'/Perinci/Examples/sum'},
+                          m => {url=>'/Perinci/Examples/merge_hash'},
+                      }
+                  },
+        argv      => [qw/s --array 2 --array 3 --array 4/],
+        exit_code => 0,
+        output_re => qr/9/,
+    );
+    test_run(
+        name      => 'multiple subcommands (subc specified via '.
+            'default_subcommand)',
+        args      => {url => '/Perinci/Examples/',
+                      subcommands => {
+                          s => {url=>'/Perinci/Examples/sum'},
+                          m => {url=>'/Perinci/Examples/merge_hash'},
+                      },
+                      default_subcommand => 's',
+                  },
+        argv      => [qw/--array 2 --array 3 --array 4/],
+        exit_code => 0,
+        output_re => qr/9/s,
+    );
+    test_run(
+        name      => 'multiple subcommands (subc specified via --cmd)',
+        args      => {url => '/Perinci/Examples/',
+                      subcommands => {
+                          s => {url=>'/Perinci/Examples/sum'},
+                          m => {url=>'/Perinci/Examples/merge_hash'},
+                      },
+                      default_subcommand => 's',
+                  },
+        argv      => ['--cmd', 'm',
+                      '--h1-json', '{"a":11,"b":12}',
+                      '--h2-json', '{"a":21,"c":23}'],
+        exit_code => 0,
+        output_re => qr/a[^\n]+21.+b[^\n]+12.+c[^\n]+23/s,
+    );
+
+    test_run(
+        name      => 'args_as array',
+        args      => {url=>'/Perinci/Examples/test_args_as_array'},
+        argv      => [qw/--a0 zero --a1 one --a2 two --format text-simple/],
+        exit_code => 0,
+        output_re => qr/^zero\none\ntwo/,
+    );
+    test_run(
+        name      => 'args_as arrayref',
+        args      => {url=>'/Perinci/Examples/test_args_as_arrayref'},
+        argv      => [qw/--a0 zero --a1 one --a2 two --format text-simple/],
+        exit_code => 0,
+        output_re => qr/^zero\none\ntwo/,
+    );
+    test_run(
+        name      => 'args_as hashref',
+        args      => {url=>'/Perinci/Examples/test_args_as_hashref'},
+        argv      => [qw/--a0 zero --a1 one --format text-simple/],
+        exit_code => 0,
+        output_re => qr/^a0\s+zero\na1\s+one/,
+    );
+
+    test_run(
+        name      => 'result_naked',
+        args      => {url=>'/Perinci/Examples/test_result_naked'},
+        argv      => [qw/--a0 zero --a1 one/],
+        exit_code => 0,
+        output_re => qr/a0[^\n]+zero.+a1[^\n]+one/s,
     );
 };
 

@@ -182,10 +182,10 @@ sub _parse_argv1 {
         my $scn_from = $r->{subcommand_name_from};
         if (!defined($scn) && defined($self->{default_subcommand})) {
             # get from default_subcommand
-            if ($self->{get_subcommand_from_arg} == 1) {
+            if ($self->get_subcommand_from_arg == 1) {
                 $scn = $self->{default_subcommand};
                 $scn_from = 'default_subcommand';
-            } elsif ($self->{get_subcommand_from_arg} == 2 && !@ARGV) {
+            } elsif ($self->get_subcommand_from_arg == 2 && !@ARGV) {
                 $scn = $self->{default_subcommand};
                 $scn_from = 'default_subcommand';
             }
