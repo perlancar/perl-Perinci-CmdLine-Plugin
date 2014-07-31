@@ -1,5 +1,16 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.11     2014-07-31 (SHARYANTO)
+
+         - Add usage and argument position information in help.
+
+         - Handle args_as array/arrayref/hashref.
+
+         [INTERNAL]
+
+         - Add more tests.
+
+
 0.10     2014-07-29 (SHARYANTO)
 
          - Adjust to Perinci::Sub::Complete 0.60.
