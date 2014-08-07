@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.12     2014-08-07 (SHARYANTO)
+
+         - Complete --cmd value.
+
+         - [Bugfix] Fix completion of subcommands ('gu ^').
+
+
 0.11     2014-07-31 (SHARYANTO)
 
          - Add usage and argument position information in help.
