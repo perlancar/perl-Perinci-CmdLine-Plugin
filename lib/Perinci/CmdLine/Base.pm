@@ -131,6 +131,7 @@ sub do_completion {
         completion      => sub {
             my %args = @_;
             my $type = $args{type};
+
             # user specifies custom completion routine, so use that first
             if ($self->completion) {
                 my $res = $self->completion(%args);
@@ -138,12 +139,12 @@ sub do_completion {
             }
             # if subcommand name has not been supplied and we're at arg#0,
             # complete subcommand name
-            if ($self->subcommands && !$r->{subcommand_name_from} &&
+            if ($self->subcommands && $r->{subcommand_name_from} ne '--cmd' &&
                     $args{type} eq 'arg' && $args{argpos}==0) {
                 require Complete::Util;
                 return Complete::Util::complete_array_elem(
-                    array => keys %{ $self->list_subcommands },
-                    word=>$words->[$cword]);
+                    array => [keys %{ $self->list_subcommands }],
+                    word  => $words->[$cword]);
             }
 
             # otherwise let periscomp do its thing
