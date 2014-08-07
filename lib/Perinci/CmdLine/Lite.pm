@@ -84,6 +84,13 @@ sub BUILD {
                     $r->{subcommand_name} = $val;
                     $r->{subcommand_name_from} = '--cmd';
                 },
+                completion => sub {
+                    require Complete::Util;
+                    my %args = @_;
+                    Complete::Util::complete_array_elem(
+                        array => [keys %{ $self->list_subcommands }],
+                        word => $args{word});
+                },
             };
         }
         $self->{common_opts} = $co;
