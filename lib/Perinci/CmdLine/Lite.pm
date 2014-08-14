@@ -47,7 +47,7 @@ sub BUILD {
             },
             format => {
                 getopt  => 'format=s',
-                summary => 'Set output format)',
+                summary => 'Set output format',
                 schema => ['str*' => in => [qw/text text-simple text-pretty
                                                json json-pretty/]],
                 handler => sub {
