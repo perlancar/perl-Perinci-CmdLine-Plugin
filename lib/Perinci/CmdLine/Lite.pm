@@ -429,11 +429,8 @@ sub run_help {
                 "",
                 (defined($as->{pos}) ? "(or via arg #$as->{pos}".
                      ($as->{greedy} ? "+":"").") " : ""),
-                (($sm->{is_alias} ? (
-                    $as->{cmdline_aliases}{$sm->{alias}}{summary} //
-                        "Alias for $sm->{alias_for}"
-                    ) : undef) //
-                        $as->{summary})
+                ($sm->{alias_for} ? "Alias for $sm->{alias_for}" :
+                     $as->{summary} // ''),
             );
             my $sch = ($sm->{is_alias} ?
                            $as->{cmdline_aliases}{$sm->{alias}}{schema} : undef) //
