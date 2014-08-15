@@ -425,11 +425,12 @@ sub run_help {
             }
             my $arg = $sm->{arg};
             my $as = $args_p->{$arg};
+            my $alspec = $sm->{alias} ? $as->{cmdline_aliases}{$sm->{alias}} : {};
             my $sum = join(
                 "",
                 (defined($as->{pos}) ? "(or via arg #$as->{pos}".
                      ($as->{greedy} ? "+":"").") " : ""),
-                ($sm->{alias_for} ? "Alias for $sm->{alias_for}" :
+                ($sm->{alias_for} ? $alspec->{summary} // "Alias for $sm->{alias_for}" :
                      $as->{summary} // ''),
             );
             my $sch = ($sm->{is_alias} ?
