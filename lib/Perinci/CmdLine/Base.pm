@@ -267,6 +267,18 @@ sub parse_argv {
 
         $r->{format} //= $meta->{'x.perinci.cmdline.default_format'};
 
+        # since get_args_from_argv() doesn't pass $r, we need to wrap it
+        my $copts = $self->common_opts;
+        my %old_handlers;
+        for (keys %$copts) {
+            my $h = $copts->{$_}{handler};
+            $copts->{$_}{handler} = sub {
+                my ($go, $val) = @_;
+                $h->($go, $val, $r);
+            };
+            $old_handlers{$_} = $h;
+        }
+
         require Perinci::Sub::GetArgs::Argv;
         my $res = Perinci::Sub::GetArgs::Argv::get_args_from_argv(
             argv                => \@ARGV,
@@ -275,7 +287,7 @@ sub parse_argv {
             allow_extra_elems   => 0,
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
-            common_opts         => $self->common_opts,
+            common_opts         => $copts,
             on_missing_required_args => sub {
                 my %a = @_;
                 my ($an, $aa, $as) = ($a{arg}, $a{args}, $a{spec});
@@ -289,6 +301,12 @@ sub parse_argv {
                 }
             },
         );
+
+        # restore
+        for (keys %$copts) {
+            $copts->{$_}{handler} = $old_handlers{$_};
+        }
+
         return $res;
     }
 }
