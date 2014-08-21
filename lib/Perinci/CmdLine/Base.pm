@@ -351,7 +351,7 @@ sub run {
     $self->hook_after_run($r);
 
     my $exitcode;
-    if ($r->{res}[3] && $r->{res}[3]{'cmdline.exit_code'}) {
+    if ($r->{res}[3] && defined($r->{res}[3]{'cmdline.exit_code'})) {
         $exitcode = $r->{res}[3]{'cmdline.exit_code'};
     } else {
         $exitcode = $self->status2exitcode($r->{res}[0]);
