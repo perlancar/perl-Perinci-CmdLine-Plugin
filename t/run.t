@@ -41,6 +41,35 @@ subtest 'subcommands action' => sub {
         exit_code => 0,
         output_re => qr/^Available subcommands:\s+dies\s+noop/ms,
     );
+    test_run(
+        name      => 'unknown subcommand = error',
+        args      => {subcommands => {
+            noop => {url=>'/Perinci/Examples/noop'},
+            dies => {url=>'/Perinci/Examples/dies'},
+        }},
+        argv      => [qw/foo/],
+        exit_code => 200,
+    );
+    test_run(
+        name      => 'default_subcommand',
+        args      => {subcommands => {
+            noop => {url=>'/Perinci/Examples/noop'},
+            dies => {url=>'/Perinci/Examples/dies'},
+        },
+                      default_subcommand=>'noop'},
+        argv      => [qw//],
+        exit_code => 0,
+    );
+    test_run(
+        name      => 'default_subcommand 2',
+        args      => {subcommands => {
+            noop => {url=>'/Perinci/Examples/noop'},
+            dies => {url=>'/Perinci/Examples/dies'},
+        },
+                      default_subcommand=>'dies'},
+        argv      => [qw/--cmd noop/],
+        exit_code => 0,
+    );
 };
 
 subtest 'output formats' => sub {
