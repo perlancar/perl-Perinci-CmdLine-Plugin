@@ -6,7 +6,7 @@ use warnings;
 
 use Perinci::CmdLine::Lite;
 use Test::More 0.98;
-use Test::Perinci::CmdLine qw(test_complete test_run);
+use Test::Perinci::CmdLine qw(test_run);
 
 $Test::Perinci::CmdLine::CLASS = 'Perinci::CmdLine::Lite';
 
