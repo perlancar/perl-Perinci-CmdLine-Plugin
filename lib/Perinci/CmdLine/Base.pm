@@ -279,12 +279,20 @@ sub parse_argv {
             $old_handlers{$_} = $h;
         }
 
+        my $has_cmdline_src;
+        for my $av (values %{ $meta->{args} // {} }) {
+            if ($av->{cmdline_src}) {
+                $has_cmdline_src = 1;
+                last;
+            }
+        }
+
         require Perinci::Sub::GetArgs::Argv;
         my $res = Perinci::Sub::GetArgs::Argv::get_args_from_argv(
             argv                => \@ARGV,
             args                => $scd->{args} ? { %{$scd->{args}} } : undef,
             meta                => $meta,
-            allow_extra_elems   => 0,
+            allow_extra_elems   => $has_cmdline_src ? 1:0,
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
             common_opts         => $copts,
