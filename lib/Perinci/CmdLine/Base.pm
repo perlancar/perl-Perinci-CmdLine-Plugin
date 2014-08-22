@@ -335,6 +335,7 @@ sub run {
             die $parse_res;
         }
         $r->{parse_argv_res} = $parse_res;
+        $r->{args} = $parse_res->[2] // {};
 
         # set defaults
         $r->{action} //= 'call';
@@ -345,7 +346,6 @@ sub run {
             if $missing && @$missing;
 
         my $args = $parse_res->[2];
-        $r->{args} = $args // {};
         my $scd = $r->{subcommand_data};
         $args->{-cmdline} = $self if $scd->{pass_cmdline_object} //
             $self->pass_cmdline_object;
