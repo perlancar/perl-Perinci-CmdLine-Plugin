@@ -47,7 +47,8 @@ sub test_run {
         }
 
         if ($args{status}) {
-            is($res->[0], $args{status}, "status");
+            is($res->[0], $args{status}, "status")
+                or diag explain $res;
         }
 
         if ($args{output_re}) {
