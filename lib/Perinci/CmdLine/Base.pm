@@ -76,7 +76,7 @@ sub list_subcommands {
     if ($scs) {
         if (ref($scs) eq 'CODE') {
             $scs = $scs->($self);
-            $self->_err("Subcommands code didn't return a hashref")
+            die [500, "BUG: Subcommands code didn't return a hashref"]
                 unless ref($scs) eq 'HASH';
         }
         $res = $scs;
