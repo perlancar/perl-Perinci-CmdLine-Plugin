@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.17     2014-08-23 (SHARYANTO)
+
+         - Handle result metadata: cmdline.default_format, cmdline.skip_format,
+           cmdline.result.
+
+
 0.16     2014-08-22 (SHARYANTO)
 
          - Fixes, mainly to make Perinci::CmdLine work again.
