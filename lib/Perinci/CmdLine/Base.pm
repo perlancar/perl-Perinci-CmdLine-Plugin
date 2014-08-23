@@ -265,7 +265,7 @@ sub parse_argv {
         my $meta = $self->get_meta($scd->{url});
         $r->{meta} = $meta;
 
-        $r->{format} //= $meta->{'x.perinci.cmdline.default_format'};
+        $r->{format} //= $meta->{'cmdline.default_format'};
 
         # since get_args_from_argv() doesn't pass $r, we need to wrap it
         my $copts = $self->common_opts;
@@ -371,8 +371,16 @@ sub run {
             $r->{res} = [500, "Bug: no response produced"];
         }
     }
+    $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
+    if ($r->{res}[3]{'cmdline.result'}) {
+        $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
+    }
   FORMAT:
-    $r->{fres} = $self->hook_format_result($r);
+    if (!$r->{res}[3]{'cmdline.skip_format'}) {
+        $r->{fres} = $self->hook_format_result($r) // '';
+    } else {
+        $r->{fres} = $r->{res};
+    }
     $self->hook_display_result($r);
     $self->hook_after_run($r);
 
@@ -837,10 +845,39 @@ option).
 
 This module interprets the following result metadata property/attribute:
 
-=head2 attribute: cmdline.exit_code => INT
+=head2 attribute: cmdline.exit_code => int
 
 Instruct Perinci::CmdLine to use this exit code, instead of using (function
 status - 300).
+
+=head2 attribute: cmdline.result => any
+
+Replace result. Can be useful for example in this case:
+
+ sub is_palindrome {
+     my %args = @_;
+     my $str = $args{str};
+     my $is_palindrome = $str eq reverse($str);
+     [200, "OK", $is_palindrome,
+      {"cmdline.result" => ($is_palindrome ? "Palindrome" : "Not palindrome")}];
+ }
+
+When called as a normal function we return boolean value. But as a CLI, we
+display a more user-friendly message.
+
+=head2 attribute: cmdline.default_format => str
+
+Default format to use. Can be useful when you want to display the result using a
+certain format by default, but still allows user to override the default.
+
+=head2 attribute: cmdline.skip_format => bool (default: 0)
+
+When we want the command-line framework to just print the result without any
+formatting.
+
+=head2 attribute: x.perinci.cmdline.base.exit_code => int
+
+This is added by this module, so exit code can be tested.
 
 
 =head1 ENVIRONMENT

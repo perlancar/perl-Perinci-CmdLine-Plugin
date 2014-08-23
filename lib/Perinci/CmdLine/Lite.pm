@@ -591,10 +591,6 @@ something like this:
 
 =item * P::C::Lite does not support I18N
 
-=item * P::C::Lite does not yet support these Rinci function metadata properties
-
- x.perinci.cmdline.default_format
-
 =item * P::C::Lite does not yet support these Rinci function argument specification properties
 
  cmdline_src
@@ -602,7 +598,6 @@ something like this:
 =item * P::C::Lite does not yet support these Rinci result metadata properties/attributes
 
  is_stream
- cmdline.display_result
  cmdline.page_result
  cmdline.pager
 

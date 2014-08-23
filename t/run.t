@@ -78,7 +78,7 @@ subtest 'output formats' => sub {
         args      => {url => '/Perinci/Examples/sum'},
         argv      => [qw/1 2 3 --json/],
         exit_code => 0,
-        output_re => qr/^\[200,"OK",6\]/,
+        output_re => qr/^\[200,"OK",6,\{\}\]/,
     );
     subtest 'text-pretty' => sub {
         test_run(
@@ -302,6 +302,43 @@ subtest 'call action' => sub {
         exit_code => 0,
         output_re => qr/a0[^\n]+zero.+a1[^\n]+one/s,
     );
+};
+
+subtest 'result metadata' => sub {
+    subtest 'cmdline.exit_code' => sub {
+        test_run(
+            args      => {url=>'/Perinci/Examples/CmdLineResMeta/exit_code'},
+            argv      => [qw//],
+            status    => 200,
+            exit_code => 7,
+        );
+    };
+    subtest 'cmdline.result' => sub {
+        test_run(
+            args      => {url=>'/Perinci/Examples/CmdLineResMeta/result'},
+            argv      => [qw//],
+            output_re => qr/false/,
+        );
+    };
+    subtest 'cmdline.default_format' => sub {
+        test_run(
+            args      => {url=>'/Perinci/Examples/CmdLineResMeta/default_format'},
+            argv      => [qw//],
+            output_re => qr/null/,
+        );
+        test_run(
+            args      => {url=>'/Perinci/Examples/CmdLineResMeta/default_format'},
+            argv      => [qw/--format text/],
+            output_re => qr/\A\z/,
+        );
+    };
+    subtest 'cmdline.skip_format' => sub {
+        test_run(
+            args      => {url=>'/Perinci/Examples/CmdLineResMeta/skip_format'},
+            argv      => [qw//],
+            output_re => qr/ARRAY\(0x/,
+        );
+    };
 };
 
 DONE_TESTING:
