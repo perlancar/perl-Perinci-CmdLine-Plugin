@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.19     2014-08-24 (SHARYANTO)
+
+         - Base: Use Mo if used by Perinci::CmdLine::Lite, otherwise use Moo
+           when used by Perinci::CmdLine use Moo. This is because there is a
+           problem with role attributes not being applied when Moo subclass
+           extends Mo class.
+
+
 0.18     2014-08-24 (SHARYANTO)
 
          - Fix logic errors.
