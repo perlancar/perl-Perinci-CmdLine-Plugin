@@ -39,6 +39,10 @@ has summary => (is=>'rw');
 has tags => (is=>'rw');
 has url => (is=>'rw');
 
+has read_config => (is=>'rw', default=>1);
+has config_filename => (is=>'rw');
+has config_dirs => (is=>'rw');
+
 # role: requires 'get_meta' # ($url)
 
 # role: requires 'hook_before_run'
@@ -765,6 +769,22 @@ entity.
 
 Alternatively you can provide multiple functions from which the user can select
 using the first argument (see B<subcommands>).
+
+=head2 read_config => bool (default: 1)
+
+Whether to read configuration files.
+
+=head2 config_dirs => array of str
+
+Which directories to look for configuration file. The default is to look at the
+system location and then per-user home directory. On Unix, it's C<< ["/etc",
+$ENV{HOME}] >>.
+
+=head2 config_filename => str
+
+Set configuration filename. The default is C<< basename($0) . ".conf" >>. For
+example, if your program is named C<foo-bar>, config_filename will be
+C<foo-bar.conf>.
 
 
 =head1 METHODS

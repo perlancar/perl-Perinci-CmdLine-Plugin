@@ -95,6 +95,8 @@ sub BUILD {
                 },
             };
         }
+        if ($self->read_config) {
+        }
         $self->{common_opts} = $co;
     }
 
