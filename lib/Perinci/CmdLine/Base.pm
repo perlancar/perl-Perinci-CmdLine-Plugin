@@ -9,8 +9,8 @@ use 5.010001;
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
 # have attributes), Role::Basic, or Moo::Role.
 
-use Mo qw'build default';
-#use Moo;
+use if  $INC{'Perinci/CmdLine/Lite.pm'}, qw(Mo  build default);
+use if !$INC{'Perinci/CmdLine/Lite.pm'}, qw(Moo);
 
 has actions => (is=>'rw');
 has common_opts => (is=>'rw');
