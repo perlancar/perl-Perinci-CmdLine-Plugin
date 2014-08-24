@@ -7,7 +7,9 @@ use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
 
-use Mo; extends 'Perinci::CmdLine::Base';
+use Mo;
+#use Moo;
+extends 'Perinci::CmdLine::Base';
 
 # when debugging, use this instead of the above because Mo doesn't give clear
 # error message if base class has errors.
