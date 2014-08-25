@@ -43,8 +43,12 @@ has read_config => (is=>'rw', default=>1);
 has config_filename => (
     is=>'rw',
     default => sub {
-        my $self = shift;
-        $self->program_name . ".conf";
+        # can't refer to $self, in Mo? so we reconstruct program_name
+        my $pn = $ENV{PERINCI_CMDLINE_PROGRAM_NAME};
+        if (!defined($pn)) {
+            $pn = $0; $pn =~ s!.+/!!;
+        }
+        $pn . ".conf";
     },
 );
 has config_dirs => (

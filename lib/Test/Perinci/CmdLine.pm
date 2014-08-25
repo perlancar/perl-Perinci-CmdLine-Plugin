@@ -19,7 +19,10 @@ our $CLASS = "Perinci::CmdLine";
 sub test_run {
     my %args = @_;
 
-    my $cmd = $CLASS->new(%{$args{args}}, exit=>0);
+    my %cmdargs = %{$args{args}};
+    $cmdargs{exit} = 0;
+    $cmdargs{read_config} //= 0;
+    my $cmd = $CLASS->new(%cmdargs);
 
     local @ARGV = @{$args{argv} // []};
     my ($stdout, $stderr);

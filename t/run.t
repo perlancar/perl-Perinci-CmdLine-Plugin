@@ -4,6 +4,8 @@ use 5.010;
 use strict;
 use warnings;
 
+use File::Slurp::Tiny qw(write_file);
+use File::Temp qw(tempdir);
 use Perinci::CmdLine::Lite;
 use Test::More 0.98;
 use Test::Perinci::CmdLine qw(test_run);
@@ -339,6 +341,91 @@ subtest 'result metadata' => sub {
             output_re => qr/ARRAY\(0x/,
         );
     };
+};
+
+subtest 'config' => sub {
+    my $dir = tempdir(CLEANUP=>1);
+    write_file("$dir/prog.conf", <<'_');
+arg=101
+[subcommand1]
+arg=102
+[subcommand2]
+arg=103
+[profile1]
+arg=111
+[subcommand1 profile1]
+arg=121
+_
+    test_run(
+        name => 'config_dirs',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [],
+        output_re => qr/101/,
+    );
+    test_run(
+        name => '--noconfig',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/--noconfig/],
+        output_re => qr/^$/,
+    );
+    test_run(
+        name => '--config-path',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            read_config=>1,
+            #config_dirs=>[$dir],
+        },
+        argv => ['--config-path', "$dir/prog.conf"],
+        output_re => qr/^101$/,
+    );
+    test_run(
+        name => '--config-profile',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/--config-profile=profile1/],
+        output_re => qr/111/,
+    );
+    test_run(
+        name => 'subcommand',
+        args => {
+            subcommands => {
+                subcommand1=>{url=>'/Perinci/Examples/noop'},
+            },
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/subcommand1/],
+        output_re => qr/102/,
+    );
+    test_run(
+        name => 'subcommand + --config-profile',
+        args => {
+            subcommands => {
+                subcommand1=>{url=>'/Perinci/Examples/noop'},
+            },
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/--config-profile=profile1 subcommand1/],
+        output_re => qr/121/,
+    );
 };
 
 DONE_TESTING:
