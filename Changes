@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.20     2014-08-25 (SHARYANTO)
+
+         [ENHANCEMENTS]
+
+         - Add support for configuration file.
+
+
 0.19     2014-08-24 (SHARYANTO)
 
          - Base: Use Mo if used by Perinci::CmdLine::Lite, otherwise use Moo
