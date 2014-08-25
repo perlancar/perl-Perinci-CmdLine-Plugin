@@ -185,6 +185,84 @@ support, they are turned off. You can also turn off colors by setting COLOR=0 or
 using PERINCI_CMDLINE_COLOR_THEME=Default::no_color.
 
 
+=head1 CONFIGURATION FILE
+
+Configuration files are read to preset the value of arguments, before
+potentially overriden/merged with command-line options. Configuration files are
+in L<IOD> format, which is basically C<INI> with some extra features.
+
+By default, configuration files are searched in C</etc> and home directory, with
+the name of I<program_name> + C<.conf>. If multiple files are found, the
+contents are merged together.
+
+If user wants to use a custom configuration file, she can issue C<--config-path>
+command-line option.
+
+If user does not want to read configuration file, she can issue C<--noconfig>
+command-line option.
+
+The configuration file's section corresponds to subcommand names and/or profile
+names. Profiles are ways to specify multiple sets/cases/scenarios in a single
+configuration file.
+
+Example 1 (without any profile or subcommand):
+
+ ; prog.conf
+ foo=1
+ bar=2
+
+When executing program (the comments will show what arguments are set):
+
+ % prog; # {foo=>1, bar=>2}
+ % prog --foo 10; # {foo=>10, bar=>2}
+
+Example 2 (with profiles):
+
+ ; prog.conf
+ [profile1]
+ foo=1
+ bar=2
+ [profile2]
+ foo=10
+ bar=20
+
+When executing program:
+
+ % prog; # {}
+ % prog --config-profile profile1; # {foo=>1, bar=>2}
+ % prog --config-profile profile2; # {foo=>10, bar=>20}
+
+Example 3 (with subcommands):
+
+ ; prog.conf
+ [subcommand1]
+ foo=1
+ bar=2
+ [subcommand2]
+ baz=3
+ qux=4
+
+When executing program:
+
+ % prog subcommand1; # {foo=>1, bar=>2}
+ % prog subcommand2; # {baz=>3, qux=>4}
+
+Example 4 (with subcommands and profiles):
+
+ ; prog.conf
+ [subcommand1 profile1]
+ foo=1
+ bar=2
+ [subcommand1 profile2]
+ foo=10
+ bar=20
+
+When executing program:
+
+ % prog subcommand1 --config-profile profile1; # {foo=>1, bar=>2}
+ % prog subcommand1 --config-profile profile2; # {foo=>10, bar=>20}
+
+
 =head1 COMMAND-LINE OPTION/ARGUMENT PARSING
 
 This section describes how Perinci::CmdLine parses command-line
