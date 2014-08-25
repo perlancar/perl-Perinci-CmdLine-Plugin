@@ -40,23 +40,7 @@ has tags => (is=>'rw');
 has url => (is=>'rw');
 
 has read_config => (is=>'rw', default=>1);
-has config_filename => (
-    is=>'rw',
-    default => sub {
-        my $self = shift;
-        my $pn;
-        # can't refer to $self, in Mo? so we reconstruct program_name
-        if ($self->program_name) {
-            $pn = $self->program_name;
-        } else {
-            $pn = $ENV{PERINCI_CMDLINE_PROGRAM_NAME};
-            if (!defined($pn)) {
-                $pn = $0; $pn =~ s!.+/!!;
-            }
-        }
-        $pn . ".conf";
-    },
-);
+has config_filename => (is=>'rw');
 has config_dirs => (
     is=>'rw',
     default => sub {
@@ -188,8 +172,10 @@ sub _read_config {
 
     if (!$r->{config_paths}) {
         $r->{config_paths} = [];
+        my $name = $self->config_filename //
+            $self->program_name . ".conf";
         for my $dir (@{ $self->config_dirs }) {
-            my $path = "$dir/" . $self->config_filename;
+            my $path = "$dir/" . $name;
             push @{ $r->{config_paths} }, $path if -e $path;
         }
     }
