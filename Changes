@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.21     2014-08-25 (SHARYANTO)
+
+         - No functional changes.
+
+         - Workaround for default for config_filename not being set properly if
+           used by Moo subclass (in Perinci::CmdLine).
+
+
 0.20     2014-08-25 (SHARYANTO)
 
          [ENHANCEMENTS]
