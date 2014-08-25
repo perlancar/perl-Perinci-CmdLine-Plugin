@@ -356,6 +356,9 @@ arg=111
 [subcommand1 profile1]
 arg=121
 _
+    write_file("$dir/prog2.conf", <<'_');
+arg=104
+_
     test_run(
         name => 'config_dirs',
         args => {
@@ -366,6 +369,18 @@ _
         },
         argv => [],
         output_re => qr/101/,
+    );
+    test_run(
+        name => 'config_filename',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            config_filename=>'prog2.conf',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [],
+        output_re => qr/104/,
     );
     test_run(
         name => '--noconfig',
