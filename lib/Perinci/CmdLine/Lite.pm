@@ -96,6 +96,31 @@ sub BUILD {
             };
         }
         if ($self->read_config) {
+            $co->{config_path} = {
+                getopt  => 'config-path=s@',
+                summary => 'Set path to configuration file',
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{config_paths} //= [];
+                    push @{ $r->{config_paths} }, $val;
+                },
+            };
+            $co->{no_config} = {
+                getopt  => 'noconfig|no-config',
+                summary => 'Do not use any configuration file',
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{read_config} = 0;
+                },
+            };
+            $co->{config_profile} = {
+                getopt  => 'config-profile=s',
+                summary => 'Set configuration profile to use',
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{config_profile} = $val;
+                },
+            };
         }
         $self->{common_opts} = $co;
     }
