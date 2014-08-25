@@ -249,7 +249,8 @@ sub parse_argv {
     # able to catch --help, --version, etc early without having to know about
     # subcommands. two reasons for this: sometimes we need to get subcommand
     # name *from* cmdline opts (e.g. --cmd) and thus it's a chicken-and-egg
-    # problem. second, it's faster (especially in P::C case).
+    # problem. second, it's faster because we don't have to load Riap client and
+    # request the meta through it (especially in the case of remote URL).
     #
     # the second parse is after ge get subcommand name and the function
     # metadata. we can parse the remaining argv to get function arguments.
