@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.22     2014-08-26 (SHARYANTO)
+
+         [INCOMPATIBLE CHANGES]
+
+         - Change configuration profile syntax from '[PROFILENAME]' to
+           '[profile=PROFILENAME]' (for use with subcommand: '[SUBCMDNAME
+           profile=PROFILENAME]'.
+
+
 0.21     2014-08-25 (SHARYANTO)
 
          - No functional changes.
