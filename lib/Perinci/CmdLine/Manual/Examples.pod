@@ -364,7 +364,7 @@ but user can specify other subcommands:
 
 This is accomplished by setting:
 
- Perinci::CmdLine::Lite->new(
+ Perinci::CmdLine::Any->new(
      subcommands => {
          info        => {...},
          run_hooks   => {...},
@@ -390,6 +390,92 @@ This is accomplished by setting:
 
 =head2 Pager
 
+
+=head2 Configuration
+
+In the function-centric world of Perinci::CmdLine, configuration is just another
+way to supply values to function arguments (before being potentially overriden
+by command-line arguments). Configuration files are written in L<IOD> format,
+which is basically "INI with extra features". By default, configuration files
+are searched in C</etc> and then your home directory, with the name of
+I<program_name> + C<.conf>. So if you have:
+
+ # ~/prog.conf
+ foo=1
+ bar=2
+
+and:
+
+ # prog
+ #!perl
+ use Perinci::CmdLine::Any;
+ $SPEC{prog} = {
+     v => 1.1,
+     args => {
+         foo => {},
+         bar => {},
+     },
+ };
+ sub prog {
+     my %args = @_;
+     [200, "OK", "foo is $args{foo}, while bar is $args{bar}"];
+ }
+ Perinci::CmdLine::Any->new(url=>'/main/prog')->run;
+
+When you run:
+
+ % prog
+
+you'll get:
+
+ foo is 1, while bar is 2
+
+Multiple configuration files will be merged, so if you have:
+
+ # /etc/prog.conf
+ foo=1
+ bar=2
+
+ # ~/prog.conf
+ foo=10
+
+you'll get:
+
+ foo is 10, while bar is 2
+
+=head2 Configuration profiles
+
+Configuration file can store more than one set of arguments, through specially
+named sections, called profiles:
+
+ # ~/prog.conf
+ foo=1
+ bar=2
+
+ [profile=p1]
+ foo=21
+ bar=22
+
+ [profile=p2]
+ foo=31
+ bar=32
+
+Running the program:
+
+ % prog
+ foo is 1, while bar is 2
+ % prog --config-profile p1
+ foo is 21, while bar is 22
+ % prog --config-profile p2
+ foo is 31, while bar is 32
+
+=head2 Configuration with subcommands
+
+=head2 Ignoring configuration files
+
+If you don't want to use any configuration files, you can use:
+
+ % prog --noconfig ...
 
 =head2 Modifying common options
 
