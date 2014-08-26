@@ -306,9 +306,12 @@ sub parse_argv {
         for my $section (keys %$conf) {
             if (defined $profile) {
                 if (length $scn) {
-                    next unless $section =~ /\A\Q$scn\E\s+\Q$profile\E\z/;
+                    next unless
+                        $section =~ /\A\Q$scn\E\s+\Q$profile\E\z/ # old, deprecated
+                            || $section =~ /\A\Q$scn\E\s+\Qprofile=$profile\E\z/;
                 } else {
-                    next unless $section eq $profile;
+                    next unless $section eq $profile # old, deprecated
+                        || $section eq "profile=$profile";
                 }
             } else {
                 if (length $scn) {

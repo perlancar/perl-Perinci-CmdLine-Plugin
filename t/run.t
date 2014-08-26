@@ -351,9 +351,9 @@ arg=101
 arg=102
 [subcommand2]
 arg=103
-[profile1]
+[profile=profile1]
 arg=111
-[subcommand1 profile1]
+[subcommand1 profile=profile1]
 arg=121
 _
     write_file("$dir/prog2.conf", <<'_');
