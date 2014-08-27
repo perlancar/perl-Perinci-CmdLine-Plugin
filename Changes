@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.23     2014-08-27 (PERLANCAR)
+
+         - Handle cmdline_src argument spec property (functionality moved from
+           Perinci::CmdLine).
+
+
 0.22     2014-08-26 (SHARYANTO)
 
          [INCOMPATIBLE CHANGES]
