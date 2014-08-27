@@ -461,6 +461,7 @@ sub run_help {
                      ($as->{greedy} ? "+":"").") " : ""),
                 ($sm->{alias_for} ? $alspec->{summary} // "Alias for $sm->{alias_for}" :
                      $as->{summary} // ''),
+                ($as->{cmdline_src} ? " ($as->{cmdline_src})" : ""),
             );
             my $sch = ($sm->{is_alias} ?
                            $as->{cmdline_aliases}{$sm->{alias}}{schema} : undef) //
@@ -619,10 +620,6 @@ something like this:
 =item * P::C::Lite does not support progress indicator
 
 =item * P::C::Lite does not support I18N
-
-=item * P::C::Lite does not yet support these Rinci function argument specification properties
-
- cmdline_src
 
 =item * P::C::Lite does not yet support these Rinci result metadata properties/attributes
 
