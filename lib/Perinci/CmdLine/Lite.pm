@@ -559,8 +559,8 @@ Below is summary of the differences between P::C::Lite and P::C:
 
 =item * P::C::Lite starts much faster
 
-The target is under 0.05s to make shell tab completion convenient. On the other
-hand, P::C can start between 0.2-0.5s.
+The target is under 0.04-0.05s to make shell tab completion convenient. On the
+other hand, P::C can start between 0.20-0.50s.
 
 =item * P::C::Lite uses simpler formatting
 
