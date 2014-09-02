@@ -14,17 +14,36 @@ $Test::Perinci::CmdLine::CLASS = 'Perinci::CmdLine::Lite';
 
 subtest 'help action' => sub {
     test_run(
-        name      => 'help action',
         args      => {url=>'/Perinci/Examples/noop'},
         argv      => [qw/--help/],
         exit_code => 0,
         output_re => qr/- Do nothing.+^Common options:/ms,
     );
+    test_run(
+        name      => 'has subcommands',
+        args      => {
+            url => '/Perinci/Examples/',
+            subcommands=>{
+                sc1=>{url=>'/Perinci/Examples/gen_array'},
+            },
+        },
+        argv      => [qw/--help/],
+        exit_code => 0,
+        output_re => qr/--subcommands/ms,
+    );
+    test_run(
+        name      => 'help on subcommand',
+        args      => {subcommands=>{
+            sc1=>{url=>'/Perinci/Examples/gen_array'},
+        }},
+        argv      => [qw/sc1 --help/],
+        exit_code => 0,
+        output_re => qr/ sc1 -.+--len/ms,
+    );
 };
 
 subtest 'version action' => sub {
     test_run(
-        name      => 'version action',
         args      => {url=>'/Perinci/Examples/noop'},
         argv      => [qw/--version/],
         exit_code => 0,
@@ -34,7 +53,6 @@ subtest 'version action' => sub {
 
 subtest 'subcommands action' => sub {
     test_run(
-        name      => 'subcommands action',
         args      => {subcommands => {
             noop => {url=>'/Perinci/Examples/noop'},
             dies => {url=>'/Perinci/Examples/dies'},
