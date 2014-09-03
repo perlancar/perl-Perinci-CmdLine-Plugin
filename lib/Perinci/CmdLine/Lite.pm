@@ -18,6 +18,11 @@ extends 'Perinci::CmdLine::Base';
 sub BUILD {
     my ($self, $args) = @_;
 
+    if (!$self->{riap_client}) {
+        require Perinci::Access::Lite;
+        $self->{riap_client} = Perinci::Access::Lite->new;
+    }
+
     if (!$self->{actions}) {
         $self->{actions} = {
             call => {},
@@ -234,55 +239,11 @@ sub hook_display_result {
 
 sub hook_after_run {}
 
-# copy-pasted from SHARYANTO::Package::Util
-sub __package_exists {
-    no strict 'refs';
-
-    my $pkg = shift;
-
-    return unless $pkg =~ /\A\w+(::\w+)*\z/;
-    if ($pkg =~ s/::(\w+)\z//) {
-        return !!${$pkg . "::"}{$1 . "::"};
-    } else {
-        return !!$::{$pkg . "::"};
-    }
-}
-
-sub __require_url {
-    my ($url) = @_;
-
-    $url =~ m!\A(?:pl:)?/(\w+(?:/\w+)*)/(\w*)\z!
-        or die [500, "Unsupported/bad URL '$url'"];
-    my ($mod, $func) = ($1, $2);
-    # skip if package already exists, e.g. 'main'
-    require "$mod.pm" unless __package_exists($mod);
-    $mod =~ s!/!::!g;
-    ($mod, $func);
-}
-
-sub get_meta {
-    my ($self, $url) = @_;
-
-    my ($mod, $func) = __require_url($url);
-
-    my $meta;
-    {
-        no strict 'refs';
-        if (length $func) {
-            $meta = ${"$mod\::SPEC"}{$func}
-                or die [500, "No metadata for '$url'"];
-        } else {
-            $meta = ${"$mod\::SPEC"}{':package'} // {v=>1.1};
-        }
-        $meta->{entity_v}    //= ${"$mod\::VERSION"};
-        $meta->{entity_date} //= ${"$mod\::DATE"};
-    }
-
-    require Perinci::Sub::Normalize;
-    $meta = Perinci::Sub::Normalize::normalize_function_metadata($meta);
+sub hook_after_get_meta {
+    my ($self, $r) = @_;
 
     require Perinci::Object;
-    if (Perinci::Object::risub($meta)->can_dry_run) {
+    if (Perinci::Object::risub($r->{meta})->can_dry_run) {
         $self->common_opts->{dry_run} = {
             getopt  => 'dry-run',
             summary => "Run in simulation mode (also via DRY_RUN=1)",
@@ -293,8 +254,6 @@ sub get_meta {
             },
         };
     }
-
-    $meta;
 }
 
 sub run_subcommands {
@@ -319,7 +278,7 @@ sub run_subcommands {
 sub run_version {
     my ($self, $r) = @_;
 
-    my $meta = $r->{meta} = $self->get_meta($self->url);
+    my $meta = $r->{meta} = $self->get_meta($r, $self->url);
 
     [200, "OK",
      join("",
@@ -339,7 +298,7 @@ sub run_help {
     my @help;
     my $scn    = $r->{subcommand_name};
     my $scd    = $r->{subcommand_data};
-    my $meta   = $self->get_meta($scd->{url} // $self->{url});
+    my $meta   = $self->get_meta($r, $scd->{url} // $self->{url});
     my $args_p = $meta->{args} // {};
 
     # summary
@@ -486,43 +445,8 @@ sub run_help {
 sub run_call {
     my ($self, $r) = @_;
 
-    my $scd = $r->{subcommand_data};
-    my ($mod, $func) = __require_url($scd->{url});
-
-    # convert args
-    my $aa = $r->{meta}{args_as} // 'hash';
-    my @args;
-    if ($aa =~ /array/) {
-        require Perinci::Sub::ConvertArgs::Array;
-        my $convres = Perinci::Sub::ConvertArgs::Array::convert_args_to_array(
-            args => $r->{args}, meta => $r->{meta},
-        );
-        return $convres unless $convres->[0] == 200;
-        if ($aa =~ /ref/) {
-            @args = ($convres->[2]);
-        } else {
-            @args = @{ $convres->[2] };
-        }
-    } elsif ($aa eq 'hashref') {
-        @args = ({ %{ $r->{args} } });
-    } else {
-        # hash
-        @args = %{ $r->{args} };
-    }
-
-    # call!
-    my $res;
-    {
-        no strict 'refs';
-        $res = &{"$mod\::$func"}(@args);
-    }
-
-    # add envelope
-    if ($r->{meta}{result_naked}) {
-        $res = [200, "OK (envelope added by ".__PACKAGE__.")", $res];
-    }
-
-    $res;
+    $self->riap_client->request(
+        call => $r->{subcommand_data}{url}, {args=>$r->{args}});
 }
 
 1;
