@@ -453,7 +453,7 @@ sub run_call {
     }
 
     $self->riap_client->request(
-        call => $r->{subcommand_data}{url}, \%extra});
+        call => $r->{subcommand_data}{url}, \%extra);
 }
 
 1;
