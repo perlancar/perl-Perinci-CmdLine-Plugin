@@ -516,18 +516,17 @@ YAML and the other formats are not supported.
 Table is printed using the more lightweight and much faster
 L<Text::Table::Tiny>.
 
-=item * No remote URL support in P::C::Lite
+=item * No support for some protocols
 
-Instead of using Perinci::Access, P::C::Lite accesses Perl packages on the
-filesystem directly. This means only code on the filesystem is available. (But I
-plan to write another subclass P::C::Lite::HTTP that uses L<HTTP::Tiny> or
-L<HTTP::Tiny::UNIX> for Riap::HTTP support).
+Instead of L<Perinci::Access>, this module uses the more lightweight alternative
+L<Perinci::Access::Lite> which does not support some URL schemes (http/https and
+local are supported though).
 
 =item * No automatic validation from schema in P::C::Lite
 
 Since code wrapping and schema code generation done by L<Perinci::Sub::Wrapper>
-and L<Data::Sah> (which are called automatically by Perinci::Access) adds too
-much startup overhead.
+and L<Data::Sah> (which are called automatically by Perinci::Access, but not by
+Perinci::Access::Lite) adds too much startup overhead.
 
 =item * P::C::Lite does not support color themes
 
