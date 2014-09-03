@@ -1,6 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.26     2014-09-03 (PERLANCAR)
+
+         - [Bugfix] Ordering.
+
+
 0.25     2014-09-03 (PERLANCAR)
+
+         - No functional change.
 
          - Extract some functionality to Perinci-Access-Lite, to make it easier
            to add http support.
