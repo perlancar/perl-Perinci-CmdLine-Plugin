@@ -61,8 +61,8 @@ sub get_meta {
     my $res = $self->riap_client->request(meta => $url);
     die $res unless $res->[0] == 200;
     my $meta = $res->[2];
-    $self->hook_after_get_meta($r);
     $r->{meta} = $meta;
+    $self->hook_after_get_meta($r);
     $meta;
 }
 
