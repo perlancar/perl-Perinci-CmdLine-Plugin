@@ -503,9 +503,9 @@ sub run {
 
         my $parse_res = $self->parse_argv($r);
         if ($parse_res->[0] == 502) {
-            # we need to send ARGV to the server, because it's impossible to get
-            # args from ARGV (e.g. there's a cmdline_alias with CODE, which has
-            # been transformed into string when crossing network boundary)
+            # we'll need to send ARGV to the server, because it's impossible to
+            # get args from ARGV (e.g. there's a cmdline_alias with CODE, which
+            # has been transformed into string when crossing network boundary)
             $r->{send_argv} = 1;
         } elsif ($parse_res->[0] != 200) {
             die $parse_res;

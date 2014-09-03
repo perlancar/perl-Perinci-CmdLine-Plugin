@@ -445,8 +445,15 @@ sub run_help {
 sub run_call {
     my ($self, $r) = @_;
 
+    my %extra;
+    if ($r->{send_argv}) {
+        $extra{argv} = $r->{orig_argv};
+    } else {
+        $extra{args} = $r->{args};
+    }
+
     $self->riap_client->request(
-        call => $r->{subcommand_data}{url}, {args=>$r->{args}});
+        call => $r->{subcommand_data}{url}, \%extra});
 }
 
 1;
