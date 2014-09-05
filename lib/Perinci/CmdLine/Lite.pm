@@ -15,6 +15,8 @@ extends 'Perinci::CmdLine::Base';
 # error message if base class has errors.
 #use parent 'Perinci::CmdLine::Base';
 
+my $formats = [qw/text text-simple text-pretty json json-pretty/];
+
 sub BUILD {
     my ($self, $args) = @_;
 
@@ -55,8 +57,7 @@ sub BUILD {
             format => {
                 getopt  => 'format=s',
                 summary => 'Set output format',
-                schema => ['str*' => in => [qw/text text-simple text-pretty
-                                               json json-pretty/]],
+                schema => ['str*' => in => $formats],
                 handler => sub {
                     my ($go, $val, $r) = @_;
                     $r->{format} = $val;
@@ -130,7 +131,7 @@ sub BUILD {
         $self->{common_opts} = $co;
     }
 
-    $self->{formats} //= [qw/text text-simple text-pretty json/];
+    $self->{formats} //= $formats;
 
     $self->{per_arg_json} //= 1;
 }
