@@ -343,8 +343,6 @@ sub parse_argv {
         my $scd = $r->{subcommand_data};
         my $meta = $self->get_meta($r, $scd->{url});
 
-        $r->{format} //= $meta->{'cmdline.default_format'};
-
         if ($scd->{args}) {
             $args{$_} = $scd->{args}{$_} for keys %{ $scd->{args} };
         }
@@ -541,6 +539,7 @@ sub run {
         }
     }
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
+    $r->{format} //= $meta->{'cmdline.default_format'};
     if (exists $r->{res}[3]{'cmdline.result'}) {
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
@@ -1009,7 +1008,7 @@ result.
 
 This module observes the following Rinci metadata property attributes:
 
-=head2 x.perinci.cmdline.default_format => STR
+=head2 cmdline.default_format => STR
 
 Set default output format (if user does not specify via --format command-line
 option).
