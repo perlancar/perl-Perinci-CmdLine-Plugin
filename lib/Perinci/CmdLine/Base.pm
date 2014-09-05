@@ -539,7 +539,7 @@ sub run {
         }
     }
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
-    $r->{format} //= $meta->{'cmdline.default_format'};
+    $r->{format} //= $r->{meta}{'cmdline.default_format'};
     if (exists $r->{res}[3]{'cmdline.result'}) {
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }

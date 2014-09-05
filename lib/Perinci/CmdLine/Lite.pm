@@ -227,7 +227,7 @@ sub hook_format_result {
         JSON->new->allow_nonref;
     };
     if ($format eq 'json') {
-        return $json->encode($res);
+        return $json->encode($res) . "\n";
     } else {
         return $json->pretty->encode($res);
     }

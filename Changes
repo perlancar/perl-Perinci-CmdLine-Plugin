@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.28     2014-09-05 (PERLANCAR)
+
+         - Fix doc: function metadata is 'cmdline.default_format', not
+           'x.perinci.cmdline.default_format'.
+
+         - 'cmdline.default_format' property in result metadata takes precedence
+           over function metadata's.
+
+
 0.27     2014-09-03 (PERLANCAR)
 
          - Handle the case when we must send ARGV instead of args hash (when
