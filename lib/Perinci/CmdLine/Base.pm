@@ -54,6 +54,7 @@ has config_dirs => (
 # role: requires 'hook_format_result'
 # role: requires 'hook_display_result'
 # role: requires 'hook_after_run'
+# role: requires 'default_prompt_template'
 
 sub get_meta {
     my ($self, $r, $url) = @_;
@@ -411,25 +412,58 @@ sub parse_cmdline_src {
     if ($action eq 'call') {
         my $args_p = $meta->{args} // {};
         my $stdin_seen;
-        for my $an (sort keys %$args_p) {
+        for my $an (sort {
+            my $csa  = $args_p->{$a}{cmdline_src};
+            my $csb  = $args_p->{$b}{cmdline_src};
+            my $posa = $args_p->{$a}{pos} // 9999;
+            my $posb = $args_p->{$b}{pos} // 9999;
+
+            # first, always put stdin_line before stdin / stdin_or_files
+            (
+                !$csa || !$csb ? 0 :
+                    $csa eq 'stdin_line' && $csb eq 'stdin_line' ? 0 :
+                    $csa eq 'stdin_line' && $csb =~ /^(stdin|stdin_or_files)/ ? -1 :
+                    $csb eq 'stdin_line' && $csa =~ /^(stdin|stdin_or_files)/ ? 1 : 0
+            )
+            ||
+
+            # then order by pos
+            ($posa <=> $posb)
+
+            ||
+            # then by name
+            ($a cmp $b)
+        } keys %$args_p) {
             #$log->tracef("TMP: handle cmdline_src for arg=%s", $an);
             my $as = $args_p->{$an};
             my $src = $as->{cmdline_src};
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
-                    unless $src =~ /\A(stdin|file|stdin_or_files)\z/;
+                    unless $src =~ /\A(stdin|file|stdin_or_files|stdin_line)\z/;
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
                          "is not 'str'/'array', only those are supported now"]
                     unless $as->{schema}[0] =~ /\A(str|array)\z/;
-                if ($src =~ /stdin/) {
+                if ($src =~ /\A(stdin|stdin_or_files)\z/) {
                     die [531, "Only one argument can be specified ".
                              "cmdline_src stdin/stdin_or_files"]
                         if $stdin_seen++;
                 }
                 my $is_ary = $as->{schema}[0] eq 'array';
-                if ($src eq 'stdin' || $src eq 'file' &&
+                if ($src eq 'stdin_line' && !exists($r->{args}{$an})) {
+                    require Perinci::Object;
+                    require Term::ReadKey;
+                    my $prompt = Perinci::Object::rimeta($as)->langprop('cmdline_prompt') //
+                        sprintf($self->default_prompt_template, $an);
+                    print $prompt;
+                    my $iactive = (-t STDOUT);
+                    Term::ReadKey::ReadMode('noecho')
+                          if $iactive && $as->{is_password};
+                    chomp($r->{args}{$an} = <STDIN>);
+                    do { print "\n"; Term::ReadKey::ReadMode(0) }
+                        if $iactive && $as->{is_password};
+                } elsif ($src eq 'stdin' || $src eq 'file' &&
                         ($r->{args}{$an}//"") eq '-') {
                     die [400, "Argument $an must be set to '-' which means ".
                              "from stdin"]

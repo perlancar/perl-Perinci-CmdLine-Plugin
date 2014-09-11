@@ -15,10 +15,20 @@ extends 'Perinci::CmdLine::Base';
 # error message if base class has errors.
 #use parent 'Perinci::CmdLine::Base';
 
+has default_prompt_template => (
+    is=>'rw',
+    default => 'Enter %s: ',
+);
+
 my $formats = [qw/text text-simple text-pretty json json-pretty/];
 
 sub BUILD {
     my ($self, $args) = @_;
+
+    # default doesn't work?
+    if (!$self->{default_prompt_template}) {
+        $self->{default_prompt_template} = 'Enter %s: ';
+    }
 
     if (!$self->{riap_client}) {
         require Perinci::Access::Lite;

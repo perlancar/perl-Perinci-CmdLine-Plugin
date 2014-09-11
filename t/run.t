@@ -471,6 +471,43 @@ subtest 'cmdline_src' => sub {
         );
     }
 
+    # stdin_line
+    {
+        my ($fh, $filename) = tempfile();
+        write_file($filename, "foo\n");
+
+        open $fh, '<', $filename;
+        local *STDIN = $fh;
+        test_run(
+            name => 'stdin_line + from stdin',
+            args => {url=>"$prefix/cmdline_src_stdin_line"},
+            argv => ['--a2', 'bar'],
+            exit_code => 0,
+            output_re => qr/a1=foo\na2=bar/,
+        );
+
+        open $fh, '<', $filename;
+        local *STDIN = $fh;
+        test_run(
+            name => 'stdin_line + from cmdline',
+            args => {url=>"$prefix/cmdline_src_stdin_line"},
+            argv => ['--a2', 'bar', '--a1', 'qux'],
+            exit_code => 0,
+            output_re => qr/a1=qux\na2=bar/,
+        );
+
+        write_file($filename, "foo\nbar\n");
+        open $fh, '<', $filename;
+        local *STDIN = $fh;
+        test_run(
+            name => 'multi stdin_line',
+            args => {url=>"$prefix/cmdline_src_multi_stdin_line"},
+            argv => ['--a3', 'baz'],
+            exit_code => 0,
+            output_re => qr/a1=foo\na2=bar\na3=baz/,
+        );
+    }
+
     done_testing;
 };
 
