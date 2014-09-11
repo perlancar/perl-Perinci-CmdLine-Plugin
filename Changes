@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.29    2014-09-11 (PERLANCAR)
+
+	- Handle arguments with cmdline_src=stdin_line and is_password
+	  (Rinci 1.1.53).
+
+
 0.28     2014-09-05 (PERLANCAR)
 
          - Fix doc: function metadata is 'cmdline.default_format', not
