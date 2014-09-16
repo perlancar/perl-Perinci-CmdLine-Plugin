@@ -243,9 +243,19 @@ sub hook_format_result {
     }
 }
 
+sub hook_format_row {
+    my ($self, $r, $row) = @_;
+
+    if (ref($row) eq 'ARRAY') {
+        return join("\t", @$row) . "\n";
+    } else {
+        return ($row // "") . "\n";
+    }
+}
+
 sub hook_display_result {
     my ($self, $r) = @_;
-    print $r->{fres};
+    $self->display_result($r);
 }
 
 sub hook_after_run {}
@@ -450,7 +460,7 @@ sub run_help {
         push @help, "\n" if @opts;
     }
 
-    [200, "OK", join("", @help)];
+    [200, "OK", join("", @help), {"cmdline.skip_format"=>1}];
 }
 
 sub run_call {

@@ -52,6 +52,7 @@ has config_dirs => (
 # role: requires 'hook_before_run'
 # role: requires 'hook_after_parse_argv'
 # role: requires 'hook_format_result'
+# role: requires 'hook_format_row'
 # role: requires 'hook_display_result'
 # role: requires 'hook_after_run'
 # role: requires 'default_prompt_template'
@@ -515,6 +516,72 @@ sub parse_cmdline_src {
     #$log->tracef("args after cmdline_src is processed: %s", $r->{args});
 }
 
+# determine filehandle to output to (normally STDOUT, but we can also send to a
+# pager
+sub select_output_handle {
+    my ($self, $r) = @_;
+
+    my $resmeta = $r->{res}[3] // {};
+
+    my $handle;
+    if ($resmeta->{"cmdline.page_result"}) {
+        my $pager = $resmeta->{"cmdline.pager"} //
+            $ENV{PAGER};
+        unless (defined $pager) {
+            $pager = "less -FRSX" if File::Which::which("less");
+        }
+        unless (defined $pager) {
+            $pager = "more" if File::Which::which("more");
+        }
+        unless (defined $pager) {
+            die [500, "Can't determine PAGER"];
+        }
+        last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
+        #$log->tracef("Paging output using %s", $pager);
+        open $handle, "| $pager";
+    }
+    $handle //= \*STDOUT;
+    $r->{output_handle} = $handle;
+}
+
+sub display_result {
+    my ($self, $r) = @_;
+
+    my $res = $r->{res};
+    my $fres = $r->{fres};
+    my $resmeta = $res->[3] // {};
+
+    my $handle = $r->{output_handle};
+
+    use experimental 'smartmatch';
+    if ($resmeta->{is_stream}) {
+        die [500, "Can't format stream as " . $self->format .
+                 ", please use --format text"]
+            unless $self->format =~ /^text/;
+        my $x = $res->[2];
+        if (ref($x) eq 'GLOB') {
+            while (!eof($x)) {
+                print $handle ~~<$x>;
+            }
+        } elsif (blessed($x) && $x->can('getline') && $x->can('eof')) {
+            # IO::Handle-like object
+            while (!$x->eof) {
+                print $handle $x->getline;
+            }
+        } elsif (ref($x) eq 'ARRAY') {
+            # tied array
+            while (~~(@$x) > 0) {
+                print $handle $self->hook_format_row($r, shift(@$x));
+            }
+        } else {
+            die [500, "Invalid stream in result (not a glob/IO::Handle-like ".
+                     "object/(tied) array)\n"];
+        }
+    } else {
+        print $handle $fres;
+    }
+}
+
 sub run {
     my ($self) = @_;
 
@@ -579,10 +646,11 @@ sub run {
     }
   FORMAT:
     if ($r->{res}[3]{'cmdline.skip_format'}) {
-        $r->{fres} = $r->{res};
+        $r->{fres} = $r->{res}[2];
     } else {
         $r->{fres} = $self->hook_format_result($r) // '';
     }
+    $self->select_output_handle($r);
     $self->hook_display_result($r);
     $self->hook_after_run($r);
 
@@ -676,6 +744,11 @@ Enveloped result of C<action_ACTION()>.
 =item * fres => str
 
 Result from C<hook_format_result()>.
+
+=item * output_handle => handle
+
+Set by select_output_handle() to choose output handle. Normally it's STDOUT but
+can also be pipe to pager (if paging is turned on).
 
 =back
 
@@ -1052,6 +1125,41 @@ option).
 
 This module interprets the following result metadata property/attribute:
 
+=head2 property: is_stream => BOOL
+
+XXX should perhaps be defined as standard in L<Rinci::function>.
+
+If set to 1, signify that result is a stream. Result must be a glob, or an
+object that responds to getline() and eof() (like a Perl L<IO::Handle> object),
+or an array/tied array. Format must currently be C<text> (streaming YAML might
+be supported in the future). Items of result will be displayed to output as soon
+as it is retrieved, and unlike non-streams, it can be infinite.
+
+An example function:
+
+ $SPEC{cat_file} = { ... };
+ sub cat_file {
+     my %args = @_;
+     open my($fh), "<", $args{path} or return [500, "Can't open file: $!"];
+     [200, "OK", $fh, {is_stream=>1}];
+ }
+
+another example:
+
+ use Tie::Simple;
+ $SPEC{uc_file} = { ... };
+ sub uc_file {
+     my %args = @_;
+     open my($fh), "<", $args{path} or return [500, "Can't open file: $!"];
+     my @ary;
+     tie @ary, "Tie::Simple", undef,
+         SHIFT     => sub { eof($fh) ? undef : uc(~~<$fh> // "") },
+         FETCHSIZE => sub { eof($fh) ? 0 : 1 };
+     [200, "OK", \@ary, {is_stream=>1}];
+ }
+
+See also L<Data::Unixish> and L<App::dux> which deals with streams.
+
 =head2 attribute: cmdline.exit_code => int
 
 Instruct Perinci::CmdLine to use this exit code, instead of using (function
@@ -1077,6 +1185,25 @@ display a more user-friendly message.
 Default format to use. Can be useful when you want to display the result using a
 certain format by default, but still allows user to override the default.
 
+=head2 attribute: cmdline.page_result => bool
+
+If you want to filter the result through pager (currently defaults to
+C<$ENV{PAGER}> or C<less -FRSX>), you can set C<cmdline.page_result> in result
+metadata to true.
+
+For example:
+
+ $SPEC{doc} = { ... };
+ sub doc {
+     ...
+     [200, "OK", $doc, {"cmdline.page_result"=>1}];
+ }
+
+=head2 attribute: cmdline.pager => STR
+
+Instruct Perinci::CmdLine to use specified pager instead of C<$ENV{PAGER}> or
+the default C<less> or C<more>.
+
 =head2 attribute: cmdline.skip_format => bool (default: 0)
 
 When we want the command-line framework to just print the result without any
@@ -1090,6 +1217,13 @@ This is added by this module, so exit code can be tested.
 =head1 ENVIRONMENT
 
 =over
+
+=item * PAGER => str
+
+Like in other programs, can be set to select the pager program (when
+C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
+C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
+is active.
 
 =item * PERINCI_CMDLINE_PROGRAM_NAME => STR
 
