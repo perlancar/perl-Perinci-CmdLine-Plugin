@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.30    2014-09-16 (PERLANCAR)
+
+	- Handle output paging and streaming output (functionality moved from
+          Perinci::CmdLine).
+
+
 0.29    2014-09-11 (PERLANCAR)
 
 	- Handle arguments with cmdline_src=stdin_line and is_password

@@ -525,6 +525,7 @@ sub select_output_handle {
 
     my $handle;
     if ($resmeta->{"cmdline.page_result"}) {
+        require File::Which;
         my $pager = $resmeta->{"cmdline.pager"} //
             $ENV{PAGER};
         unless (defined $pager) {

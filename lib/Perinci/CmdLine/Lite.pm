@@ -572,18 +572,11 @@ something like this:
 
 =item * P::C::Lite does not support I18N
 
-=item * P::C::Lite does not yet support these Rinci result metadata properties/attributes
-
- is_stream
- cmdline.page_result
- cmdline.pager
-
 =item * P::C::Lite does not yet support these environment variables
 
  PERINCI_CMDLINE_COLOR_THEME
  PERINCI_CMDLINE_SERVER
  PROGRESS
- PAGER
  COLOR
  UTF8
 
