@@ -634,6 +634,7 @@ sub run {
     my $err = $@;
     if ($err || !$r->{res}) {
         if ($err) {
+            $err =~ s/\n+$//;
             $err = [500, "Died: $err"] unless ref($err) eq 'ARRAY';
             $r->{res} = $err;
         } else {
