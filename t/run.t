@@ -240,6 +240,22 @@ subtest 'call action' => sub {
         output_re => qr/6/,
     );
     test_run(
+        name      => 'default property of arg spec is observed',
+        args      => {url=>'/Perinci/Examples/gen_hash'},
+        argv      => [qw//],
+        exit_code => 0,
+        posttest  => sub {
+            my ($argv, $stdout, $stderr, $res) = @_;
+            is(~~keys(%{$res->[2]}), 10, "default number of pairs");
+        },
+    );
+    test_run(
+        name      => 'schema default of arg is observed',
+        args      => {url=>'/Perinci/Examples/err'},
+        argv      => [qw//],
+        exit_code => 200,
+    );
+    test_run(
         name      => 'multiple subcommands (subcommand not specified -> help)',
         args      => {url => '/Perinci/Examples/',
                       subcommands => {

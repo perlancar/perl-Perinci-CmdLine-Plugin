@@ -148,7 +148,25 @@ sub BUILD {
 
 sub hook_before_run {}
 
-sub hook_after_parse_argv {}
+sub hook_after_parse_argv {
+    my ($self, $r) = @_;
+
+    # since unlike Perinci::CmdLine, we don't wrap the function (where the
+    # wrapper assigns default values for arguments), we must do it here
+    # ourselves.
+    my $ass  = $r->{meta}{args} // {};
+    my $args = $r->{args};
+    for (keys %$ass) {
+        next if exists $args->{$_};
+        my $as = $ass->{$_};
+        if (exists $as->{default}) {
+            $args->{$_} = $as->{default};
+        } elsif ($as->{schema} && exists $as->{schema}[1]{default}) {
+            $args->{$_} = $as->{schema}[1]{default};
+        }
+    }
+
+}
 
 sub hook_format_result {
     my ($self, $r) = @_;
