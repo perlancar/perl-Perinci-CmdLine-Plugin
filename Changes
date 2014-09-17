@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.31    2014-09-17 (PERLANCAR)
+
+	- [Bugfix] Didn't set default value of args (from default property
+	  of arg spec or schema default).
+
+	- Tweak die string.
+
+
 0.30    2014-09-16 (PERLANCAR)
 
 	- Handle output paging and streaming output (functionality moved from
