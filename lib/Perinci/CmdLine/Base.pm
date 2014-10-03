@@ -438,6 +438,8 @@ sub parse_cmdline_src {
             #$log->tracef("TMP: handle cmdline_src for arg=%s", $an);
             my $as = $args_p->{$an};
             my $src = $as->{cmdline_src};
+            my $type = $as->{schema}[0]
+                or die "BUG: No schema is defined for arg '$an'";
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
@@ -445,13 +447,13 @@ sub parse_cmdline_src {
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
                          "is not 'str'/'array', only those are supported now"]
-                    unless $as->{schema}[0] =~ /\A(str|array)\z/;
+                    unless $type =~ /\A(str|array)\z/;
                 if ($src =~ /\A(stdin|stdin_or_files)\z/) {
                     die [531, "Only one argument can be specified ".
                              "cmdline_src stdin/stdin_or_files"]
                         if $stdin_seen++;
                 }
-                my $is_ary = $as->{schema}[0] eq 'array';
+                my $is_ary = $type eq 'array';
                 if ($src eq 'stdin_line' && !exists($r->{args}{$an})) {
                     require Perinci::Object;
                     require Term::ReadKey;
