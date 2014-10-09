@@ -17,7 +17,7 @@ our %SPEC;
 $SPEC{hello} = {
     v => 1.1,
     args => {
-        bar => {},
+        bar => {schema=>'str'},
     },
 };
 sub hello {
