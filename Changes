@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.32    2014-10-09 (PERLANCAR)
+
+        - Better error message when metadata does not specify argument schema
+          (now die with "BUG: Schema not defined for arg $arg").
+
+        - Push the use of Perinci::Sub::Args::Argv 0.52 to test whether support
+          for argument submetadata breaks other stuffs.
+
+
 0.31    2014-09-17 (PERLANCAR)
 
 	- [Bugfix] Didn't set default value of args (from default property
