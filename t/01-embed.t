@@ -17,19 +17,32 @@ our %SPEC;
 $SPEC{hello} = {
     v => 1.1,
     args => {
-        bar => {schema=>'str'},
+        bar => {
+            schema => 'str',
+        },
+        baz => {
+            schema => 'hash',
+            meta => {
+                v => 1.1,
+                args => {
+                    qux => {schema => 'str'},
+                },
+            },
+        },
     },
 };
 sub hello {
-    [200, "OK", "Hello, world!"];
+    my %args = @_;
+    my $greet_word = $args{baz}{qux} // "Hello";
+    [200, "OK", "$greet_word, world!"];
 }
 
 test_run(
     name      => 'run works',
     args      => {url=>'/main/hello'},
-    argv      => [],
+    argv      => [qw/--baz-qux Ola/],
     exit_code => 0,
-    output_re => qr/\AHello, world!\n\z/,
+    output_re => qr/\AOla, world!\n\z/,
 );
 
 test_complete(
