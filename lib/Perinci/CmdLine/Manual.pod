@@ -307,6 +307,64 @@ Likewise for explicit YAML parsing:
  --ary-yaml '[a, b]'  # set array value without doing --ary a --ary b
  --ary-yaml '[]'      # set empty array value
 
+B<Submetadata>. Arguments from submetadata will also be given respective
+command-line options (and aliases) with prefixed names. For example this
+function metadata:
+
+ {
+     v => 1.1,
+     args => {
+         foo => {schema=>'str*'},
+         bar => {
+             schema => 'hash*',
+             meta => {
+                 v => 1.1,
+                 args => {
+                     baz => {schema=>'str*'},
+                     qux => {
+                         schema=>'str*,
+                     },
+                 },
+             },
+         },
+         quux => {
+             schema => 'array*',
+             element_meta => {
+                 v => 1.1,
+                 args => {
+                     corge => {schema=>'str*', cmdline_aliases=>{C=>{}},
+                     grault => {schema=>'str*'},
+                 },
+             },
+         },
+     },
+ }
+
+You can specify on the command-line:
+
+ % prog --foo val \
+     --bar-baz val --bar-qux val \
+     --quux-corge 11 \
+     --quux-corge 21 --quux-grault 22 \
+     --quux-C 31
+
+The resulting argument will be:
+
+ {
+     foo => 'val',
+     bar => {
+         baz => 'val',
+         qux => 'val',
+     },
+     quux => [
+         {corge=>11},
+         {corge=>21, grault=>22},
+         {corge=>31},
+     ],
+ }
+
+For more examples on argument submetadata, see L<Perinci::Examples::SubMeta>.
+
 
 =head1 BASH COMPLETION
 
