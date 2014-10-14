@@ -60,6 +60,64 @@ recognized.
 =back
 
 
+=head1 CONCEPTS
+
+P::C is very function-oriented (and very not object-oriented, on purpose). You
+write your "business logic" in a function (of course, you are free to subdivide
+or delegate to other functions, but there must be one main function for a
+single-subcommand CLI application, or one function for each subcommand in a
+multiple-subcommand CLI application.
+
+ sub cliapp {
+     ...
+ }
+
+You annotate the function with L<Rinci> metadata, where you describe what
+arguments (and command-line aliases, if any) the function (program) accepts, the
+summary and description of those arguments, and several other aspects as
+necessary.
+
+ $SPEC{cliapp} = {
+     v => 1.1,
+     summary => 'A program to do blah blah',
+     args => {
+         foo => {
+             summary => 'foo argument',
+             req => 1,
+             pos => 0,
+             cmdline_aliases => {f=>{}},
+         },
+         bar => { ... },
+     },
+ };
+ sub cliapp {
+     ...
+ }
+
+Finally, you "run" your function:
+
+ use Perinci::CmdLine; # or ::Any, or ::Lite
+ Perinci::CmdLine->new(url => '/main/cliapp')->run;
+
+For a multi-subcommand application:
+
+ Perinci::CmdLine->new(
+     url => '/main/cliapp',
+     subcommands => {
+         sc1 => { url => '/main/do_sc1' },
+         sc2 => { url => '/main/do_sc2' },
+         ...
+     },
+ )->run;
+
+That's it. Command-line option parsing, help message, as well as tab completion
+will work without extra effort.
+
+To run a remote function, you can simply specify a remote URL, e.g.
+C<http://example.com/api/somefunc>. All the features like options parsing,
+help/usage, as well as tab completion will work with remote functions as well.
+
+
 =head1 DISPATCHING
 
 Below is the description of how the framework determines what action and which
