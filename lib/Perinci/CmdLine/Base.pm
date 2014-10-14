@@ -866,7 +866,8 @@ Sometimes you want to add subcommands as common options instead. For example:
      getopt      => 'halt',
      summary     => 'Halt the server',
      handler     => sub {
-         $cmd->{_subcommand_name} = 'shutdown';
+         my ($go, $val, $r) = @_;
+         $r->{subcommand_name} = 'shutdown';
      },
  };
 
