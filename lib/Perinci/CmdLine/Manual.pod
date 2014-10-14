@@ -121,58 +121,9 @@ help/usage, as well as tab completion will work with remote functions as well.
 =head1 DISPATCHING
 
 Below is the description of how the framework determines what action and which
-function to call. (Currently lots of internal attributes are accessed directly,
-this might be rectified in the future.)
+function to call.
 
-B<Actions>. The C<_actions> attribute is an array which contains the list of
-potential actions to choose, in order. It will then be filled out according to
-the command-line options specified. For example, if C<--help> is specified,
-C<help> action is shifted to the beginning of C<_actions>. Likewise for
-C<--subcommands>, etc. Finally, the C<call> action (which means an action to
-call our function) is added to this list. After we are finished filling out the
-C<_actions> array, the first action is chosen by running a method called C<<
-run_<ACTION> >>. For example if the chosen action is C<help>, C<run_help()> is
-called. These C<run_*> methods must execute the action, display the output, and
-return an exit code. Program will end with this exit code. A C<run_*> method can
-choose to decline handling the action by returning undef, in which case the next
-action will be tried, and so on until a defined exit code is returned.
-
-B<The 'call' action and determining which subcommand (function) to call>. The
-C<call> action (implemented by C<run_call()>) is the one that actually does the
-real job, calling the function and displaying its result. The C<_subcommand>
-attribute stores information on the subcommand to run, including its Riap URL.
-If there are subcommands, e.g.:
-
- my $cmd = Perinci::CmdLine->new(
-     subcommands => {
-         sub1 => {
-             url => '/MyApp/func1',
-         },
-         sub2 => {
-             url => '/MyApp/func2',
-         },
-     },
- );
-
-then which subcommand to run is determined by the command-line argument, e.g.:
-
- % myapp sub1 ...
-
-then C<_subcommand> attribute will contain C<< {url=>'/MyApp/func1'} >>. When no
-subcommand is specified on the command line, C<run_call()> will decline handling
-the action and returning undef, and the next action e.g. C<help> will be
-executed. But if C<default_subcommand> attribute is set, C<run_call()> will run
-the default subcommand instead.
-
-When there are no subcommands, e.g.:
-
- my $cmd = Perinci::CmdLine->new(url => '/MyApp/func');
-
-C<_subcommand> will simply contain C<< {url=>'/MyApp/func'} >>.
-
-C<run_call()> will call the function specified in the C<url> in the
-C<_subcommand> using C<Perinci::Access>. (Actually, C<run_help()> or
-C<run_completion()> can be called instead, depending on which action to run.)
+TODO
 
 
 =head1 LOGGING [P::C]
