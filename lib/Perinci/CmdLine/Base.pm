@@ -50,12 +50,15 @@ has config_dirs => (
 
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_before_run'
+# role: optional 'hook_before_read_config_file'
 # role: requires 'hook_after_parse_argv'
 # role: requires 'hook_format_result'
 # role: requires 'hook_format_row'
 # role: requires 'hook_display_result'
 # role: requires 'hook_after_run'
 # role: requires 'default_prompt_template'
+
+sub hook_before_read_config_file {}
 
 sub get_meta {
     my ($self, $r, $url) = @_;
@@ -312,6 +315,8 @@ sub parse_argv {
 
     # read from configuration
     if ($r->{read_config}) {
+        $self->hook_before_read_config_file($r);
+
         my $conf = $self->_read_config($r);
         my $scn  = $r->{subcommand_name};
         my $profile = $r->{config_profile};
