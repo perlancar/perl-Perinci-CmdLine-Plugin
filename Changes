@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.33    2014-10-16 (PERLANCAR)
+
+        - Add hook: before_read_config_file.
+
+
 0.32    2014-10-09 (PERLANCAR)
 
         - Better error message when metadata does not specify argument schema
