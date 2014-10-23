@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.34    2014-10-23 (PERLANCAR)
+
+	- No functional changes.
+
+	- Typo: unimplemented status is 501, not 502.
+
+
 0.33    2014-10-16 (PERLANCAR)
 
         - Add hook: before_read_config_file.
