@@ -46,7 +46,7 @@ Revision history for Perinci-CmdLine-Lite
 0.27     2014-09-03 (PERLANCAR)
 
          - Handle the case when we must send ARGV instead of args hash (when
-           parse_args_from_argv returns 502).
+           parse_args_from_argv returns 501).
 
 
 0.26     2014-09-03 (PERLANCAR)

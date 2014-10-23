@@ -609,7 +609,7 @@ sub run {
         $self->hook_before_run($r);
 
         my $parse_res = $self->parse_argv($r);
-        if ($parse_res->[0] == 502) {
+        if ($parse_res->[0] == 501) {
             # we'll need to send ARGV to the server, because it's impossible to
             # get args from ARGV (e.g. there's a cmdline_alias with CODE, which
             # has been transformed into string when crossing network boundary)
