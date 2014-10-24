@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.36    2014-10-24 (PERLANCAR)
+
+        - Send as-is (no newline) if result is binary and format is text.
+
+        - Automatically encode binary/buf arguments when sending to server.
+
+        - Allow buf args to have cmdline_src set.
+
+
 0.35    2014-10-24 (PERLANCAR)
 
 	- Add attribute: riap_version.
