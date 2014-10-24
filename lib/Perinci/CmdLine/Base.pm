@@ -408,7 +408,7 @@ sub parse_argv {
 }
 
 # parse cmdline_src argument spec properties for filling argument value from
-# file and/or stdin.
+# file and/or stdin. currently does not support argument submetadata.
 sub parse_cmdline_src {
     my ($self, $r) = @_;
 
