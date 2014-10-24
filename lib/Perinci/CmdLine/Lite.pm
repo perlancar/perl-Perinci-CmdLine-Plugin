@@ -188,7 +188,8 @@ sub hook_format_result {
             if (my $prev = $res->[3]{prev}) {
                 $fres .= " ($prev->[0]: $prev->[1])";
             }
-            return "$fres\n";
+        } elsif ($res->[3] && $res->[3]{"x.hint.result_binary"}) {
+            return $res->[2];
         } else {
             require Data::Check::Structure;
             my $data = $res->[2];
