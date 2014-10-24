@@ -415,6 +415,8 @@ sub parse_cmdline_src {
     my $action = $r->{action};
     my $meta   = $r->{meta};
 
+    my $is_network = $r->{subcommand_data}{url} =~ m!^(https?|riap[^:]+):!;
+
     # handle cmdline_src
     if ($action eq 'call') {
         my $args_p = $meta->{args} // {};
@@ -519,7 +521,18 @@ sub parse_cmdline_src {
                         do { local $/; <$fh> };
                 }
             }
-        }
+
+            # encode to base64 if binary and we want to cross network (because
+            # it's usually JSON)
+            if ($is_network && defined($r->{args}{$an}) && $args_p->{schema} &&
+                    $args_p->{schema}[0] eq 'buf' &&
+                        !$r->{args}{"$an:base64"}) {
+                require MIME::Base64;
+                $r->{args}{"$an:base64"} =
+                    MIME::Base64::encode_base64($r->{args}{$an});
+                delete $r->{args}{$an};
+            }
+        } # for arg
     }
     #$log->tracef("args after cmdline_src is processed: %s", $r->{args});
 }
