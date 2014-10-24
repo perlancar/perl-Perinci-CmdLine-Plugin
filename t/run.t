@@ -98,7 +98,7 @@ subtest 'output formats' => sub {
         args      => {url => '/Perinci/Examples/sum'},
         argv      => [qw/1 2 3 --json/],
         exit_code => 0,
-        output_re => qr/^\[200,"OK",6,\{\}\]/,
+        output_re => qr/^\[\s*200,\s*"OK",\s*6,\s*\{\}\s*\]/s,
     );
     subtest 'text-pretty' => sub {
         test_run(
