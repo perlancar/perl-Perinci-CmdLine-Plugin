@@ -492,6 +492,51 @@ If you don't want to use any configuration files, you can use:
 =head2 Shell tab completion
 
 
+=head2 Dealing with binary data
+
+=head2 (Client) (Server) Dealing with binary data
+
+The choice as JSON as the network transport protocol for Riap (because it is the
+lowest common denominator across languages like JavaScript, PHP, Python, Ruby,
+Perl) makes dealing with binary data requires an extra step or two. The P::C
+framework are equipped with some features to make this simpler and more
+convenient.
+
+First, to make a function that accepts binary data (in its arguments), you need
+to specify the argument type as C<buf>. To return binary data as result, you
+need to specify C<result>'s schema type as C<buf>. Example:
+
+ package MyLib;
+ our %SPEC;
+ $SPEC{gzip} = {
+     v => 1.1,
+     summary => 'Gzip some data',
+     args => {
+         data => {
+             summary => 'Data to compress',
+             schema => 'buf*',
+             req => 1,
+         },
+     },
+ };
+ sub gzip {
+     require IO::Compress::Gzip;
+
+     my %args = @_;
+     my $compressed;
+     IO::Compress::Gzip::gzip($args{data} => $compressed)
+         or return [500, "Compression failed"];
+     [200, "OK", $compressed];
+ }
+
+If you use this function in P::C, you will get the command-line option
+C<--data-base64> in addition to the usual C<--data>. With C<--data-base64>, you
+can specify binary data including NUL bytes.
+
+In the C<text> output formats, P::C will also print the binary result from
+server as-is without any newline added.
+
+
 =head2 I18N
 
 
