@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.37    2014-10-24 (PERLANCAR)
+
+	- No functional changes.
+
+	- Avoid perl undef warning.
+
+
 0.36    2014-10-24 (PERLANCAR)
 
         - Send as-is (no newline) if result is binary and format is text.
