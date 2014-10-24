@@ -32,7 +32,11 @@ sub BUILD {
 
     if (!$self->{riap_client}) {
         require Perinci::Access::Lite;
-        $self->{riap_client} = Perinci::Access::Lite->new;
+        my %rcargs = (
+            riap_version => $self->{riap_version} // 1.1,
+            %{ $self->{riap_client_args} // {} },
+        );
+        $self->{riap_client} = Perinci::Access::Lite->new(%rcargs);
     }
 
     if (!$self->{actions}) {

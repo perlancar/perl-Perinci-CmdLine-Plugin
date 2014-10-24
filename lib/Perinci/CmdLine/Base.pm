@@ -32,6 +32,7 @@ has program_name => (
         }
         $pn;
     });
+has riap_version => (is=>'rw', default=>1.1);
 has riap_client => (is=>'rw');
 has riap_client_args => (is=>'rw');
 has subcommands => (is=>'rw');
@@ -921,6 +922,10 @@ Passing the cmdline object can be useful, e.g. to call run_help(), etc.
 
 Default is from PERINCI_CMDLINE_PROGRAM_NAME environment or from $0.
 
+=head2 riap_client => float (default: 1.1)
+
+Specify L<Riap> protocol version to use. Will be passed to C<riap_client_args>.
+
 =head2 riap_client => obj
 
 Optional. Can be set to L<Perinci::Access> (or compatible) instance. Sometimes a
@@ -929,6 +934,10 @@ server. If this is empty, the request won't be done.
 
 See Perinci::CmdLine where it is set by default. In Perinci::CmdLine::Lite, this
 is left undefined by default.
+
+=head2 riap_version => float (default: 1.1)
+
+Will be passed to Riap client constructor as well.
 
 =head2 riap_client_args => hash
 
