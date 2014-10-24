@@ -452,8 +452,8 @@ sub parse_cmdline_src {
                     unless $src =~ /\A(stdin|file|stdin_or_files|stdin_line)\z/;
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
-                         "is not 'str'/'array', only those are supported now"]
-                    unless $type =~ /\A(str|array)\z/;
+                         "is not str/buf/array, only those are supported now"]
+                    unless $type =~ /\A(str|buf|array)\z/;
                 if ($src =~ /\A(stdin|stdin_or_files)\z/) {
                     die [531, "Only one argument can be specified ".
                              "cmdline_src stdin/stdin_or_files"]
