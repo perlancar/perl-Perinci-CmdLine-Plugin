@@ -531,7 +531,7 @@ sub parse_cmdline_src {
                             !$r->{args}{"$an:base64"}) {
                 require MIME::Base64;
                 $r->{args}{"$an:base64"} =
-                    MIME::Base64::encode_base64($r->{args}{$an});
+                    MIME::Base64::encode_base64($r->{args}{$an}, "");
                 delete $r->{args}{$an};
             }
         } # for arg
