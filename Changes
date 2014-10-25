@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.39    2014-10-25 (PERLANCAR)
+
+	- Only do converting of ARG -> ARG:base64 when riap_version is 1.2.
+
+
 0.38    2014-10-24 (PERLANCAR)
 
 	- No functional changes.
