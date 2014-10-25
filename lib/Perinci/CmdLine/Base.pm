@@ -525,9 +525,10 @@ sub parse_cmdline_src {
 
             # encode to base64 if binary and we want to cross network (because
             # it's usually JSON)
-            if ($is_network && defined($r->{args}{$an}) && $args_p->{schema} &&
-                    $args_p->{schema}[0] eq 'buf' &&
-                        !$r->{args}{"$an:base64"}) {
+            if ($self->{riap_version} == 1.2 && $is_network &&
+                    defined($r->{args}{$an}) && $args_p->{schema} &&
+                        $args_p->{schema}[0] eq 'buf' &&
+                            !$r->{args}{"$an:base64"}) {
                 require MIME::Base64;
                 $r->{args}{"$an:base64"} =
                     MIME::Base64::encode_base64($r->{args}{$an});
