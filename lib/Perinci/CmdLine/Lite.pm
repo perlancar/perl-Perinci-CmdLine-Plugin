@@ -639,6 +639,16 @@ All the environment variables that L<Perinci::CmdLine::Base> supports, plus:
 =back
 
 
+=head1 RESULT METADATA
+
+All those supported by L<Perinci::CmdLine::Base>, plus:
+
+=head2 x.hint.result_binary => bool
+
+If set to true, then when formatting to C<text> formats, this class won't print
+any newline to keep the data being printed unmodified.
+
+
 =head1 SEE ALSO
 
 L<Perinci::CmdLine>, L<Perinci::CmdLine::Manual>
