@@ -531,10 +531,29 @@ need to specify C<result>'s schema type as C<buf>. Example:
 
 If you use this function in P::C, you will get the command-line option
 C<--data-base64> in addition to the usual C<--data>. With C<--data-base64>, you
-can specify binary data including NUL bytes.
+can specify binary data including NUL bytes from the command-line.
 
-In the C<text> output formats, P::C will also print the binary result from
-server as-is without any newline added.
+If you specify the argument as accepting data from stdin or files like this:
+
+     args => {
+         data => {
+             summary => 'Data to compress',
+             schema => 'buf*',
+             req => 1,
+             cmdline_src => 'stdin_or_files',
+         },
+     },
+
+you can pass binary data, e.g.:
+
+ % yourprog < /some/bindata
+
+P:C will take care of encoding this data to network server when you specify
+C<riap_version> attribute to 1.2. So this process is transparent to you.
+
+When outputing binary result, in the C<text> output formats, P::C will also
+print the binary result from server as-is without any newline added. So you can
+pipe binary data to files/processes unmodified.
 
 
 =head2 I18N
