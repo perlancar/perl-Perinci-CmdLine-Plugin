@@ -1154,7 +1154,7 @@ Set default output format (if user does not specify via --format command-line
 option).
 
 
-=head1 RESULT_METADATA
+=head1 RESULT METADATA
 
 This module interprets the following result metadata property/attribute:
 
