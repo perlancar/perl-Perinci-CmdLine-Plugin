@@ -164,7 +164,7 @@ subtest 'output formats' => sub {
             argv      => [qw/--format=text-pretty hohos/],
             exit_code => 0,
             output_re => qr/\A
-                            \[\s*200,\s*"OK"/x,
+                            \[\s*"?200"?,\s*"OK"/sx,
         );
     }; # text-pretty
 
@@ -226,7 +226,7 @@ subtest 'output formats' => sub {
             argv      => [qw/--format=text-simple hohos/],
             exit_code => 0,
             output_re => qr/\A
-                            \[\s*200,\s*"OK"/x,
+                            \[\s*"?200"?,\s*"OK"/sx,
         );
     }; # text-simple
 };
