@@ -183,7 +183,7 @@ sub hook_format_result {
         my $is_pretty = $format eq 'text-pretty' ? 1 :
             $format eq 'text-simple' ? 0 : (-t STDOUT);
         no warnings 'uninitialized';
-        if ($res->[0] != 200) {
+        if ($res->[0] !~ /^2/) {
             my $fres = "ERROR $res->[0]: $res->[1]";
             if (my $prev = $res->[3]{prev}) {
                 $fres .= " ($prev->[0]: $prev->[1])";
