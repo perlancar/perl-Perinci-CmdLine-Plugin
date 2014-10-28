@@ -12,6 +12,8 @@ use Test::Perinci::CmdLine qw(test_run);
 
 $Test::Perinci::CmdLine::CLASS = 'Perinci::CmdLine::Lite';
 
+require Perinci::Examples;
+
 subtest 'help action' => sub {
     test_run(
         args      => {url=>'/Perinci/Examples/noop'},
