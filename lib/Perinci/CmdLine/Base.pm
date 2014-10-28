@@ -321,6 +321,7 @@ sub parse_argv {
         my $conf = $self->_read_config($r);
         my $scn  = $r->{subcommand_name};
         my $profile = $r->{config_profile};
+        my $found;
         for my $section (keys %$conf) {
             if (defined $profile) {
                 if (length $scn) {
@@ -340,7 +341,11 @@ sub parse_argv {
             }
             $args{$_} = $conf->{$section}{$_}
                 for keys %{ $conf->{$section} };
+            $found++;
             last;
+        }
+        if (defined($profile) && !$found) {
+            return [412, "Profile '$profile' not found in configuration file"];
         }
     }
 
