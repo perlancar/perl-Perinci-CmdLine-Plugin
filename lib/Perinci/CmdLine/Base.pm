@@ -458,7 +458,7 @@ sub parse_cmdline_src {
             my $type = $as->{schema}[0]
                 or die "BUG: No schema is defined for arg '$an'";
             my $do_partial_arg = defined($self->arg_part_size) &&
-                $meta->{features}{partial_arg};
+                $meta->{features}{partial_arg} && $as->{partial} ? $an : undef;
             $r->{do_partial_arg} = $do_partial_arg;
             if ($src) {
                 die [531,
