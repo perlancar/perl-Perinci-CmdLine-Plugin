@@ -494,13 +494,19 @@ sub run_call {
 
     my %extra;
     if ($r->{send_argv}) {
+        die [501, "Can't do partial_arg when send_argv is also enabled"]
+            if $r->{do_partial_arg};
         $extra{argv} = $r->{orig_argv};
     } else {
         $extra{args} = $r->{args};
     }
 
-    $self->riap_client->request(
-        call => $r->{subcommand_data}{url}, \%extra);
+    if ($r->{do_partial_arg}) {
+
+    } else {
+        $self->riap_client->request(
+            call => $r->{subcommand_data}{url}, \%extra);
+    }
 }
 
 1;
