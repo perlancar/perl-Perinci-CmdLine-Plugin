@@ -502,7 +502,16 @@ sub run_call {
     }
 
     if ($r->{do_partial_arg}) {
-
+        my $an = $r->{do_partial_arg};
+        my $fh = $r->{args}{$an};
+        local $/ = \($self->arg_part_size);
+        while (<$fh>) {
+            $r->{args}{$an} = $_;
+            $r->{args}{"-arg_part_"} =
+            $self->riap_client->request(
+                call => $r->{subcommand_data}{url}, \%extra);
+            );
+        }
     } else {
         $self->riap_client->request(
             call => $r->{subcommand_data}{url}, \%extra);
