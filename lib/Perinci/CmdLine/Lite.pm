@@ -179,14 +179,7 @@ sub hook_format_result {
     my $format = $r->{format} // 'text';
     my $meta   = $r->{meta};
 
-    if ($res->[3]{stream}) {
-        unless ($format =~ /\Atext(-simple|-pretty)?\z/) {
-            return "ERROR: Streaming output must be formatted as text";
-        }
-        # will format when we display
-        return '';
-
-    } if ($format =~ /\Atext(-simple|-pretty)?\z/) {
+    if ($format =~ /\Atext(-simple|-pretty)?\z/) {
         my $is_pretty = $format eq 'text-pretty' ? 1 :
             $format eq 'text-simple' ? 0 : (-t STDOUT);
         no warnings 'uninitialized';

@@ -587,13 +587,10 @@ sub display_result {
 
     use experimental 'smartmatch';
     if ($resmeta->{stream}) {
-        die [500, "Can't format stream as " . $self->format .
-                 ", please use --format text"]
-            unless $self->format =~ /^text/;
         my $x = $res->[2];
         if (ref($x) eq 'GLOB') {
             while (!eof($x)) {
-                print $handle ~~<$x>;
+                while(<$x>) { print $handle $_ }
             }
         } elsif (blessed($x) && $x->can('getline') && $x->can('eof')) {
             # IO::Handle-like object
@@ -681,6 +678,8 @@ sub run {
   FORMAT:
     if ($r->{res}[3]{'cmdline.skip_format'}) {
         $r->{fres} = $r->{res}[2];
+    } elsif ($r->{res}[3]{stream}) {
+        # stream will be formatted as displayed by display_result()
     } else {
         $r->{fres} = $self->hook_format_result($r) // '';
     }
