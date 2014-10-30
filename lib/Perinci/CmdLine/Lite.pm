@@ -179,7 +179,14 @@ sub hook_format_result {
     my $format = $r->{format} // 'text';
     my $meta   = $r->{meta};
 
-    if ($format =~ /\Atext(-simple|-pretty)?\z/) {
+    if ($res->[3]{stream}) {
+        unless ($format =~ /\Atext(-simple|-pretty)?\z/) {
+            return "ERROR: Streaming output must be formatted as text";
+        }
+        # will format when we display
+        return '';
+
+    } if ($format =~ /\Atext(-simple|-pretty)?\z/) {
         my $is_pretty = $format eq 'text-pretty' ? 1 :
             $format eq 'text-simple' ? 0 : (-t STDOUT);
         no warnings 'uninitialized';
@@ -494,28 +501,15 @@ sub run_call {
 
     my %extra;
     if ($r->{send_argv}) {
-        die [501, "Can't do partial_arg when send_argv is also enabled"]
-            if $r->{do_partial_arg};
         $extra{argv} = $r->{orig_argv};
     } else {
         $extra{args} = $r->{args};
     }
 
-    if ($r->{do_partial_arg}) {
-        my $an = $r->{do_partial_arg};
-        my $fh = $r->{args}{$an};
-        local $/ = \($self->arg_part_size);
-        while (<$fh>) {
-            $r->{args}{$an} = $_;
-            $r->{args}{"-arg_part_"} =
-            $self->riap_client->request(
-                call => $r->{subcommand_data}{url}, \%extra);
-            );
-        }
-    } else {
-        $self->riap_client->request(
-            call => $r->{subcommand_data}{url}, \%extra);
-    }
+    $extra{stream_arg} = 1 if $r->{stream_arg};
+
+    $self->riap_client->request(
+        call => $r->{subcommand_data}{url}, \%extra);
 }
 
 1;

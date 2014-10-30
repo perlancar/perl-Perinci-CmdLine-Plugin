@@ -49,9 +49,6 @@ has config_dirs => (
     },
 );
 
-has arg_part_size => (is => 'rw');
-has res_part_size => (is => 'rw');
-
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_before_run'
 # role: optional 'hook_before_read_config_file'
@@ -457,9 +454,8 @@ sub parse_cmdline_src {
             my $src = $as->{cmdline_src};
             my $type = $as->{schema}[0]
                 or die "BUG: No schema is defined for arg '$an'";
-            my $do_partial_arg = defined($self->arg_part_size) &&
-                $meta->{features}{partial_arg} && $as->{partial} ? $an : undef;
-            $r->{do_partial_arg} = $do_partial_arg;
+            # Riap::HTTP currently does not support streaming input
+            $r->{stream_arg} = $an if $as->{stream} && $url !~ /^https?:/;
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
@@ -493,7 +489,7 @@ sub parse_cmdline_src {
                         if defined($r->{args}{$an}) &&
                             $r->{args}{$an} ne '-';
                     #$log->trace("Getting argument '$an' value from stdin ...");
-                    $r->{args}{$an} = $do_partial_arg ?
+                    $r->{args}{$an} = $r->{stream_arg} ?
                         \*STDIN : $is_ary ? [<STDIN>] : do {local $/;<STDIN>};
                 } elsif ($src eq 'stdin_or_files') {
                     # push back argument value to @ARGV so <> can work to slurp
@@ -510,7 +506,7 @@ sub parse_cmdline_src {
                         die [500, "Can't read file '$_': $!"] if !(-r $_);
                     }
 
-                    $r->{args}{$an} = $do_partial_arg ?
+                    $r->{args}{$an} = $r->{stream_arg} ?
                         \*ARGV : $is_ary ? [<>] : do { local $/; <> };
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
@@ -530,7 +526,7 @@ sub parse_cmdline_src {
                         die [500, "Can't open file '$r->{args}{$an}' ".
                                  "for argument '$an': $!"];
                     }
-                    $r->{args}{$an} = $do_partial_arg ?
+                    $r->{args}{$an} = $r->{stream_arg} ?
                         $fh : $is_ary ? [<$fh>] : do { local $/; <$fh> };
                 }
             }
@@ -590,7 +586,7 @@ sub display_result {
     my $handle = $r->{output_handle};
 
     use experimental 'smartmatch';
-    if ($resmeta->{is_stream}) {
+    if ($resmeta->{stream}) {
         die [500, "Can't format stream as " . $self->format .
                  ", please use --format text"]
             unless $self->format =~ /^text/;
@@ -788,19 +784,9 @@ Result from C<hook_format_result()>.
 Set by select_output_handle() to choose output handle. Normally it's STDOUT but
 can also be pipe to pager (if paging is turned on).
 
-=item * do_partial_arg => str
+=item * stream_arg => str
 
-Set to argument name which will be sent in chunks, if we are doing chunked
-argument (sending large argument in chunks via several call requests). This will
-be enabled when C<arg_part_size> is set, function supports the C<partial_arg>
-feature, the argument has its C<partial> property set, and the partial argument
-comes from stdin or files.
-
-=item * do_partial_res => bool
-
-Set to true if we are doing chunked response (retrieving potentially large
-amount of result in chunks via several call requests). This will be enabled when
-C<res_part_size> is set and function supports the C<partial_res> feature.
+If we are doing streaming argument, this will be set to the argument name.
 
 =back
 
@@ -1105,28 +1091,6 @@ Configuration filename. The default is C<< program_name . ".conf" >>. For
 example, if your program is named C<foo-bar>, config_filename will be
 C<foo-bar.conf>.
 
-=head2 arg_part_size => int
-
-If set, turn on sending of argument in chunks (see C<partial_arg> feature in
-L<Rinci::function>, specified since Rinci 1.1.63). Can be useful if argument to
-be sent is very large. For example, if you set this attribute to C<10*1024*1024>
-(10MB) then if argument is 15MB, it will be sent in two steps (two Riap C<call>
-requests): the first 10MB and then the rest (5MB).
-
-The function must support C<partial_arg> feature, and the correspondin argument
-must have its C<partial> property set to true. Additionally, chunking will only
-be done if argument comes from files or stdin.
-
-=head2 res_part_size => int
-
-If set, turn on requesting result in chunks (see L<partial_res> feature in
-L<Rinci::function>, specified since Rinci 1.1.63). Can be useful if result is
-potentially very large. For example, if you set this attribute to
-C<10*1024*1024> (10MB) then if result is 15MB, it will be retrieved in two steps
-(two Riap C<call> requests): the first 10MB and then the rest (5MB).
-
-The function must support C<partial_res> feature.
-
 
 =head1 METHODS
 
@@ -1207,41 +1171,6 @@ option).
 =head1 RESULT METADATA
 
 This module interprets the following result metadata property/attribute:
-
-=head2 property: is_stream => BOOL
-
-XXX should perhaps be defined as standard in L<Rinci::function>.
-
-If set to 1, signify that result is a stream. Result must be a glob, or an
-object that responds to getline() and eof() (like a Perl L<IO::Handle> object),
-or an array/tied array. Format must currently be C<text> (streaming YAML might
-be supported in the future). Items of result will be displayed to output as soon
-as it is retrieved, and unlike non-streams, it can be infinite.
-
-An example function:
-
- $SPEC{cat_file} = { ... };
- sub cat_file {
-     my %args = @_;
-     open my($fh), "<", $args{path} or return [500, "Can't open file: $!"];
-     [200, "OK", $fh, {is_stream=>1}];
- }
-
-another example:
-
- use Tie::Simple;
- $SPEC{uc_file} = { ... };
- sub uc_file {
-     my %args = @_;
-     open my($fh), "<", $args{path} or return [500, "Can't open file: $!"];
-     my @ary;
-     tie @ary, "Tie::Simple", undef,
-         SHIFT     => sub { eof($fh) ? undef : uc(~~<$fh> // "") },
-         FETCHSIZE => sub { eof($fh) ? 0 : 1 };
-     [200, "OK", \@ary, {is_stream=>1}];
- }
-
-See also L<Data::Unixish> and L<App::dux> which deals with streams.
 
 =head2 attribute: cmdline.exit_code => int
 
