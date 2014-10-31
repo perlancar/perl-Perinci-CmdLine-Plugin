@@ -361,40 +361,51 @@ sub run_help {
     push @help, "\n";
     push @help, "Usage:\n";
     {
+        # we have subcommands but user has not specified any to choose
+        my $has_sc_no_sc = $self->subcommands && !length($r->{subcommand_name});
+
         push @help, "  $cmdname --help (or -h, -?)\n";
         push @help, "  $cmdname --verbose (or -v)\n";
-        my @args;
-        my %args = %{ $args_p };
-        my $max_pos = -1;
-        for (values %args) {
-            $max_pos = $_->{pos} if defined($_->{pos}) && $_->{pos} > $max_pos;
-        }
-        my $pos = 0;
-        while ($pos <= $max_pos) {
-            my ($arg, $as);
-            for (keys %args) {
-                $as = $args{$_};
-                if (defined($as->{pos}) && $as->{pos}==$pos) { $arg=$_; last }
+        push @help, "  $cmdname --subcommands\n" if $has_sc_no_sc;
+
+        unless ($has_sc_no_sc) {
+            my @args;
+            my %args = %{ $args_p };
+            my $max_pos = -1;
+            for (values %args) {
+                $max_pos = $_->{pos}
+                    if defined($_->{pos}) && $_->{pos} > $max_pos;
             }
-            next unless defined($arg);
-            if ($as->{req}) {
-                push @args, "<$arg>" . ($as->{greedy} ? " ...":"");
-            } else {
-                push @args, "[$arg]" . ($as->{greedy} ? " ...":"");
+            my $pos = 0;
+            while ($pos <= $max_pos) {
+                my ($arg, $as);
+                for (keys %args) {
+                    $as = $args{$_};
+                    if (defined($as->{pos}) && $as->{pos}==$pos) {
+                        $arg=$_;
+                        last;
+                    }
+                }
+                next unless defined($arg);
+                if ($as->{req}) {
+                    push @args, "<$arg>" . ($as->{greedy} ? " ...":"");
+                } else {
+                    push @args, "[$arg]" . ($as->{greedy} ? " ...":"");
+                }
+                delete $args{$arg};
+                $pos++;
             }
-            delete $args{$arg};
-            $pos++;
+            unshift @args, "[options]" if keys %args;
+            push @help, "  $cmdname ".join(" ", @args)."\n";
         }
-        unshift @args, "[options]" if keys %args;
-        push @help, "  $cmdname ".join(" ", @args)."\n";
     }
 
     # description
-    push @help, "\n";
     {
         my $desc = ($scd ? $scd->{description} : undef) //
             $meta->{description};
         last unless $desc;
+        push @help, "\n";
         $desc =~ s/\A\n+//;
         $desc =~ s/\n+\z//;
         push @help, $desc, "\n";
