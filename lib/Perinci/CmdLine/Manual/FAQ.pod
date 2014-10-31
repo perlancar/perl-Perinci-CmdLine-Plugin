@@ -6,22 +6,22 @@ package Perinci::CmdLine::Manual::FAQ; # just to make podweaver happy
 1;
 # ABSTRACT: FAQs
 
-=head1 FAQ
+=head1 NOMENCLATURE
 
-C<P::C> denotes that the answer applies to L<Perinci::CmdLine> only and not
-L<Perinci::CmdLine::Lite>.
+C<[Full]> denotes that the answer applies to L<Perinci::CmdLine> only and not
+L<Perinci::CmdLine::Lite>. C<[Lite]> denotes that the answer is specific to
+Perinci::CmdLine::Lite. C<[Any]> denotes that the answer is specific to
+L<Perinci::CmdLine::Any>.
 
-=head2 How do I debug my program?
 
-[P::C] You can set environment DEBUG=1 or TRACE=1. See L<Log::Any::App> for more
-details.
+=head1 GENERAL
 
-=head2 How does Perinci::CmdLine compare with other CLI-app frameworks?
+=head2 How does P::C compare with other CLI-app frameworks?
 
 The main difference is that Perinci::CmdLine accesses your code through L<Riap>
-protocol, not directly. This means that aside from local Perl code,
-Perinci::CmdLine can also provide CLI for code in remote hosts/languages. For a
-very rough demo, download and run this PHP Riap::TCP server
+protocol, not directly. This means that aside from local Perl code, P::C can
+also provide CLI for code in remote hosts/languages. For a very rough demo,
+download and run this PHP Riap::TCP server
 https://github.com/sharyanto/php-Phinci/blob/master/demo/phi-tcpserve-terbilang.php
 on your system. After that, try running:
 
@@ -31,22 +31,21 @@ on your system. After that, try running:
 Everything from help message, calling, argument checking, tab completion works
 for remote code as well as local Perl code.
 
-=head2 How to add support for new output format (e.g. XML, HTML)?
+=head2 My application is OO?
 
-See L<Perinci::Result::Format>.
+This framework is currently non-OO and function-centric. There are already
+several OO-based command-line frameworks on CPAN.
 
-=head2 My function has argument named 'format', but it is blocked by common option '--format'!
 
-To add/remove/rename common options, see the documentation on C<common_opts>
-attribute. In this case, you want:
+=head1 DEBUGGING
 
- delete $cmd->common_opts->{format};
- #delete $cmd->common_opts->{format_options}; # you might also want this
+=head2 How do I debug my program?
 
-or perhaps rename it:
+[Full] You can set environment DEBUG=1 or TRACE=1. See L<Log::Any::App> for more
+details.
 
- $cmd->common_opts->{output_format} = $cmd->common_opts->{format};
- delete $cmd->common_opts->{format};
+
+=head1 INPUT
 
 =head2 How to accept input from STDIN (or files)?
 
@@ -82,8 +81,10 @@ specified in L<Rinci::function> specification).
 
 =head2 But I don't want the whole file content slurped into string/array, I want streaming!
 
-If your function argument is of type C<stream> or C<filehandle>, an I/O handle
-will be provided to your function instead. But this part is not implemented yet.
+Riap 1.2 defines streaming input (and output), which P::C supports to some
+degree. If you set your argument property with C<stream> then local input
+streaming will work. Argument retrieved from file/stdin will be presented to
+function as filehandle, which the function can then read data from.
 
 Currently, see L<App::dux> for an example on how to accomplish this on function
 argument of type C<array>. Basically in App::dux, you feed an array tied with
@@ -150,6 +151,59 @@ subroutine based on another:
  );
  Perinci::CmdLine->new(url => '/main/f1')->run;
 
+
+=head1 OUTPUT AND FORMATTING
+
+=head2 How to add support for new output format (e.g. XML, HTML)?
+
+See L<Perinci::Result::Format>.
+
+=head2 My function has argument named 'format', but it is blocked by common option '--format'!
+
+To add/remove/rename common options, see the documentation on C<common_opts>
+attribute. In this case, you want:
+
+ delete $cmd->common_opts->{format};
+ #delete $cmd->common_opts->{format_options}; # you might also want this
+
+or perhaps rename it:
+
+ $cmd->common_opts->{output_format} = $cmd->common_opts->{format};
+ delete $cmd->common_opts->{format};
+
+=head2 How to stream output?
+
+XXX
+
+
+=head1 SHELL COMPLETION
+
+=head2 How does completion work with P::C?
+
+Currently only bash completion is supported. Basically, you activate completion
+by invoking C<complete -C ProgramName ProgramName> in bash. This means, to get
+completion bash will execute the program with COMP_LINE and COMP_POINT
+environment set to the command-line and cursor position, respectively. P::C will
+detect these environment variables and do the completion for you (either
+providing list of subcommands, list of available options, or argument values).
+The process is quite transparent to you and is convenient.
+
+Another alternative used by many is to generate C<complete> bash commands
+statically.
+
+The benefit of using the program to complete itself is convenience/flexibility:
+when arguments and subcommands change, completion need not be updated
+separately. If you generate completion commands, it will need to be regenerated
+and repasted to shell startup file.
+
+The downside of using the program to complete itself is startup overhead. That's
+why it's important for P::C to keep having a small startup overhead. An
+alternative, P::C::Lite, is written specifically with this issue in mind. The
+goal of P::C::Lite is to have startup overhead of under 0.05s, so it can still
+feel instantaneous. Of course, you also need to do your part by not loading too
+many modules or by delaying loading modules to avoid having a large startup
+overhead.
+
 =head2 How to do custom completion for my argument?
 
 By default, L<Perinci::Sub::Complete>'s C<complete_arg_val()> can employ some
@@ -202,11 +256,6 @@ and C<COMP_POINT> environment variables. You can do something like this to see
 debugging information:
 
  % COMP_LINE='myprog --arg x' COMP_POINT=13 PERL5OPT=-MLog::Any::App TRACE=1 myprog --arg x
-
-=head2 My application is OO?
-
-This framework is currently non-OO and function-centric. There are already
-several OO-based command-line frameworks on CPAN.
 
 
 =head1 SEE ALSO
