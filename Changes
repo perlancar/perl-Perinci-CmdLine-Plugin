@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.42    2014-10-31 (PERLANCAR)
+
+	- Tweak help message: show --subcommands when program has
+	  subcommands and doesn't specify one.
+
+
 0.41    2014-10-30 (PERLANCAR)
 
         - Add support for streaming input and output.
