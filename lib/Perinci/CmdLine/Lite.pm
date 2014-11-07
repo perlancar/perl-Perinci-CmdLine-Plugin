@@ -7,7 +7,7 @@ use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
 
-use Mo;
+use Mo qw(build default);
 #use Moo;
 extends 'Perinci::CmdLine::Base';
 
@@ -19,16 +19,19 @@ has default_prompt_template => (
     is=>'rw',
     default => 'Enter %s: ',
 );
+has logging => (
+    is=>'rw',
+    default => 0,
+);
+has log_level => (
+    is=>'rw',
+    default => 'warning',
+);
 
 my $formats = [qw/text text-simple text-pretty json json-pretty/];
 
 sub BUILD {
     my ($self, $args) = @_;
-
-    # default doesn't work?
-    if (!$self->{default_prompt_template}) {
-        $self->{default_prompt_template} = 'Enter %s: ';
-    }
 
     if (!$self->{riap_client}) {
         require Perinci::Access::Lite;
