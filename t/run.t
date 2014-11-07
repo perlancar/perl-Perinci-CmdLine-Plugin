@@ -666,5 +666,7 @@ _
     );
 };
 
+# XXX test logging
+
 DONE_TESTING:
 done_testing;

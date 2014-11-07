@@ -19,13 +19,36 @@ has default_prompt_template => (
     is=>'rw',
     default => 'Enter %s: ',
 );
-has logging => (
+has log => (
     is=>'rw',
-    default => 0,
+    default => sub {
+        if (defined $ENV{LOG}) {
+            return $ENV{LOG};
+        } elsif ($ENV{LOG_LEVEL} && $ENV{LOG_LEVEL} =~ /^(off|none)$/) {
+            return 0;
+        } elsif ($ENV{LOG_LEVEL} || $ENV{TRACE} || $ENV{DEBUG} ||
+                     $ENV{VERBOSE} || $ENV{QUIET}) {
+            return 0;
+        }
+        0;
+    },
 );
 has log_level => (
     is=>'rw',
-    default => 'warning',
+    default => sub {
+        if ($ENV{LOG_LEVEL}) {
+            return $ENV{LOG_LEVEL};
+        } elsif ($ENV{TRACE}) {
+            return 'trace';
+        } elsif ($ENV{DEBUG}) {
+            return 'debug';
+        } elsif ($ENV{VERBOSE}) {
+            return 'info';
+        } elsif ($ENV{QUIET}) {
+            return 'error';
+        }
+        'warning';
+    },
 );
 
 my $formats = [qw/text text-simple text-pretty json json-pretty/];
@@ -145,6 +168,48 @@ sub BUILD {
                 },
             };
         }
+        if ($self->log) {
+            $co->{log_level} = {
+                getopt  => 'log-level=s',
+                summary => 'Set log level',
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{log_level} = $val;
+                },
+            };
+            $co->{trace} = {
+                getopt  => 'trace',
+                summary => "Set log level to 'trace'",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{log_level} = 'trace';
+                },
+            };
+            $co->{debug} = {
+                getopt  => 'debug',
+                summary => "Set log level to 'debug'",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{log_level} = 'debug';
+                },
+            };
+            $co->{verbose} = {
+                getopt  => 'verbose',
+                summary => "Set log level to 'info'",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{log_level} = 'info';
+                },
+            };
+            $co->{quiet} = {
+                getopt  => 'quiet',
+                summary => "Set log level to 'error'",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    $r->{log_level} = 'error';
+                },
+            };
+        }
         $self->{common_opts} = $co;
     }
 
@@ -173,6 +238,14 @@ sub hook_after_parse_argv {
         }
     }
 
+    # set up log adapter
+    if ($self->log) {
+        require Log::Any::Adapter;
+        Log::Any::Adapter->set(
+            'ScreenColoredLevel',
+            min_level => $r->{log_level} // $self->log_level,
+        );
+    }
 }
 
 sub hook_format_result {
@@ -543,6 +616,9 @@ L<Perinci::Access> for metadata access, L<Data::Sah> for validator generation,
 L<Text::ANSITable> for formatting results, and L<Log::Any::App> (which uses
 L<Log::Log4perl>) for logging.
 
+P::C::Lite attributes default to condition of low startup overhead. For example,
+C<log> is by default off instead of on like in P::C.
+
 I first developed P::C::Lite mainly for CLI applications that utilize shell tab
 completion as their main feature, e.g. L<App::PMUtils>, L<App::ProgUtils>,
 L<App::GitUtils>.
@@ -602,13 +678,10 @@ Perinci::Access::Lite) adds too much startup overhead.
 
 =item * P::C::Lite does not support undo
 
-=item * P::C::Lite does not currently support logging
+=item * P::C::Lite currently has simpler logging
 
-Something more lightweight than L<Log::Any::App> will be considered. But for
-now, if you want to view logging and your function uses L<Log::Any>, you can do
-something like this:
-
- % DEBUG=1 PERL5OPT=-MLog::Any::App app.pl
+Only logging to screen is supported, using
+L<Log::Any::Adapter::ScreenColoredLevel>.
 
 =item * P::C::Lite does not support progress indicator
 
@@ -622,8 +695,6 @@ something like this:
  COLOR
  UTF8
 
- DEBUG, VERBOSE, QUIET, TRACE, and so on
-
 =item * In passing command-line object to functions, P::C::Lite object is passed
 
 Some functions might expect a L<Perinci::CmdLine> instance.
@@ -635,9 +706,20 @@ Some functions might expect a L<Perinci::CmdLine> instance.
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=over
+=head2 log => bool (default: 0, or from env)
 
-=back
+Whether to enable logging. This currently means setting up L<Log::Any::Adapter>
+to display logging (set in C<hook_after_parse_argv>, so tab completion skips
+this step). To produce log, you use L<Log::Any> in your code.
+
+The default is off. If you set LOG=1 or LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET,
+then the default will be on. It defaults to off if you set LOG=0 or
+LOG_LEVEL=off.
+
+=head2 log_level => str (default: warning, or from env)
+
+Set default log level. The default can also be set via
+LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
 
 
 =head1 METHODS
@@ -653,7 +735,25 @@ All the methods of L<Perinci::CmdLine::Base>, plus:
 
 All the environment variables that L<Perinci::CmdLine::Base> supports, plus:
 
-=over
+=head2 DEBUG
+
+Set log level to 'debug'.
+
+=head2 VERBOSE
+
+Set log level to 'info'.
+
+=head2 QUIET
+
+Set log level to 'error'.
+
+=head2 TRACE
+
+Set log level to 'trace'.
+
+=head2 LOG_LEVEL
+
+Set log level.
 
 =back
 
