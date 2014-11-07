@@ -726,10 +726,6 @@ LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
 
 All the methods of L<Perinci::CmdLine::Base>, plus:
 
-=over
-
-=back
-
 
 =head1 ENVIRONMENT
 
@@ -754,8 +750,6 @@ Set log level to 'trace'.
 =head2 LOG_LEVEL
 
 Set log level.
-
-=back
 
 
 =head1 RESULT METADATA

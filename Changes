@@ -1,5 +1,20 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.43    2014-11-07 (PERLANCAR)
+
+        [ENHANCEMENTS]
+
+        - Add logging (currently simple using
+          Log::Any::Adapter::ScreenColoredLevel, and defaults to off).
+
+        - Show extra result in run_completion for debugging (can be seen in JSON
+          format, for example).
+
+        [BUG FIXES]
+
+        - Forgot to use Mo's qw/default/ to make default work.
+
+
 0.42    2014-10-31 (PERLANCAR)
 
 	- Tweak help message: show --subcommands when program has
