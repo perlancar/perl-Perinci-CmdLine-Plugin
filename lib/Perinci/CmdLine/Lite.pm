@@ -441,7 +441,7 @@ sub run_help {
         my $has_sc_no_sc = $self->subcommands && !length($r->{subcommand_name});
 
         push @help, "  $cmdname --help (or -h, -?)\n";
-        push @help, "  $cmdname --verbose (or -v)\n";
+        push @help, "  $cmdname --version (or -v)\n";
         push @help, "  $cmdname --subcommands\n" if $has_sc_no_sc;
 
         unless ($has_sc_no_sc) {
