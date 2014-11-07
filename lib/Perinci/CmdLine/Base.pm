@@ -178,7 +178,12 @@ sub do_completion {
             return undef;
         },
     );
-    [200, "OK", Complete::Bash::format_completion($compres)];
+    [200, "OK", Complete::Bash::format_completion($compres),
+     # these extra result are for debugging
+     {
+         "func.words" => $words,
+         "func.cword" => $cword,
+     }];
 }
 
 sub _read_config {
