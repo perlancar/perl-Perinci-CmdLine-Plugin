@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.45    2014-11-08 (PERLANCAR)
+
+	- [ux] Prefix log messages with program name.
+
+
 0.44    2014-11-07 (PERLANCAR)
 
 	- No functional changes.
