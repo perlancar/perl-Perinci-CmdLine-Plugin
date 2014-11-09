@@ -205,6 +205,7 @@ sub _read_config {
     my %res;
     for my $path (@{ $r->{config_paths} }) {
         my $hoh = $reader->read_file($path);
+        $r->{read_config_file} = $path;
         for my $section (keys %$hoh) {
             my $hash = $hoh->{$section};
             for (keys %$hash) {
@@ -349,7 +350,9 @@ sub parse_argv {
             $found++;
             last;
         }
-        if (defined($profile) && !$found) {
+        if (defined($profile) && !$found &&
+                defined($r->{read_config_file}) &&
+                    ($r->{ignore_missing_config_profile_section} // 1)) {
             return [412, "Profile '$profile' not found in configuration file"];
         }
     }
@@ -728,6 +731,16 @@ Selected format to use. Usually set from the common option C<--format>.
 
 =item * read_config => bool
 
+This is set in run() to signify that we have tried to read config file (this is
+set to true even though config file does not exist). This is never set to true
+when C<read_config> attribute is set, which means that we never try to read any
+config file.
+
+=item * read_config_file => str
+
+This is set in the routine that reads config file, C<_read_config()>, containing
+the path to the config file that is used.
+
 =item * config_paths => array of str
 
 =item * config_profile => str
@@ -735,6 +748,19 @@ Selected format to use. Usually set from the common option C<--format>.
 =item * parse_argv_res => array
 
 Enveloped result of C<parse_argv()>.
+
+=item * ignore_missing_config_profile_section => bool (default 1)
+
+This is checked in the parse_argv(). To aid error checking, when a user
+specifies a profile (e.g. via C<--config-profile FOO>) and config file exists
+but the said profile section is not found in the config file, an error is
+returned. This is to notify user that perhaps she mistypes the profile name.
+
+But this checking can be turned off with this setting. This is sometimes used
+when e.g. a subclass wants to pick a config profile automatically by setting C<<
+$r->{config_profile} >> somewhere before reading config file, but do not want to
+fail execution when config profile is not found. An example of code that does
+this is L<Perinci::CmdLine::fatten>.
 
 =item * subcommand_name => str
 
