@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.46    2014-11-09 (PERLANCAR)
+
+	- Introduce request stash keys:
+	  ignore_missing_config_profile_section & read_config_file.
+
+
 0.45    2014-11-08 (PERLANCAR)
 
 	- [ux] Prefix log messages with program name.
