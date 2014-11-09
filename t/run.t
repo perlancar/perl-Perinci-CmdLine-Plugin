@@ -639,6 +639,28 @@ _
         output_re => qr/111/,
     );
     test_run(
+        name => 'unknown config profile -> error',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'prog',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/--config-profile=foo/],
+        status => 412,
+    );
+    test_run(
+        name => 'unknown config profile but does not read config -> ok',
+        args => {
+            url=>'/Perinci/Examples/noop',
+            program_name=>'foo',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw/--config-profile=bar/],
+        output_re => qr/^$/,
+    );
+    test_run(
         name => 'subcommand',
         args => {
             subcommands => {
