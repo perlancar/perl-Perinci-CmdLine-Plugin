@@ -335,12 +335,12 @@ sub hook_format_result {
     $cleanser->clean_in_place($res);
     state $json = do {
         require JSON;
-        JSON->new->allow_nonref;
+        JSON->new->canonical(1)->allow_nonref;
     };
     if ($format eq 'json') {
         return $json->encode($res) . "\n";
     } else {
-        return $json->pretty->encode($res);
+        return $json->canonical(1)->pretty->encode($res);
     }
 }
 

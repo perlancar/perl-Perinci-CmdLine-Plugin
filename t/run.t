@@ -377,11 +377,37 @@ subtest 'cmdline_src' => sub {
             output_re => qr/a1=foo/,
         );
         test_run(
+            name => 'file 1 (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_file"},
+            argv => ['--json', '--a1', $filename],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"file"
+                               .+
+                               "-cmdline_srcfilename_a1"\s*:\s*"
+                           /sx,
+        );
+        test_run(
             name => 'file 2',
             args => {url=>"$prefix/cmdline_src_file"},
             argv => ['--a1', $filename, '--a2', $filename2],
             exit_code => 0,
             output_re => qr/a1=foo\na2=\[bar\n,baz\]/,
+        );
+        test_run(
+            name => 'file 2 (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_file"},
+            argv => ['--json', '--a1', $filename, '--a2', $filename2],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"file"
+                               .+
+                               "-cmdline_src_a2"\s*:\s*"file"
+                               .+
+                               "-cmdline_srcfilename_a1"\s*:\s*"
+                               .+
+                               "-cmdline_srcfilename_a2"\s*:\s*"
+                           /sx,
         );
         test_run(
             name   => 'file not found',
@@ -411,6 +437,15 @@ subtest 'cmdline_src' => sub {
             output_re => qr/a1=foo$/,
         );
         test_run(
+            name => 'stdin_or_files file (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_stdin_or_files_str"},
+            argv => ['--json', $filename],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"stdin_or_files"
+                           /sx,
+        );
+        test_run(
             name   => 'stdin_or_files file not found',
             args   => {url=>"$prefix/cmdline_src_stdin_or_files_str"},
             argv   => [$filename . "/x"],
@@ -431,6 +466,7 @@ subtest 'cmdline_src' => sub {
                 exit_code => 0,
                 output_re => qr/a1=bar\nbaz$/,
             );
+            # XXX test special hint arguments passed
         }
         if (0) {
             open $fh, '<', $filename2;
@@ -443,6 +479,7 @@ subtest 'cmdline_src' => sub {
                 exit_code => 0,
                 output_re => qr/a1=\[bar\n,baz\]/,
             );
+            # XXX test special hint arguments passed
         }
     }
 
@@ -451,14 +488,28 @@ subtest 'cmdline_src' => sub {
         my ($fh, $filename) = tempfile();
         write_file($filename, "bar\nbaz");
 
+        local *STDIN;
+
         open $fh, '<', $filename;
-        local *STDIN = $fh;
+        *STDIN = $fh;
         test_run(
             name => 'stdin str',
             args => {url=>"$prefix/cmdline_src_stdin_str"},
             argv => [],
             exit_code => 0,
             output_re => qr/a1=bar\nbaz/,
+        );
+
+        open $fh, '<', $filename;
+        *STDIN = $fh;
+        test_run(
+            name => 'stdin str (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_stdin_str"},
+            argv => ['--json'],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"stdin"
+                           /sx,
         );
 
         open $fh, '<', $filename;
@@ -494,8 +545,10 @@ subtest 'cmdline_src' => sub {
         my ($fh, $filename) = tempfile();
         write_file($filename, "foo\n");
 
+        local *STDIN;
+
         open $fh, '<', $filename;
-        local *STDIN = $fh;
+        *STDIN = $fh;
         test_run(
             name => 'stdin_line + from stdin',
             args => {url=>"$prefix/cmdline_src_stdin_line"},
@@ -505,7 +558,19 @@ subtest 'cmdline_src' => sub {
         );
 
         open $fh, '<', $filename;
-        local *STDIN = $fh;
+        *STDIN = $fh;
+        test_run(
+            name => 'stdin_line + from stdin (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_stdin_line"},
+            argv => ['--json', '--a2', 'bar'],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"stdin_line"
+                           /sx,
+        );
+
+        open $fh, '<', $filename;
+        *STDIN = $fh;
         test_run(
             name => 'stdin_line + from cmdline',
             args => {url=>"$prefix/cmdline_src_stdin_line"},
@@ -516,7 +581,7 @@ subtest 'cmdline_src' => sub {
 
         write_file($filename, "foo\nbar\n");
         open $fh, '<', $filename;
-        local *STDIN = $fh;
+        *STDIN = $fh;
         test_run(
             name => 'multi stdin_line',
             args => {url=>"$prefix/cmdline_src_multi_stdin_line"},

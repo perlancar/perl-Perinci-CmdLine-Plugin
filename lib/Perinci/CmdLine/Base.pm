@@ -490,6 +490,7 @@ sub parse_cmdline_src {
                     chomp($r->{args}{$an} = <STDIN>);
                     do { print "\n"; Term::ReadKey::ReadMode(0) }
                         if $iactive && $as->{is_password};
+                    $r->{args}{"-cmdline_src_$an"} = 'stdin_line';
                 } elsif ($src eq 'stdin' || $src eq 'file' &&
                         ($r->{args}{$an}//"") eq '-') {
                     die [400, "Argument $an must be set to '-' which means ".
@@ -499,6 +500,7 @@ sub parse_cmdline_src {
                     #$log->trace("Getting argument '$an' value from stdin ...");
                     $r->{args}{$an} = $r->{stream_arg} ?
                         \*STDIN : $is_ary ? [<STDIN>] : do {local $/;<STDIN>};
+                    $r->{args}{"-cmdline_src_$an"} = 'stdin';
                 } elsif ($src eq 'stdin_or_files') {
                     # push back argument value to @ARGV so <> can work to slurp
                     # all the specified files
@@ -516,6 +518,7 @@ sub parse_cmdline_src {
 
                     $r->{args}{$an} = $r->{stream_arg} ?
                         \*ARGV : $is_ary ? [<>] : do { local $/; <> };
+                    $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
                         if ($as->{req}) {
@@ -530,12 +533,15 @@ sub parse_cmdline_src {
                     #$log->trace("Getting argument '$an' value from ".
                     #                "file ...");
                     my $fh;
-                    unless (open $fh, "<", $r->{args}{$an}) {
-                        die [500, "Can't open file '$r->{args}{$an}' ".
-                                 "for argument '$an': $!"];
+                    my $fname = $r->{args}{$an};
+                    unless (open $fh, "<", $fname) {
+                        die [500, "Can't open file '$fname' for argument '$an'".
+                                 ": $!"];
                     }
                     $r->{args}{$an} = $r->{stream_arg} ?
                         $fh : $is_ary ? [<$fh>] : do { local $/; <$fh> };
+                    $r->{args}{"-cmdline_src_$an"} = 'file';
+                    $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
                 }
             }
 
@@ -1186,6 +1192,31 @@ to STDOUT. But in the case of streaming output, this hook can also set it up.
 Called at the end of C<run()>, right before it exits (if C<exit> attribute is
 true) or returns C<$r->{res}>. The hook has a chance to modify exit code or
 result.
+
+
+=head1 SPECIAL ARGUMENTS
+
+Below is list of special arguments that may be passed to your function by the
+framework. Per L<Rinci> specification, these are prefixed by C<-> (dash).
+
+=head2 -dry_run => bool
+
+Only when in dry run mode, to notify function that we are in dry run mode.
+
+=head2 -cmdline => obj
+
+Only when C<pass_cmdline_object> attribute is set to true. This can be useful
+for the function to know about various stuffs, by probing the framework object.
+
+=head2 -cmdline_src_ARGNAME => str
+
+This will be set if argument is retrieved from C<file>, C<stdin>,
+C<stdin_or_files>, or C<stdin_line>.
+
+=head2 -cmdline_srcfilename_ARGNAME => str
+
+An extra information if argument value is retrieved from C<file>, so the
+function can know the filename.
 
 
 =head1 METADATA PROPERTY ATTRIBUTE
