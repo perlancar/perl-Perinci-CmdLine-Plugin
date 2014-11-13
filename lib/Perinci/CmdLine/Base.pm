@@ -364,7 +364,7 @@ sub parse_argv {
         }
         if (defined($profile) && !$found &&
                 defined($r->{read_config_file}) &&
-                    !($r->{ignore_missing_config_profile_section} // 1)) {
+                    !$r->{ignore_missing_config_profile_section}) {
             return [412, "Profile '$profile' not found in configuration file"];
         }
     }
