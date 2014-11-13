@@ -725,6 +725,23 @@ _
         argv => [qw/--config-profile=bar/],
         output_re => qr/^$/,
     );
+    {
+        test_run(
+            name => 'unknown config profile but set ignore_missing_config_profile_section -> ok',
+            hook_before_read_config_file => sub {
+                my ($self, $r) = @_;
+                $r->{ignore_missing_config_profile_section} = 1;
+            },
+            args => {
+                url=>'/Perinci/Examples/noop',
+                program_name=>'prog',
+                read_config=>1,
+                config_dirs=>[$dir],
+            },
+            argv => [qw/--config-profile=bar/],
+            output_re => qr/^$/,
+        );
+    }
     test_run(
         name => 'subcommand',
         args => {
