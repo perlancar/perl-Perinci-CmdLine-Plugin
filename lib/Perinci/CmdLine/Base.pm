@@ -347,7 +347,7 @@ sub parse_argv {
             }
             my $as = $r->{meta}{args};
             for my $k (keys %{ $conf->{$section} }) {
-                my $v = $conf->{$section}{$_};
+                my $v = $conf->{$section}{$k};
                 # since IOD might return a scalar or an array (depending on
                 # whether there is a single param=val or multiple param= lines),
                 # we need to arrayify the value if the argument is expected to
