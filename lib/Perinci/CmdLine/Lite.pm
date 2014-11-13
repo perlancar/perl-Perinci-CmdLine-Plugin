@@ -6,6 +6,7 @@ package Perinci::CmdLine::Lite;
 use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
+use Log::Any '$log';
 
 use Mo qw(build default);
 #use Moo;
