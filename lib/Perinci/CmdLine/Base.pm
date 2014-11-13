@@ -345,8 +345,20 @@ sub parse_argv {
                     next unless $section eq 'GLOBAL';
                 }
             }
-            $args{$_} = $conf->{$section}{$_}
-                for keys %{ $conf->{$section} };
+            my $as = $r->{meta}{args};
+            for my $k (keys %{ $conf->{$section} }) {
+                my $v = $conf->{$section}{$_};
+                # since IOD might return a scalar or an array (depending on
+                # whether there is a single param=val or multiple param= lines),
+                # we need to arrayify the value if the argument is expected to
+                # be an array.
+                if (ref($v) ne 'ARRAY' && $as->{$k} && $as->{$k}{schema} &&
+                        $as->{$k}{schema}[0] eq 'array') {
+                    $args{$k} = [$v];
+                } else {
+                    $args{$k} = $v;
+                }
+            }
             $found++;
             last;
         }
