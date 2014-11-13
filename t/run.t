@@ -768,6 +768,22 @@ _
         argv => [qw/--config-profile=profile1 subcommand1/],
         output_re => qr/121/,
     );
+
+    write_file("$dir/sum.conf", <<'_');
+array=0
+_
+    test_run(
+        name => 'array-ify if argument is array',
+        args => {
+            url=>'/Perinci/Examples/sum',
+            program_name=>'sum',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [qw//],
+        exit_code => 0,
+        output_re => qr/^0$/,
+    );
 };
 
 # XXX test logging
