@@ -482,6 +482,8 @@ sub run_help {
 
     # options
     {
+        require Data::Dmp;
+
         my $opts = $cliospec->{opts};
         last unless keys %$opts;
 
@@ -504,8 +506,13 @@ sub run_help {
             push @help, "\n$cat:\n";
             for my $opt (@opts) {
                 my $ospec = $opts->{$opt};
-                push @help, sprintf("  %-${len}s  %s\n",
-                                    $opt, $ospec->{summary}//'');
+                push @help, sprintf(
+                    "  %-${len}s  %s%s\n",
+                    $opt,
+                    $ospec->{summary}//'',
+                    (exists($ospec->{default}) ?
+                         " [".Data::Dmp::dmp($ospec->{default})."]":""),
+                );
             }
         }
     }
