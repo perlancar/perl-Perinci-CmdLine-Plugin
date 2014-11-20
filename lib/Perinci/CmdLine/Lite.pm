@@ -448,19 +448,25 @@ sub run_help {
         push @help, "  $cmdname --version (or -v)\n";
         push @help, "  $cmdname --subcommands\n" if $has_sc_no_sc;
 
-        unless ($has_sc_no_sc) {
-            require Perinci::Sub::To::CLIOptSpec;
-            my $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
+        require Perinci::Sub::To::CLIOptSpec;
+        my $res;
+        if ($has_sc_no_sc) {
+            $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
+                meta => {v=>1.1}, meta_is_normalized => 1,
+                common_opts => $self->common_opts,
+            );
+        } else {
+            $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
                 meta => $meta, meta_is_normalized => 1,
                 common_opts => $self->common_opts,
             );
-            die [500, "gen_cli_opt_spec_from_meta failed: ".
-                     "$res->[0] - $res->[1]"] unless $res->[0] == 200;
-            $cliospec = $res->[2];
-            my $usage = $cliospec->{usage_line};
-            $usage =~ s/\[\[prog\]\]/$cmdname/;
-            push @help, "  $usage\n";
         }
+        die [500, "gen_cli_opt_spec_from_meta failed: ".
+                 "$res->[0] - $res->[1]"] unless $res->[0] == 200;
+        $cliospec = $res->[2];
+        my $usage = $cliospec->{usage_line};
+        $usage =~ s/\[\[prog\]\]/$cmdname/;
+        push @help, "  $usage\n";
     }
 
     # description
@@ -476,7 +482,6 @@ sub run_help {
 
     # options
     {
-        last unless $cliospec;
         my $opts = $cliospec->{opts};
         last unless keys %$opts;
 
