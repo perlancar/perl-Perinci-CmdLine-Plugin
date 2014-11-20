@@ -671,14 +671,14 @@ _
         output_re => qr/104/,
     );
     test_run(
-        name => '--noconfig',
+        name => '--no-config',
         args => {
             url=>'/Perinci/Examples/noop',
             program_name=>'prog',
             read_config=>1,
             config_dirs=>[$dir],
         },
-        argv => [qw/--noconfig/],
+        argv => [qw/--no-config/],
         output_re => qr/^$/,
     );
     test_run(
