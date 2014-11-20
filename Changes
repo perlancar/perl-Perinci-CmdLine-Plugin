@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.51    2014-11-20 (PERLANCAR)
+
+        - Tweak --help message (show default value, note about base64/json/yaml
+          encoding).
+
+
 0.50    2014-11-20 (PERLANCAR)
 
         - Use the new Perinci::Sub::To::CLIOptSpec for nicer display of options
