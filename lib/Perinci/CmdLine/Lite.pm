@@ -153,7 +153,7 @@ sub BUILD {
                 },
             };
             $co->{no_config} = {
-                getopt  => 'noconfig|no-config',
+                getopt  => 'no-config',
                 summary => 'Do not use any configuration file',
                 handler => sub {
                     my ($go, $val, $r) = @_;
