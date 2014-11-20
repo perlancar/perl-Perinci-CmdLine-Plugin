@@ -453,12 +453,16 @@ sub run_help {
         if ($has_sc_no_sc) {
             $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
                 meta => {v=>1.1}, meta_is_normalized => 1,
-                common_opts => $self->common_opts,
+                common_opts  => $self->common_opts,
+                per_arg_json => $self->per_arg_json,
+                per_arg_yaml => $self->per_arg_yaml,
             );
         } else {
             $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
                 meta => $meta, meta_is_normalized => 1,
-                common_opts => $self->common_opts,
+                common_opts  => $self->common_opts,
+                per_arg_json => $self->per_arg_json,
+                per_arg_yaml => $self->per_arg_yaml,
             );
         }
         die [500, "gen_cli_opt_spec_from_meta failed: ".
@@ -509,12 +513,25 @@ sub run_help {
                 my $arg_spec = $ospec->{arg_spec};
                 my $is_bool = $arg_spec->{schema} &&
                     $arg_spec->{schema}[0] eq 'bool';
+                my $show_default = exists($ospec->{default}) &&
+                    !$is_bool && !$ospec->{is_base64} &&
+                        !$ospec->{is_json} && !$ospec->{is_yaml};
+                my $add_sum = '';
+                if ($ospec->{is_base64}) {
+                    $add_sum = " (base64-encoded)";
+                } elsif ($ospec->{is_json}) {
+                    $add_sum = " (JSON-encoded)";
+                } elsif ($ospec->{is_yaml}) {
+                    $add_sum = " (YAML-encoded)";
+                }
                 push @help, sprintf(
-                    "  %-${len}s  %s%s\n",
+                    "  %-${len}s  %s%s%s\n",
                     $opt,
                     $ospec->{summary}//'',
-                    (exists($ospec->{default}) && !$is_bool ?
+                    $add_sum,
+                    ($show_default ?
                          " [".Data::Dmp::dmp($ospec->{default})."]":""),
+
                 );
             }
         }
