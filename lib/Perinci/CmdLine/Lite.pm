@@ -506,11 +506,14 @@ sub run_help {
             push @help, "\n$cat:\n";
             for my $opt (@opts) {
                 my $ospec = $opts->{$opt};
+                my $arg_spec = $ospec->{arg_spec};
+                my $is_bool = $arg_spec->{schema} &&
+                    $arg_spec->{schema}[0] eq 'bool';
                 push @help, sprintf(
                     "  %-${len}s  %s%s\n",
                     $opt,
                     $ospec->{summary}//'',
-                    (exists($ospec->{default}) ?
+                    (exists($ospec->{default}) && !$is_bool ?
                          " [".Data::Dmp::dmp($ospec->{default})."]":""),
                 );
             }
