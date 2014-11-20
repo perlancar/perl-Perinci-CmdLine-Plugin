@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.50    2014-11-20 (PERLANCAR)
+
+        - Use the new Perinci::Sub::To::CLIOptSpec for nicer display of options
+          in --help.
+
+
 0.49    2014-11-13 (PERLANCAR)
 
         - Handle arrayifying scalar parameter from config file to array
