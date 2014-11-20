@@ -435,6 +435,8 @@ sub run_help {
         push @help, " - ", $sum, "\n";
     }
 
+    my $cliospec;
+
     # usage
     push @help, "\n";
     push @help, "Usage:\n";
@@ -447,34 +449,17 @@ sub run_help {
         push @help, "  $cmdname --subcommands\n" if $has_sc_no_sc;
 
         unless ($has_sc_no_sc) {
-            my @args;
-            my %args = %{ $args_p };
-            my $max_pos = -1;
-            for (values %args) {
-                $max_pos = $_->{pos}
-                    if defined($_->{pos}) && $_->{pos} > $max_pos;
-            }
-            my $pos = 0;
-            while ($pos <= $max_pos) {
-                my ($arg, $as);
-                for (keys %args) {
-                    $as = $args{$_};
-                    if (defined($as->{pos}) && $as->{pos}==$pos) {
-                        $arg=$_;
-                        last;
-                    }
-                }
-                next unless defined($arg);
-                if ($as->{req}) {
-                    push @args, "<$arg>" . ($as->{greedy} ? " ...":"");
-                } else {
-                    push @args, "[$arg]" . ($as->{greedy} ? " ...":"");
-                }
-                delete $args{$arg};
-                $pos++;
-            }
-            unshift @args, "[options]" if keys %args;
-            push @help, "  $cmdname ".join(" ", @args)."\n";
+            require Perinci::Sub::To::CLIOptSpec;
+            my $res = Perinci::Sub::To::CLIOptSpec::gen_cli_opt_spec_from_meta(
+                meta => $meta, meta_is_normalized => 1,
+                common_opts => $self->common_opts,
+            );
+            die [500, "gen_cli_opt_spec_from_meta failed: ".
+                     "$res->[0] - $res->[1]"] unless $res->[0] == 200;
+            $cliospec = $res->[2];
+            my $usage = $cliospec->{usage_line};
+            $usage =~ s/\[\[prog\]\]/$cmdname/;
+            push @help, "  $usage\n";
         }
     }
 
@@ -491,88 +476,33 @@ sub run_help {
 
     # options
     {
-        require Perinci::Sub::GetArgs::Argv;
-        my $co = $self->common_opts;
-        my $co_by_ospec = { map {$co->{$_}{getopt} => $_ } keys %$co };
-        my $res = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
-            meta         => $meta,
-            common_opts  => $co,
-            per_arg_json => $self->{per_arg_json},
-            per_arg_yaml => $self->{per_arg_yaml},
-        );
-        my $sms = $res->[3]{'func.specmeta'};
+        last unless $cliospec;
+        my $opts = $cliospec->{opts};
+        last unless keys %$opts;
 
-        # first, all common options first
-        my @opts;
-        for my $k (sort(grep {!defined($sms->{$_}{arg})} keys %$sms)) {
-            my $p = $sms->{$k}{parsed};
-            # XXX currently ad-hoc, skip irrelevant common opt
-            next if $scn && $k eq 'subcommands';
-            my $i = 0;
-            my $opt = '';
-            for (@{ $p->{opts} }) {
-                $i++;
-                $opt .= ", " if $i > 1;
-                $opt .= (length($_) > 1 ? '--':'-').$_;
-                $opt .= "=$p->{type}" if $p->{type} && $i==1;
-            }
-            push @opts, [$opt, $co->{$co_by_ospec->{$k}}{summary}];
-        }
-        my $longest = 6;
-        for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
-        push @help, "\nCommon options:\n" if @opts;
-        for (@opts) {
-            push @help, sprintf("  %-${longest}s  %s\n",
-                                $_->[0], $_->[1] // "");
+        # find all the categories
+        my %cats; # val=[options...]
+        for (keys %$opts) {
+            push @{ $cats{$opts->{$_}{category}} }, $_;
         }
 
-        # now the rest
-        @opts = ();
-        for my $k (sort(grep {defined($sms->{$_}{arg})} keys %$sms)) {
-            my $sm = $sms->{$k};
-            # skip non-code aliases
-            next if $sm->{is_alias} && !$sm->{is_code};
-            my $p = $sm->{parsed};
-            my $i = 0;
-            my $opt = '';
-            for (@{ $p->{opts} }) {
-                $i++;
-                $opt .= ", " if $i > 1;
-                $opt .= (length($_) > 1 ? '--':'-').$_;
-                $opt .= "=$p->{type}" if $p->{type} && $i==1;
+        for my $cat (sort keys %cats) {
+            # find the longest option
+            my @opts = sort {length($b)<=>length($a)} @{ $cats{$cat} };
+            my $len = length($opts[0]);
+            # sort again by name
+            @opts = sort {
+                (my $a_without_dash = $a) =~ s/^-+//;
+                (my $b_without_dash = $b) =~ s/^-+//;
+                lc($a) cmp lc($b);
+            } @opts;
+            push @help, "\n$cat:\n";
+            for my $opt (@opts) {
+                my $ospec = $opts->{$opt};
+                push @help, sprintf("  %-${len}s  %s\n",
+                                    $opt, $ospec->{summary}//'');
             }
-            # add non-code aliases
-            for my $al (@{ $sm->{noncode_aliases} // [] }) {
-                $al =~ s/=.+//; $al = (length($al) > 1 ? "--":"-").$al;
-                $opt .= ", $al";
-            }
-            my $arg = $sm->{arg};
-            my $as = $args_p->{$arg};
-            my $alspec = $sm->{alias} ?
-                $as->{cmdline_aliases}{$sm->{alias}} : {};
-            my $sum = join(
-                "",
-                (defined($as->{pos}) ? "(or via arg #$as->{pos}".
-                     ($as->{greedy} ? "+":"").") " : ""),
-                ($sm->{alias_for} ? $alspec->{summary} //
-                     "Alias for $sm->{alias_for}" : $as->{summary} // ''),
-                ($as->{cmdline_src} ? " ($as->{cmdline_src})" : ""),
-            );
-            my $sch = ($sm->{is_alias} ?
-                           $as->{cmdline_aliases}{$sm->{alias}}{schema} :
-                               undef) // $as->{schema};
-            if ($sch && $sch->[1]{in}) {
-                $sum .= " (".join("|", @{ $sch->[1]{in} }).")";
-            }
-            push @opts, [$opt, $sum];
         }
-        for (@opts) { my $l = length($_->[0]); $longest = $l if $l > $longest }
-        push @help, "\nOptions:\n" if @opts;
-        for (@opts) {
-            push @help, sprintf("  %-${longest}s  %s\n",
-                                $_->[0], $_->[1] // "");
-        }
-        push @help, "\n" if @opts;
     }
 
     [200, "OK", join("", @help), {"cmdline.skip_format"=>1}];
