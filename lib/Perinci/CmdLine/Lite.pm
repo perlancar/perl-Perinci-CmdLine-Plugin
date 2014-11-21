@@ -527,7 +527,7 @@ sub run_help {
                 }
 
                 my $argv = '';
-                if (defined $ospec->{pos}) {
+                if (!$ospec->{main_opt} && defined($ospec->{pos})) {
                     if ($ospec->{greedy}) {
                         $argv = " (=argv[$ospec->{pos}-])";
                     } else {
@@ -536,7 +536,7 @@ sub run_help {
                 }
 
                 my $cmdline_src = '';
-                if (defined $arg_spec->{cmdline_src}) {
+                if (!$ospec->{main_opt} && defined($arg_spec->{cmdline_src})) {
                     $cmdline_src = " (or from $arg_spec->{cmdline_src})";
                     $cmdline_src =~ s!_or_!/!g;
                 }
