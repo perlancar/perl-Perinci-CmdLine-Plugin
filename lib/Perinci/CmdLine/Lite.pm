@@ -524,11 +524,20 @@ sub run_help {
                 } elsif ($ospec->{is_yaml}) {
                     $add_sum = " (YAML-encoded)";
                 }
+                my $argv = '';
+                if (defined $ospec->{pos}) {
+                    if ($ospec->{greedy}) {
+                        $argv = " (=argv[$ospec->{pos}-])";
+                    } else {
+                        $argv = " (=argv[$ospec->{pos}])";
+                    }
+                }
                 push @help, sprintf(
-                    "  %-${len}s  %s%s%s\n",
+                    "  %-${len}s  %s%s%s%s\n",
                     $opt,
                     $ospec->{summary}//'',
                     $add_sum,
+                    $argv,
                     ($show_default ?
                          " [".Data::Dmp::dmp($ospec->{default})."]":""),
 
