@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.52    2014-11-21 (PERLANCAR)
+
+        [REMOVED FEATURES]
+
+        - Only provide --no-config instead of also --noconfig (to make --help
+          message nicer).
+
+
 0.51    2014-11-20 (PERLANCAR)
 
         - Tweak --help message (show default value, note about base64/json/yaml
