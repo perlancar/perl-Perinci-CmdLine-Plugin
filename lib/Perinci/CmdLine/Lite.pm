@@ -516,6 +516,7 @@ sub run_help {
                 my $show_default = exists($ospec->{default}) &&
                     !$is_bool && !$ospec->{is_base64} &&
                         !$ospec->{is_json} && !$ospec->{is_yaml};
+
                 my $add_sum = '';
                 if ($ospec->{is_base64}) {
                     $add_sum = " (base64-encoded)";
@@ -524,6 +525,7 @@ sub run_help {
                 } elsif ($ospec->{is_yaml}) {
                     $add_sum = " (YAML-encoded)";
                 }
+
                 my $argv = '';
                 if (defined $ospec->{pos}) {
                     if ($ospec->{greedy}) {
@@ -532,12 +534,20 @@ sub run_help {
                         $argv = " (=argv[$ospec->{pos}])";
                     }
                 }
+
+                my $cmdline_src = '';
+                if (defined $arg_spec->{cmdline_src}) {
+                    $cmdline_src = " (or from $arg_spec->{cmdline_src})";
+                    $cmdline_src =~ s!_or_!/!g;
+                }
+
                 push @help, sprintf(
-                    "  %-${len}s  %s%s%s%s\n",
+                    "  %-${len}s  %s%s%s%s%s\n",
                     $opt,
                     $ospec->{summary}//'',
                     $add_sum,
                     $argv,
+                    $cmdline_src,
                     ($show_default ?
                          " [".Data::Dmp::dmp($ospec->{default})."]":""),
 
