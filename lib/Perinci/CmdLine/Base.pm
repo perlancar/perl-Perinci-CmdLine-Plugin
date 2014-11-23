@@ -120,14 +120,32 @@ sub status2exitcode {
     $status - 300;
 }
 
-sub do_completion {
-    require Complete::Bash;
+sub _detect_completion {
+    my ($self, $r) = @_;
+    if ($ENV{COMP_LINE}) {
+        $r->{shell} = 'bash';
+        return 1;
+    } elsif ($ENV{COMMAND_LINE}) {
+        $r->{shell} = 'tcsh';
+        return 1;
+    }
+    0;
+}
 
+sub do_completion {
     my ($self, $r) = @_;
 
     local $r->{in_completion} = 1;
 
-    my ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, '=') };
+    my ($words, $cword);
+    if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef,undef,'=') };
+    } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
+        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline(undef) }; # also break on '='
+    }
+
     shift @$words; $cword--; # strip program name
 
     # check whether subcommand is defined. try to search from --cmd, first
@@ -179,7 +197,15 @@ sub do_completion {
             return undef;
         },
     );
-    [200, "OK", Complete::Bash::format_completion($compres),
+
+    my $formatter;
+    if ($r->{shell} eq 'bash') {
+        $formatter = \&Complete::Bash::format_completion;
+    } elsif ($r->{shell} eq 'tcsh') {
+        $formatter = \&Complete::Tcsh::format_completion;
+    }
+
+    [200, "OK", $formatter->($compres),
      # these extra result are for debugging
      {
          "func.words" => $words,
@@ -649,7 +675,7 @@ sub run {
     my $r = {orig_argv=>[@ARGV]};
 
     # completion is special case, we delegate to do_completion()
-    if ($ENV{COMP_LINE}) {
+    if ($self->_detect_completion($r)) {
         $r->{res} = $self->do_completion($r);
         goto FORMAT;
     }
