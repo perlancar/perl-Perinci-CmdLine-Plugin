@@ -381,6 +381,8 @@ For more examples on argument submetadata, see L<Perinci::Examples::SubMeta>.
 
 =head2 tcsh
 
+=head2 zsh
+
 
 =head1 PROGRESS INDICATOR [P::C]
 

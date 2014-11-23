@@ -180,16 +180,18 @@ XXX
 
 =head2 How does completion work with P::C?
 
-Currently bash and tcsh shells are supported. Basically, you activate completion
-by invoking C<complete -C ProgramName ProgramName> in bash (or C<complete
-ProgramName 'p/*/`ProgramName`/'> in tcsh). This means, to get completion bash
-will execute the program with COMP_LINE and COMP_POINT environment set to the
-command-line and cursor position, respectively (in tcsh, COMMAND_LINE is given
-instead). P::C will detect these environment variables and do the completion for
-you (either providing list of subcommands, list of available options, or
-argument values). The process is quite transparent to you and is convenient.
+Currently bash, tcsh, and zsh shells are supported. Basically, you activate
+completion by invoking C<complete -C ProgramName ProgramName> in bash (or
+C<complete ProgramName 'p/*/`ProgramName`/'> in tcsh, or the slightly more
+complex C<compctl ...> in zsh). This means, to get completion bash will execute
+the program with COMP_LINE and COMP_POINT environment set to the command-line
+and cursor position, respectively (in tcsh, COMMAND_LINE is given instead). P::C
+will detect these environment variables and do the completion for you (either
+providing list of subcommands, list of available options, or argument values).
+The process is quite transparent to you and is convenient.
 
-Another alternative used by many is to generate C<complete> commands statically.
+Another alternative used by many is to generate C<complete>/C<compctl> commands
+statically.
 
 The benefit of using the program to complete itself is convenience/flexibility:
 when arguments and subcommands change, completion need not be updated
