@@ -375,19 +375,11 @@ The resulting argument will be:
 For more examples on argument submetadata, see L<Perinci::Examples::SubMeta>.
 
 
-=head1 BASH COMPLETION
+=head1 SHELL COMPLETION
 
-To do bash completion, first create your script, e.g. C<myscript>, that uses
-Perinci::CmdLine:
+=head2 bash
 
- #!/usr/bin/perl
- use Perinci::CmdLine;
- Perinci::CmdLine->new(...)->run;
-
-then execute this in C<bash> (or put it in bash startup files like
-C</etc/bash.bashrc> or C<~/.bashrc> for future sessions):
-
- % complete -C myscript myscript; # myscript must be in PATH
+=head2 tcsh
 
 
 =head1 PROGRESS INDICATOR [P::C]
