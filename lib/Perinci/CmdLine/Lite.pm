@@ -529,9 +529,9 @@ sub run_help {
                 my $argv = '';
                 if (!$ospec->{main_opt} && defined($ospec->{pos})) {
                     if ($ospec->{greedy}) {
-                        $argv = " (=argv[$ospec->{pos}-])";
+                        $argv = " (=arg[$ospec->{pos}-])";
                     } else {
-                        $argv = " (=argv[$ospec->{pos}])";
+                        $argv = " (=arg[$ospec->{pos}])";
                     }
                 }
 
