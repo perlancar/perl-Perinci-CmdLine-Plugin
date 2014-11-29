@@ -211,6 +211,9 @@ this:
 
 Bash will then use this to provide completion for the user.
 
+The exact C<complete>/C<compctl> command can be generated, for example, by
+L<Pod::Weaver::Section::Completion::PerinciCmdLine>.
+
 The downside of using the program to complete itself, like the abovementioned
 mechanism, is startup overhead. Everytime the Tab key is pressed, the shell will
 invoke the script. That's why it's important for P::C to keep having a small
