@@ -182,8 +182,7 @@ sub do_completion {
     # command-line argument, or default_subcommand.
     {
         # @ARGV given by bash is messed up / different. during completion, we
-        # get ARGV from parsing COMP_LINE/COMP_POINT. this might not be the case
-        # with other shells like zsh/fish. XXX detect and support other shell.
+        # get ARGV from parsing COMP_LINE/COMP_POINT.
         local @ARGV = @$words;
         $self->_parse_argv1($r);
     }
