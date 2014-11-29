@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.56    2014-11-29 (PERLANCAR)
+
+        - Support tab completion for fish shell.
+
+        - [ux] Change 'argv' to 'arg' in help message.
+
+
 0.55    2014-11-23 (PERLANCAR)
 
 	- No functional changes.
