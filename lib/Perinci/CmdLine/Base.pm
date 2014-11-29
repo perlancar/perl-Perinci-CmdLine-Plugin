@@ -122,13 +122,20 @@ sub status2exitcode {
 
 sub _detect_completion {
     my ($self, $r) = @_;
-    if ($ENV{COMP_LINE}) {
+
+    $r->{completion_mode} = $ENV{COMP_MODE} // 'gen_answer';
+
+    if ($ENV{COMP_SHELL}) {
+        $r->{shell} = $ENV{COMP_SHELL};
+        return 1;
+    } elsif ($ENV{COMP_LINE}) {
         $r->{shell} = 'bash';
         return 1;
     } elsif ($ENV{COMMAND_LINE}) {
         $r->{shell} = 'tcsh';
         return 1;
     }
+
     0;
 }
 
@@ -137,13 +144,36 @@ sub do_completion {
 
     local $r->{in_completion} = 1;
 
+    if ($r->{completion_mode} eq 'gen_command') {
+        my $func;
+        if ($r->{shell} eq 'fish') {
+            require Perinci::Sub::To::FishComplete;
+            $func = \&Perinci::Sub::To::FishComplete::gen_fish_complete_from_meta;
+        } else {
+            #require Perinci::Sub::To::BashComplete;
+            #$func = \&Perinci::Sub::To::BashComplete::gen_bash_complete_from_meta;
+            die "Only fish is currently supported when COMP_MODE=gen_command\n";
+        }
+        my $scd = $r->{subcommand_data};
+        my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
+        return $func->(
+            meta => $meta, meta_is_normalized=>1,
+            common_opts  => $self->common_opts,
+            per_arg_json => $self->per_arg_json,
+            per_arg_yaml => $self->per_arg_yaml,
+        );
+    }
+
     my ($words, $cword);
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
         ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef,undef,'=') };
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
-        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline(undef) }; # also break on '='
+        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline(undef) }; # XXX also break on '='
+    } elsif ($r->{shell} eq 'fish') {
+        require Complete::Fish;
+        ($words, $cword) = @{ Complete::Fish::parse_cmdline(undef) }; # XXX also break on '='
     }
 
     shift @$words; $cword--; # strip program name
@@ -203,6 +233,8 @@ sub do_completion {
         $formatter = \&Complete::Bash::format_completion;
     } elsif ($r->{shell} eq 'tcsh') {
         $formatter = \&Complete::Tcsh::format_completion;
+    } elsif ($r->{shell} eq 'fish') {
+        $formatter = \&Complete::Fish::format_completion;
     }
 
     [200, "OK", $formatter->($compres),
