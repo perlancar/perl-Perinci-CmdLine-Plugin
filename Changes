@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.58    2014-12-02 (PERLANCAR)
+
+	- Switch Perinci::Sub::To::{CLIOptSpec,CLIDocData}.
+
+        - Render examples in help message.
+
+
 0.57    2014-11-29 (PERLANCAR)
 
 	- Use zsh-specific module for zsh completion.
