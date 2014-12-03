@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.59    2014-12-03 (PERLANCAR)
+
+        - [Experimental] Add --naked-res (this is not yet introduced in
+          Perinci::CmdLine) for convenience when piping JSON result to something
+          else.
+
+
 0.58    2014-12-02 (PERLANCAR)
 
 	- Switch Perinci::Sub::To::{CLIOptSpec,CLIDocData}.
