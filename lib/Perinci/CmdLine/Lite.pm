@@ -504,12 +504,15 @@ sub run_help {
         last unless @{ $clidocdata->{examples} };
         push @help, "\n";
         push @help, "Examples:\n";
-        for my $eg (@{ $clidocdata->{examples} }) {
+        my $i = 0;
+        my $egs = $clidocdata->{examples};
+        for my $eg (@$egs) {
+            $i++;
             my $cmdline = $eg->{cmdline};
             $cmdline =~ s/\[\[prog\]\]/$cmdname/;
             push @help, "  $eg->{summary}:\n" if $eg->{summary};
             push @help, "  % $cmdline\n";
-            push @help, "\n" if $eg->{summary};
+            push @help, "\n" if $eg->{summary} && $i < @$egs;
         }
     }
 
