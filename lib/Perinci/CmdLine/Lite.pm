@@ -555,7 +555,8 @@ sub run_help {
                     $arg_spec->{schema}[0] eq 'bool';
                 my $show_default = exists($ospec->{default}) &&
                     !$is_bool && !$ospec->{is_base64} &&
-                        !$ospec->{is_json} && !$ospec->{is_yaml};
+                        !$ospec->{is_json} && !$ospec->{is_yaml} &&
+                            !$ospec->{is_alias};
 
                 my $add_sum = '';
                 if ($ospec->{is_base64}) {
