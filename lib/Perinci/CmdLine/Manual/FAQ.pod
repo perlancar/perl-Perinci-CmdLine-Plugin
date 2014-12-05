@@ -154,6 +154,43 @@ subroutine based on another:
 
 =head1 OUTPUT AND FORMATTING
 
+=head2 I don't want borders!
+
+By default, the text format produces bordered tables in interactive mode, e.g.
+if you have this program:
+
+ $SPEC{foo} = {v=>1.1};
+ sub foo {
+     [200, "OK", [[1,2], [3,4], [5,6]]];
+ }
+ use Perinci::CmdLine::Any;
+ Perinci::CmdLine::Any->new(url => '/main/foo')->run;
+
+and you run it, you will have:
+
+ % foo
+ +---+---+
+ | 1 | 2 |
+ | 3 | 4 |
+ | 5 | 6 |
+ +---+---+
+
+and if you use C<--format text-simple>, only then it will become a tab-separated
+format:
+
+ % foo --format text-simple
+ 1       2
+ 3       4
+ 5       6
+
+But if you don't like this formatting and want to default to simpler formatting
+by default, you can add C<cmdline.default_format> attribute to your function
+metadata:
+
+ $SPEC{foo} = {v=>1.1, 'cmdline.default_format' => 'text-simple'};
+
+Using this attribute, you can also default to JSON, and so on if you want.
+
 =head2 How to add support for new output format (e.g. XML, HTML)?
 
 See L<Perinci::Result::Format>.
