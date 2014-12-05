@@ -191,6 +191,13 @@ metadata:
 
 Using this attribute, you can also default to JSON, and so on if you want.
 
+You can also do this on a per-result basis, by adding C<cmdline.default_format>
+attribute in your result metadata, e.g.:
+
+ sub foo {
+     [200, "OK", [[1,2], [3,4], [5,6]], {'cmdline.default_format'=>'text-simple'}];
+ }
+
 =head2 How to add support for new output format (e.g. XML, HTML)?
 
 See L<Perinci::Result::Format>.
