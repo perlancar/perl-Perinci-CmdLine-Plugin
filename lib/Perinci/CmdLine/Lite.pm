@@ -197,6 +197,8 @@ _
             $co->{log_level} = {
                 getopt  => 'log-level=s',
                 summary => 'Set log level',
+                schema  => ['str*' => in => [
+                    qw/trace debug info warn warning error fatal/]],
                 handler => sub {
                     my ($go, $val, $r) = @_;
                     $r->{log_level} = $val;
