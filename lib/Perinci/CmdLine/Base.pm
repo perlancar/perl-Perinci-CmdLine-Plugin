@@ -180,6 +180,7 @@ sub do_completion {
         riap_server_url => $scd->{url},
         riap_uri        => undef,
         riap_client     => $self->riap_client,
+        extras          => {r=>$r, cmdline=>$self},
         completion      => sub {
             my %args = @_;
             my $type = $args{type};
