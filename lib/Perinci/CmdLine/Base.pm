@@ -330,6 +330,8 @@ sub _parse_argv1 {
 
     # also set dry-run on environment
     $r->{dry_run} = 1 if $ENV{DRY_RUN};
+
+    $r->{_parse_argv1_done} = 1;
 }
 
 sub _parse_argv2 {
@@ -472,7 +474,7 @@ sub parse_argv {
     # per-subcommand opts, e.g. --he<tab> resulting in --help (common opt) as
     # well as --height (function argument).
 
-    $self->_parse_argv1($r);
+    $self->_parse_argv1($r) unless $r->{_parse_argv1_done};
     $self->_parse_argv2($r);
 }
 
