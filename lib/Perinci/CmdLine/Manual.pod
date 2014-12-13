@@ -32,14 +32,14 @@ below are equivalent:
  % mycmd -h
  % mycmd -?
 
-=item * Tab completion for bash (including completion from remote code)
+=item * Tab completion for various shells (including completion from remote code)
+
+Example for bash:
 
  % complete -C mycmd mycmd
  % mycmd --he<tab> ; # --help
  % mycmd s<tab>    ; # sub1, sub2, sub3 (if those are the specified subcommands)
  % mycmd sub1 -<tab> ; # list the options available for sub1 subcommand
-
-Support for other shell might be added in the future upon request.
 
 =item * Undo/redo/history
 
@@ -380,12 +380,29 @@ For more examples on argument submetadata, see L<Perinci::Examples::SubMeta>.
 
 =head1 SHELL COMPLETION
 
-=head2 bash
+The framework can detect when C<COMP_LINE> and C<COMP_POINT> environment
+variables (set by bash when completing using external command) are set and then
+answer the completion. In bash, activating tab completion for your script is as
+easy as (assuming your script is already in PATH):
 
-=head2 tcsh
+ % complete -C yourscript yourscript
 
-=head2 zsh
+That is, your script can complete itself. The above command can be put in
+C<~/.bashrc>. But it is recommended that you use L<shcompgen> instead (see
+below).
 
+Tcsh uses C<COMMAND_LINE> instead. The framework can also detect that.
+
+For other shells: some shells can emulate bash (like zsh) and for some other
+(like fish) you need to generate a set of C<complete> commands for each
+command-line option.
+
+C<shcompgen> is a CLI tool that can detect all scripts in PATH if they are using
+P::C (as well as a few other frameworks) and generate shell completion scripts
+for them. It supports several shells. Combined with
+L<Dist::Zilla::Plugin::GenShellCompletion>, you can make it so that users
+installing your distribution can immediately/automatically activate tab
+completion for your scripts.
 
 =head1 PROGRESS INDICATOR [P::C]
 
