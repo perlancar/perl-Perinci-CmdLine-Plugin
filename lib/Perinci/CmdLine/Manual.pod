@@ -126,13 +126,16 @@ function to call.
 TODO
 
 
-=head1 LOGGING [P::C]
+=head1 LOGGING
 
-Logging is done with L<Log::Any> (for producing) and L<Log::Any::App> (for
-displaying to outputs). Loading Log::Any::App will add to startup overhead time,
-so this module tries to be smart when determining whether or not to do logging
-output (i.e. whether or not to load Log::Any::App). Here are the order of rules
-being used:
+Logging is done with L<Log::Any> (for producing). For displaying logs, P::C uses
+L<Log::Any::App> currently which supports multiple outputs (screen, file, etc)
+while P::C::Lite currently uses L<Log::Any::Adapter::ScreenColoredLevel> which
+only supports displaying to screen.
+
+Loading Log::Any adapters adds to startup overhead time, so the framework tries
+to be smart when determining whether or not to do logging output. Here are the
+order of rules being used:
 
 =over
 
@@ -144,24 +147,24 @@ Normally, shell completion does not need to show log output.
 
 You can make a command-line program start a bit faster if you use LOG=0.
 
-=item * If subcommand's log_any_app setting is defined, use that
+=item * If subcommand's C<log> setting is defined, use that
 
 This allows you, e.g. to turn off logging by default for subcommands that need
 faster startup time. You can still turn on logging for those subcommands by
 LOG=1.
 
-=item * If action metadata's default_log setting is defined, use that
+=item * [P::C] If action metadata's default_log setting is defined, use that
 
 For example, actions like C<help>, C<list>, and C<version> has C<default_log>
 set to 0, for faster startup time. You can still turn on logging for those
 actions by LOG=1.
 
-=item * Use log_any_app attribute setting
+=item * Use log attribute setting
 
 =back
 
 
-=head1 UTF8 OUTPUT [P::C]
+=head1 [P::C] UTF8 OUTPUT
 
 By default, C<< binmode(STDOUT, ":utf8") >> is issued if utf8 output is desired.
 This is determined by, in order:
