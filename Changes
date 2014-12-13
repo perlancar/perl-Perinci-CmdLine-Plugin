@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.60    2014-12-13 (PERLANCAR)
+
+        - No functional changes.
+
+        - Tweak/update documentation, including instruction for activating tab
+          completion (mention shcompgen), logging.
+
+
 0.59    2014-12-03 (PERLANCAR)
 
         - [Experimental] Add --naked-res (this is not yet introduced in
