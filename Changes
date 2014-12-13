@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.62    2014-12-13 (PERLANCAR)
+
+	- Avoid running phase 1 of parse_argv() twice if parse_argv() happens to
+          be called after _parse_argv1() (for example, inside custom completion
+          which wants to call parse_argv() to get command-line arguments).
+
+
 0.61    2014-12-13 (PERLANCAR)
 
 	- Pass r and cmdline as extra arguments to completion routine.
