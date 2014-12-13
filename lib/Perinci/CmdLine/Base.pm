@@ -332,25 +332,8 @@ sub _parse_argv1 {
     $r->{dry_run} = 1 if $ENV{DRY_RUN};
 }
 
-sub parse_argv {
+sub _parse_argv2 {
     my ($self, $r) = @_;
-
-    # we parse argv twice. the first parse is with common_opts only so we're
-    # able to catch --help, --version, etc early without having to know about
-    # subcommands. two reasons for this: sometimes we need to get subcommand
-    # name *from* cmdline opts (e.g. --cmd) and thus it's a chicken-and-egg
-    # problem. second, it's faster because we don't have to load Riap client and
-    # request the meta through it (especially in the case of remote URL).
-    #
-    # the second parse is after ge get subcommand name and the function
-    # metadata. we can parse the remaining argv to get function arguments.
-    #
-    # note that when doing completion we're not using this algorithem and only
-    # parse argv once. this is to make completion work across common- and
-    # per-subcommand opts, e.g. --he<tab> resulting in --help (common opt) as
-    # well as --height (function argument).
-
-    $self->_parse_argv1($r);
 
     my %args;
 
@@ -469,6 +452,28 @@ sub parse_argv {
 
         return $res;
     }
+}
+
+sub parse_argv {
+    my ($self, $r) = @_;
+
+    # we parse argv twice. the first parse is with common_opts only so we're
+    # able to catch --help, --version, etc early without having to know about
+    # subcommands. two reasons for this: sometimes we need to get subcommand
+    # name *from* cmdline opts (e.g. --cmd) and thus it's a chicken-and-egg
+    # problem. second, it's faster because we don't have to load Riap client and
+    # request the meta through it (especially in the case of remote URL).
+    #
+    # the second parse is after ge get subcommand name and the function
+    # metadata. we can parse the remaining argv to get function arguments.
+    #
+    # note that when doing completion we're not using this algorithem and only
+    # parse argv once. this is to make completion work across common- and
+    # per-subcommand opts, e.g. --he<tab> resulting in --help (common opt) as
+    # well as --height (function argument).
+
+    $self->_parse_argv1($r);
+    $self->_parse_argv2($r);
 }
 
 # parse cmdline_src argument spec properties for filling argument value from
