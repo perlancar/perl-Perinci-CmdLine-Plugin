@@ -129,9 +129,7 @@ subtest 'output formats' => sub {
             args      => {url => '/Perinci/Examples/gen_sample_data'},
             argv      => [qw/--format=text-pretty aos/],
             exit_code => 0,
-            output_re => qr/\A
-                            \+-+\+\n
-                            \|\s*one\s*\|\n/x,
+            output_re => qr/\Aone\ntwo\n/x,
         );
         test_run(
             name      => 'aoaos',

@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.63    2014-12-15 (PERLANCAR)
+
+	- [ux] Don't show aos as table, because the border is often
+	  annoying, what most people want is a simple 1-element-per-line.
+
+
 0.62    2014-12-13 (PERLANCAR)
 
 	- Avoid running phase 1 of parse_argv() twice if parse_argv() happens to
