@@ -306,13 +306,7 @@ sub hook_format_result {
             } elsif (ref($data) eq 'ARRAY' && !@$data) {
                 return "";
             } elsif (Data::Check::Structure::is_aos($data, {max=>$max})) {
-                if ($is_pretty) {
-                    require Text::Table::Tiny;
-                    $data = [map {[$_]} @$data];
-                    return Text::Table::Tiny::table(rows=>$data) . "\n";
-                } else {
-                    return join("", map {"$_\n"} @$data);
-                }
+                return join("", map {"$_\n"} @$data);
             } elsif (Data::Check::Structure::is_aoaos($data, {max=>$max})) {
                 if ($is_pretty) {
                     require Text::Table::Tiny;
