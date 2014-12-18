@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.67    2014-12-18 (PERLANCAR)
+
+	- Fix proper location of config dir on Windows
+
+        - HOME gets a priority over /etc.
+
+
 0.66    2014-12-18 (PERLANCAR)
 
 	- Use HOMEPATH instead of HOME on Windows for default config_dirs.
