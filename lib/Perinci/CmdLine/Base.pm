@@ -46,7 +46,17 @@ has config_filename => (is=>'rw');
 has config_dirs => (
     is=>'rw',
     default => sub {
-        [grep {defined} ("/etc", $ENV{HOME}, $ENV{HOMEPATH})];
+        my @dirs;
+        if ($^O eq 'MSWin32') {
+            require File::HomeDir;
+            # currently i don't know where is the appropriate place equivalent
+            # to /etc on windows
+            push @dirs, "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
+        } else {
+            push @dirs, $ENV{HOME};
+            push @dirs, "/etc";
+        }
+        [grep {defined} @dirs];
     },
 );
 
