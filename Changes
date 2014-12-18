@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.66    2014-12-18 (PERLANCAR)
+
+	- Use HOMEPATH instead of HOME on Windows for default config_dirs.
+
+
 0.65    2014-12-18 (PERLANCAR)
 
 	- No functional changes.
