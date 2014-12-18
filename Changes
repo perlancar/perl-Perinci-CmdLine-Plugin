@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.64    2014-12-18 (PERLANCAR)
+
+	- No functional changes.
+
+	- [dzil] Make Complete::* modules prereq on Unix only for now.
+
+
 0.63    2014-12-15 (PERLANCAR)
 
 	- [ux] Don't show aos as table, because the border is often
