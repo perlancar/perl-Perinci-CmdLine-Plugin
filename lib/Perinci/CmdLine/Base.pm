@@ -46,7 +46,7 @@ has config_filename => (is=>'rw');
 has config_dirs => (
     is=>'rw',
     default => sub {
-        ["/etc", $ENV{HOME}];
+        [grep {defined} ("/etc", $ENV{HOME}, $ENV{HOMEPATH})];
     },
 );
 
