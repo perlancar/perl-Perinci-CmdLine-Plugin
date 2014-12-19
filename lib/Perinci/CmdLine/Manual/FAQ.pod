@@ -222,51 +222,6 @@ XXX
 
 =head1 SHELL COMPLETION
 
-=head2 How does completion work with P::C?
-
-Currently bash, fish, tcsh, and zsh shells are supported.
-
-Basically, you first activate completion for your script by invoking C<complete>
-(or C<compctl> in the case of zsh) shell internal command which tells the shell
-to invoke your script with special environment variable set so P::C can provide
-completion answer for the shell. For example, in bash the C<complete> command
-is:
-
- complete -C yourscript yourscript
-
-Then when you press C<Tab> in this command:
-
- % yourscript --opt <Tab>
-
-then bash will invoke C<yourscript> with C<COMP_LINE> environment set to
-C<yourscript --opt > and C<COMP_POINT> set to 17 (the cursor position).
-Perinci::CmdLine, looking that C<COMP_LINE> is set, will try to provide a
-completion for the above command-line. First, it will retrieve the approriate
-function metadata, search the argument that corresponds to the command-line
-option C<--opt>, and try several methods to complete its value (e.g. from
-argument specification property C<completion>, if exists, or from C<in> clause
-in the argument's schema, or if all things fail, usually from files/directories
-on the filesystem). It will then print the completion answer to STDOUT like
-this:
-
- one
- two
- three
-
-Bash will then use this to provide completion for the user.
-
-The exact C<complete>/C<compctl> command can be generated, for example, by
-L<Pod::Weaver::Section::Completion::PerinciCmdLine>.
-
-The downside of using the program to complete itself, like the abovementioned
-mechanism, is startup overhead. Everytime the Tab key is pressed, the shell will
-invoke the script. That's why it's important for P::C to keep having a small
-startup overhead. P::C::Lite is written specifically with this issue in mind.
-The goal of P::C::Lite is to have startup overhead of under 0.05s, so it can
-still feel instantaneous when doing tab completion. Of course, you also need to
-do your part by not loading too many modules or by delaying loading modules to
-avoid having a large startup overhead.
-
 =head2 How to do custom completion for my argument?
 
 By default, L<Perinci::Sub::Complete>'s C<complete_arg_val()> can employ some
