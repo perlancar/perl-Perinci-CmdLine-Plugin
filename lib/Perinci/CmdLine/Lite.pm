@@ -75,169 +75,43 @@ sub BUILD {
         };
     }
 
+    my $_t = sub {
+        no warnings;
+        my $co_name = shift;
+        my $href = $Perinci::CmdLine::Base::copts{$co_name};
+        %$href;
+    };
+
     if (!$self->{common_opts}) {
-        my $co = {
-            version => {
-                getopt  => 'version|v',
-                summary => 'Show program version',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{action} = 'version';
-                    $r->{skip_parse_subcommand_argv} = 1;
-                },
-            },
-            help => {
-                getopt  => 'help|h|?',
-                summary => 'Show help message',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{action} = 'help';
-                    $r->{skip_parse_subcommand_argv} = 1;
-                },
-            },
-            format => {
-                getopt  => 'format=s',
-                summary => 'Set output format',
-                schema => ['str*' => in => $formats],
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{format} = $val;
-                },
-            },
-            json => {
-                getopt  => 'json',
-                summary => 'Set output format to json',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{format} = 'json';
-                },
-            },
-            naked_res => {
-                getopt  => 'naked-res',
-                summary => 'When outputing as JSON, strip result envelope',
-                description => <<'_',
+        my $copts = {};
 
-By default, when outputing as JSON, the full enveloped result is returned, e.g.:
-
-    [200,"OK",[1,2,3],{"func.extra"=>4}]
-
-The reason is so you can get the status (1st element), status message (2nd
-element) as well as result metadata/extra result (4th element) instead of just
-the result (3rd element). However, sometimes you want just the result, e.g. when
-you want to pipe the result for more post-processing:
-
-    [1,2,3]
-
-In this case, you can use `--naked-res`.
-
-_
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{naked_res} = 1;
-                },
-            },
+        $copts->{version}   = { $_t->('version'), };
+        $copts->{help}      = { $_t->('help'), };
+        $copts->{format}    = {
+            $_t->('format'),
+            schema => ['str*' => in => $formats],
         };
+        $copts->{json}      = { $_t->('json'), };
+        $copts->{naked_res} = { $_t->('naked_res'), };
         if ($self->subcommands) {
-            $co->{subcommands} = {
-                getopt  => 'subcommands',
-                summary => 'List available subcommands',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{action} = 'subcommands';
-                    $r->{skip_parse_subcommand_argv} = 1;
-                },
-            };
+            $copts->{subcommands} = { $_t->('subcommands'), };
         }
         if ($self->default_subcommand) {
-            $co->{cmd} = {
-                getopt  => 'cmd=s',
-                summary => 'Select subcommand',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{subcommand_name} = $val;
-                    $r->{subcommand_name_from} = '--cmd';
-                },
-                completion => sub {
-                    require Complete::Util;
-                    my %args = @_;
-                    Complete::Util::complete_array_elem(
-                        array => [keys %{ $self->list_subcommands }],
-                        word => $args{word});
-                },
-            };
+            $copts->{cmd} = { $_t->('cmd') };
         }
         if ($self->read_config) {
-            $co->{config_path} = {
-                getopt  => 'config-path=s@',
-                summary => 'Set path to configuration file',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{config_paths} //= [];
-                    push @{ $r->{config_paths} }, $val;
-                },
-            };
-            $co->{no_config} = {
-                getopt  => 'no-config',
-                summary => 'Do not use any configuration file',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{read_config} = 0;
-                },
-            };
-            $co->{config_profile} = {
-                getopt  => 'config-profile=s',
-                summary => 'Set configuration profile to use',
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{config_profile} = $val;
-                },
-            };
+            $copts->{config_path}    = { $_t->('config_path') };
+            $copts->{no_config}      = { $_t->('no_config') };
+            $copts->{config_profile} = { $_t->('config_profile') };
         }
         if ($self->log) {
-            $co->{log_level} = {
-                getopt  => 'log-level=s',
-                summary => 'Set log level',
-                schema  => ['str*' => in => [
-                    qw/trace debug info warn warning error fatal/]],
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{log_level} = $val;
-                },
-            };
-            $co->{trace} = {
-                getopt  => 'trace',
-                summary => "Set log level to 'trace'",
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{log_level} = 'trace';
-                },
-            };
-            $co->{debug} = {
-                getopt  => 'debug',
-                summary => "Set log level to 'debug'",
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{log_level} = 'debug';
-                },
-            };
-            $co->{verbose} = {
-                getopt  => 'verbose',
-                summary => "Set log level to 'info'",
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{log_level} = 'info';
-                },
-            };
-            $co->{quiet} = {
-                getopt  => 'quiet',
-                summary => "Set log level to 'error'",
-                handler => sub {
-                    my ($go, $val, $r) = @_;
-                    $r->{log_level} = 'error';
-                },
-            };
+            $copts->{log_level} = { $_t->('log_level'), };
+            $copts->{trace}     = { $_t->('trace'), };
+            $copts->{debug}     = { $_t->('debug'), };
+            $copts->{verbose}   = { $_t->('verbose'), };
+            $copts->{quiet}     = { $_t->('quiet'), };
         }
-        $self->{common_opts} = $co;
+        $self->{common_opts} = $copts;
     }
 
     $self->{formats} //= $formats;

@@ -70,6 +70,188 @@ has config_dirs => (
 # role: requires 'hook_after_run'
 # role: requires 'default_prompt_template'
 
+# we put common stuffs here, but Perinci::CmdLine's final version will differ
+# from PC::Lite's in several aspects: translation, supported output formats, PC
+# currently adds some extra keys, some options are not added by PC (like --json
+# if required version < 1.04) and vice versa (PC::Lite doesn't have --yaml,
+# --perl, history/undo stuffs).
+our %copts = (
+
+    version => {
+        getopt  => "version|v",
+        usage   => "--version (or -v)",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{action} = 'version';
+            $r->{skip_parse_subcommand_argv} = 1;
+        },
+    },
+
+    help => {
+        getopt  => 'help|h|?',
+        summary => 'Display this help message',
+        usage   => "--help (or -h, -?)",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{action} = 'help';
+            $r->{skip_parse_subcommand_argv} = 1;
+        },
+        order => 0, # high
+    },
+
+    format => {
+        getopt  => 'format=s',
+        summary => 'Choose output format, e.g. json, text',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{format} = $val;
+        },
+    },
+    json => {
+        getopt  => 'json',
+        summary => 'Set output format to json',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{format} = 'json';
+        },
+    },
+
+    naked_res => {
+        getopt  => 'naked-res',
+        summary => 'When outputing as JSON, strip result envelope',
+        description => <<'_',
+
+By default, when outputing as JSON, the full enveloped result is returned, e.g.:
+
+    [200,"OK",[1,2,3],{"func.extra"=>4}]
+
+The reason is so you can get the status (1st element), status message (2nd
+element) as well as result metadata/extra result (4th element) instead of just
+the result (3rd element). However, sometimes you want just the result, e.g. when
+you want to pipe the result for more post-processing. In this case you can use
+`--naked-res` so you just get:
+
+    [1,2,3]
+
+_
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{naked_res} = 1;
+        },
+    },
+
+    subcommands => {
+        getopt  => 'subcommands',
+        summary => 'List available subcommands',
+        usage   => "--subcommands",
+        show_in_usage => sub {
+            my ($self, $r) = @_;
+            !$r->{subcommand_name};
+        },
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{action} = 'subcommands';
+            $r->{skip_parse_subcommand_argv} = 1;
+        },
+    },
+
+    # 'cmd=SUBCOMMAND_NAME' can be used to select other subcommands when
+    # default_subcommand is in effect.
+    cmd => {
+        getopt  => "cmd=s",
+        summary => 'Select subcommand',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{subcommand_name} = $val;
+            $r->{subcommand_name_from} = '--cmd';
+        },
+        completion => sub {
+            require Complete::Util;
+            my %args = @_;
+            my $cmdline = $args{extras}{cmdline};
+            Complete::Util::complete_array_elem(
+                array => [keys %{ $cmdline->list_subcommands }],
+                word  => $args{word},
+                ci    => 1,
+            );
+        },
+    },
+
+    config_path => {
+        getopt  => 'config-path=s@',
+        summary => 'Set path to configuration file',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{config_paths} //= [];
+            push @{ $r->{config_paths} }, $val;
+        },
+    },
+    no_config => {
+        getopt  => 'no-config',
+        summary => 'Do not use any configuration file',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{read_config} = 0;
+        },
+    },
+    config_profile => {
+        getopt  => 'config-profile=s',
+        summary => 'Set configuration profile to use',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{config_profile} = $val;
+        },
+    },
+
+    # since the cmdline opts is consumed, Log::Any::App doesn't see this. we
+    # currently work around this via setting env.
+    log_level => {
+        getopt  => 'log-level=s',
+        summary => 'Set log level',
+        schema  => ['str*' => in => [
+            qw/trace debug info warn warning error fatal/]],
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{log_level} = $val;
+            $ENV{LOG_LEVEL} = $val;
+        },
+    },
+    trace => {
+        getopt  => "trace",
+        summary => "Set log level to trace",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $ENV{TRACE} = 1;
+        },
+    },
+    debug => {
+        getopt  => "debug",
+        summary => "Set log level to debug",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $ENV{DEBUG} = 1;
+        },
+    },
+    verbose => {
+        getopt  => "verbose",
+        summary => "Set log level to info",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $ENV{VERBOSE} = 1;
+            $r->{_help_verbose} = 1;
+        },
+    },
+    quiet => {
+        getopt  => "quiet",
+        summary => "Set log level to quiet",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $ENV{QUIET} = 1;
+        },
+    },
+
+);
+
 sub hook_before_read_config_file {}
 
 sub get_meta {
