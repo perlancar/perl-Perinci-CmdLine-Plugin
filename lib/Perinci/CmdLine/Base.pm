@@ -915,9 +915,8 @@ sub run {
         die [400, "Missing required argument(s): ".join(", ", @$missing)]
             if $missing && @$missing;
 
-        my $args = $parse_res->[2];
         my $scd = $r->{subcommand_data};
-        $args->{-cmdline} = $self if $scd->{pass_cmdline_object} //
+        $r->{args}{-cmdline} = $self if $scd->{pass_cmdline_object} //
             $self->pass_cmdline_object;
 
         my $meth = "run_$r->{action}";
