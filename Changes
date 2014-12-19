@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.68    2014-12-19 (PERLANCAR)
+
+        - [Bugfix] Assigned to wrong 'args' variable so -cmdline was not passed
+          even though user had specified -pass_cmdline_object.
+
+        - [Internal] Refactor: move common bits of default common_opts from
+          ::Lite to ::Base to reduce code duplication.
+
+
 0.67    2014-12-18 (PERLANCAR)
 
 	- Fix proper location of config dir on Windows
