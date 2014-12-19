@@ -201,6 +201,41 @@ _
             my ($go, $val, $r) = @_;
             $r->{config_profile} = $val;
         },
+        completion => sub {
+            # return list of profiles in read config file
+
+            my %args = @_;
+            my $word    = $args{word} // '';
+            my $cmdline = $args{extras}{cmdline};
+            my $r       = $args{extras}{r};
+
+            # we are not called from cmdline, bail (actually we might want to
+            # return list of programs anyway, but we want to read the value of
+            # bash_global_dir et al)
+            return undef unless $cmdline;
+
+            # this is not activated yet
+            $r->{read_config} = 1;
+
+            my $res = $cmdline->parse_argv($r);
+            #return undef unless $res->[0] == 200;
+
+            # we are not reading any config file, return empty list
+            return [] if !$r->{read_config_file};
+
+            # re-read the config file and get the profiles
+            require Config::IOD::Reader;
+            my $reader = Config::IOD::Reader->new;
+            my $hoh = $reader->read_file($r->{read_config_file});
+            my @profiles;
+            for (sort keys %$hoh) {
+                push @profiles, $1 if /\Aprofile=(.+)/;
+            }
+
+            require Complete::Util;
+            Complete::Util::complete_array_elem(
+                array=>\@profiles, word=>$word, ci=>1);
+        },
     },
 
     # since the cmdline opts is consumed, Log::Any::App doesn't see this. we
@@ -625,8 +660,10 @@ sub _parse_argv2 {
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
             common_opts         => $copts,
+            strict              => $r->{in_completion} ? 0:1,
             on_missing_required_args => sub {
                 my %a = @_;
+
                 my ($an, $aa, $as) = ($a{arg}, $a{args}, $a{spec});
                 my $src = $as->{cmdline_src};
                 if ($src && $as->{req}) {
