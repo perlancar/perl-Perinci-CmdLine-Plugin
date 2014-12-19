@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.69    2014-12-19 (PERLANCAR)
+
+        - Add completion for --config-profile.
+
+
 0.68    2014-12-19 (PERLANCAR)
 
         - [Bugfix] Assigned to wrong 'args' variable so -cmdline was not passed
