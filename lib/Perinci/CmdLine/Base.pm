@@ -214,16 +214,20 @@ _
             # bash_global_dir et al)
             return undef unless $cmdline;
 
-            # this is not activated yet
-            $r->{read_config} = 1;
+            # we parse argument first so that we read config file (and the
+            # correct one, e.g. when user specifies --config-path)
+            {
+                # this is not activated yet
+                $r->{read_config} = 1;
 
-            my $res = $cmdline->parse_argv($r);
-            #return undef unless $res->[0] == 200;
+                my $res = $cmdline->parse_argv($r);
+                #return undef unless $res->[0] == 200;
+            }
 
             # we are not reading any config file, return empty list
             return [] if !$r->{read_config_file};
 
-            # re-read the config file and get the profiles
+            # we then re-read the config file and get the profiles
             require Config::IOD::Reader;
             my $reader = Config::IOD::Reader->new;
             my $hoh = $reader->read_file($r->{read_config_file});
