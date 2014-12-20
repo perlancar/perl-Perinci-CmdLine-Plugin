@@ -168,7 +168,7 @@ _
         completion => sub {
             require Complete::Util;
             my %args = @_;
-            my $cmdline = $args{extras}{cmdline};
+            my $cmdline = $args{cmdline};
             Complete::Util::complete_array_elem(
                 array => [keys %{ $cmdline->list_subcommands }],
                 word  => $args{word},
@@ -206,16 +206,16 @@ _
 
             my %args = @_;
             my $word    = $args{word} // '';
-            my $cmdline = $args{extras}{cmdline};
-            my $r       = $args{extras}{r};
+            my $cmdline = $args{cmdline};
+            my $r       = $args{r};
 
             # we are not called from cmdline, bail (actually we might want to
             # return list of programs anyway, but we want to read the value of
             # bash_global_dir et al)
             return undef unless $cmdline;
 
-            # we parse argument first so that we read config file (and the
-            # correct one, e.g. when user specifies --config-path)
+            # since this is common option, at this point we haven't parsed
+            # argument or even read config file. so we need to do that first.
             {
                 # this is not activated yet
                 $r->{read_config} = 1;
