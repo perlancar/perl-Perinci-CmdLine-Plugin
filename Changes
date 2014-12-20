@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.70    2014-12-20 (PERLANCAR)
+
+	- No functional changes.
+
+	- Adjust to periscomp 0.68+.
+
+
 0.69    2014-12-19 (PERLANCAR)
 
         - Add completion for --config-profile.
