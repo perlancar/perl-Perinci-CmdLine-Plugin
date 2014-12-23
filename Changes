@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.71    2014-12-23 (PERLANCAR)
+
+	- Split help message generating functionality to
+	  Perinci-CmdLine-Help so it's usable too by App-riap.
+
+
 0.70    2014-12-20 (PERLANCAR)
 
 	- No functional changes.
