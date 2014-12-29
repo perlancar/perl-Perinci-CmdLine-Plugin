@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.72    2014-12-29 (PERLANCAR)
+
+	- Adjust to Complete::Bash 0.14 which contains workaround for the
+	  annoyance of completing word containing ':' in bash.
+
+
 0.71    2014-12-23 (PERLANCAR)
 
 	- Split help message generating functionality to
