@@ -4,6 +4,8 @@ package Perinci::CmdLine::Base;
 # VERSION
 
 use 5.010001;
+use strict;
+use warnings;
 use Log::Any '$log';
 
 # this class can actually be a role instead of base class for pericmd &
@@ -436,14 +438,15 @@ sub do_completion {
         },
     );
 
-    my $formatter;
+    my $formatted;
     if ($r->{shell} eq 'bash') {
-        $formatter = \&Complete::Bash::format_completion;
+        $formatted = Complete::Bash::format_completion(
+            $compres, {word=>$words->[$cword]});
     } elsif ($r->{shell} eq 'tcsh') {
-        $formatter = \&Complete::Tcsh::format_completion;
+        $formatted = Complete::Tcsh::format_completion($compres);
     }
 
-    [200, "OK", $formatter->($compres),
+    [200, "OK", $formatted,
      # these extra result are for debugging
      {
          "func.words" => $words,
