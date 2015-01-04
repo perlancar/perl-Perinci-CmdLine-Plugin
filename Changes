@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.73    2015-01-04 (PERLANCAR)
+
+	- Re-add support for fish and zsh.
+
+
 0.72    2014-12-29 (PERLANCAR)
 
 	- Adjust to Complete::Bash 0.14 which contains workaround for the
