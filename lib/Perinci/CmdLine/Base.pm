@@ -379,9 +379,15 @@ sub do_completion {
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
         ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef,undef,'=') };
+    } elsif ($r->{shell} eq 'fish') {
+        require Complete::Fish;
+        ($words, $cword) = @{ Complete::Fish::parse_cmdline(undef) }; # XXX also break on '='
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
         ($words, $cword) = @{ Complete::Tcsh::parse_cmdline(undef) }; # XXX also break on '='
+    } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Zsh;
+        ($words, $cword) = @{ Complete::Zsh::parse_cmdline(undef) }; # XXX also break on '='
     } else {
         die "Unsupported shell '$r->{shell}'";
     }
@@ -442,8 +448,12 @@ sub do_completion {
     if ($r->{shell} eq 'bash') {
         $formatted = Complete::Bash::format_completion(
             $compres, {word=>$words->[$cword]});
+    } elsif ($r->{shell} eq 'fish') {
+        $formatted = Complete::Fish::format_completion($compres);
     } elsif ($r->{shell} eq 'tcsh') {
         $formatted = Complete::Tcsh::format_completion($compres);
+    } elsif ($r->{shell} eq 'zsh') {
+        $formatted = Complete::Zsh::format_completion($compres);
     }
 
     [200, "OK", $formatted,
