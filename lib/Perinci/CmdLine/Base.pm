@@ -308,7 +308,7 @@ sub get_meta {
 
 sub get_program_and_subcommand_name {
     my ($self, $r) = @_;
-    my $res = $self->program_name . " " .
+    my $res = ($self->program_name // "") . " " .
         ($r->{subcommand_name} // "");
     $res =~ s/\s+$//;
     $res;
