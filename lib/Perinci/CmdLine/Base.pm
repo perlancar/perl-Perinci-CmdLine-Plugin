@@ -1331,6 +1331,77 @@ If we are doing streaming argument, this will be set to the argument name.
 =back
 
 
+=head1 CONFIGURATION
+
+Configuration can be used to set function arguments.
+
+Configuration is currently in the L<IOD> (basically INI) format.
+
+By default these paths are searched: C<$HOME/$prog_name.conf>,
+C</etc/$prog_name.conf>. The location can be customized from command-line option
+C<--config-path>.
+
+All existing configuration files will be read in order.
+
+For application that does not have subcommand, you can put parameters outside
+any section, e.g.:
+
+ param=val
+ otherparam=val
+ ...
+
+For application that has subcommands, put parameters inside section with the
+same name as the subcommand name:
+
+ [subcommand1]
+ param=val
+ ...
+
+ [subcommand2]
+ param2=val
+ ...
+
+Or you can also put some parameters outside the section which will be used for
+all subcommands:
+
+ commonarg=val
+
+ [subcommand1]
+ param1=val
+ ...
+
+ [subcommand2]
+ param2=val
+ ...
+
+A configuration file can also have (multiple) profiles, to allow multiple
+configuration to be stored in a single file. Example:
+
+ [profile=p1]
+ a=1
+ b=2
+
+ [profile=p2]
+ a=10
+ b=20
+
+ [subcommand1 profile=p1]
+ c=3
+
+ [subcommand1 profile=p2]
+ c=1
+
+If you run:
+
+ % cmd subcommand1 --config-profile p1
+
+then your subcommand1 function will get: a=1, b=2, c=3. If you run:
+
+ % cmd subcommand1 --config-profile p2
+
+then your subcommand1 function will get: a=10, b=20, c=30.
+
+
 =head1 ATTRIBUTES
 
 =head2 actions => array
