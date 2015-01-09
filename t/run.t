@@ -629,6 +629,33 @@ subtest 'result metadata' => sub {
     };
 };
 
+subtest 'env' => sub {
+    {
+        local $ENV{SUM_NUMS_OPT} = '--json 1 2';
+        test_run(
+            name      => '--json',
+            args      => {program_name => 'sum-nums',
+                          url => '/Perinci/Examples/sum'},
+            argv      => [qw/3/],
+            exit_code => 0,
+            output_re => qr/^\[\s*200,\s*"OK",\s*6,\s*\{\}\s*\]/s,
+        );
+    }
+
+    {
+        local $ENV{foo_opt} = '--json 1 2';
+        test_run(
+            name      => '--json',
+            args      => {program_name => 'sum-nums',
+                          env_name => 'foo_opt',
+                          url => '/Perinci/Examples/sum'},
+            argv      => [qw/3/],
+            exit_code => 0,
+            output_re => qr/^\[\s*200,\s*"OK",\s*6,\s*\{\}\s*\]/s,
+        );
+    }
+};
+
 subtest 'config' => sub {
     my $dir = tempdir(CLEANUP=>1);
     write_file("$dir/prog.conf", <<'_');

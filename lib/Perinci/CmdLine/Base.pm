@@ -43,6 +43,15 @@ has summary => (is=>'rw');
 has tags => (is=>'rw');
 has url => (is=>'rw');
 
+has read_env => (is=>'rw', default=>1);
+has env_name => (
+    is => 'rw',
+    default => sub {
+        my $self = shift;
+        __default_env_name($self->program_name);
+    },
+);
+
 has read_config => (is=>'rw', default=>1);
 has config_filename => (is=>'rw');
 has config_dirs => (
@@ -293,6 +302,16 @@ _
 
 );
 
+sub __default_env_name {
+    my ($prog, $subc) = @_;
+    for ($prog, $subc) {
+        next unless defined;
+        $_ = uc($_);
+        s/[^A-Z0-9]+/_/g;
+    }
+    $prog . (defined($subc) ? "_$subc" : "") . "_OPT";
+}
+
 sub hook_before_read_config_file {}
 
 sub get_meta {
@@ -367,7 +386,41 @@ sub _detect_completion {
         return 1;
     }
 
+    # assume default is bash
+    $r->{shell} //= 'bash';
+
     0;
+}
+
+sub _read_env {
+    my ($self, $r) = @_;
+
+    return [] unless $self->read_env;
+    my $env_name = $self->env_name;
+    my $env = $ENV{$env_name};
+    return [] unless defined $env;
+
+    # XXX is it "proper" to use Complete::* modules to parse cmdline, outside
+    # the context of completion?
+
+    my $words;
+    if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0,'') };
+    } elsif ($r->{shell} eq 'fish') {
+        require Complete::Fish;
+        ($words, undef) = @{ Complete::Fish::parse_cmdline($env) };
+    } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
+        ($words, undef) = @{ Complete::Tcsh::parse_cmdline($env) };
+    } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Zsh;
+        ($words, undef) = @{ Complete::Zsh::parse_cmdline($env) };
+    } else {
+        die "Unsupported shell '$r->{shell}'";
+    }
+    $log->tracef("words from environment %s (%s): %s", $env_name, $env, $words);
+    $words;
 }
 
 sub do_completion {
@@ -393,6 +446,12 @@ sub do_completion {
     }
 
     shift @$words; $cword--; # strip program name
+
+    {
+        my $env_words = $self->_read_env($r);
+        unshift @$words, @$env_words;
+        $cword += @$env_words;
+    }
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
@@ -948,6 +1007,11 @@ sub run {
     eval {
         $self->hook_before_run($r);
 
+        {
+            my $env_words = $self->_read_env($r);
+            unshift @ARGV, @$env_words;
+        }
+
         my $parse_res = $self->parse_argv($r);
         if ($parse_res->[0] == 501) {
             # we'll need to send ARGV to the server, because it's impossible to
@@ -1413,6 +1477,17 @@ entity.
 
 Alternatively you can provide multiple functions from which the user can select
 using the first argument (see B<subcommands>).
+
+=head2 read_env => bool (default: 1)
+
+Whether to read environment variable for default options.
+
+=head2 env_name => str
+
+Environment name to read default options from. Default is from program name,
+upper-cased, sequences of dashes/nonalphanums replaced with a single underscore,
+plus a C<_OPT> suffix. So if your program name is called C<cpandb-cpanmeta> the
+default environment name is C<CPANDB_CPANMETA_OPT>.
 
 =head2 read_config => bool (default: 1)
 
