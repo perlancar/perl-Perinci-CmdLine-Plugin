@@ -303,13 +303,14 @@ _
 );
 
 sub __default_env_name {
-    my ($prog, $subc) = @_;
-    for ($prog, $subc) {
-        next unless defined;
+    my ($prog) = @_;
+
+    for ($prog) {
+        $_ //= "PROG"; # shouldn't happen
         $_ = uc($_);
         s/[^A-Z0-9]+/_/g;
     }
-    $prog . (defined($subc) ? "_$subc" : "") . "_OPT";
+    "${prog}_OPT";
 }
 
 sub hook_before_read_config_file {}
