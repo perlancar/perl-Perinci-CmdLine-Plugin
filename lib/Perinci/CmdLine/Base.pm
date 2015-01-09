@@ -520,6 +520,7 @@ sub do_completion {
      {
          "func.words" => $words,
          "func.cword" => $cword,
+         "cmdline.skip_format" => 1,
      }];
 }
 
