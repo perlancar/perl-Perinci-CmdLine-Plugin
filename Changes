@@ -1,5 +1,31 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.74    2015-01-09 (PERLANCAR)
+
+	[ENHANCEMENTS]
+
+        - Support supplying options from environment variable (like, e.g. cpanm
+          with its PERL_CPANM_OPT). By default environment variable named
+          '${PROG}_OPT' is used, e.g. if your script is named 'foo-bar' then the
+          environment variable FOO_BAR_OPT is consulted. The name is
+          configurable.
+
+        - Configuration parameter from outside section is now also used. This
+          allows putting common parameters.
+
+        [REMOVED FEATURES]
+
+        - Remove deprecated section naming in configuration variable
+          ('[PROFILE]' and '[SUBCOMMAND PROFILE]'). The correct and supported
+          naming is now ['profile=PROFILE'] and '[SUBCOMMAND profile=PROFILE]'.
+          This is already undocumented and deprecated since several releases
+          ago. This release removes the feature.
+
+        [DOCUMENTATION]
+
+        - Add section 'Program Flow' and 'Configuration File'.
+
+
 0.73    2015-01-04 (PERLANCAR)
 
 	- Re-add support for fish and zsh.
