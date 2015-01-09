@@ -454,14 +454,16 @@ sub do_completion {
         $cword += @$env_words;
     }
 
+    # @ARGV given by bash is messed up / different. during completion, we
+    # get ARGV from parsing COMP_LINE/COMP_POINT.
+    @ARGV = @$words;
+
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
-    {
-        # @ARGV given by bash is messed up / different. during completion, we
-        # get ARGV from parsing COMP_LINE/COMP_POINT.
-        local @ARGV = @$words;
-        $self->_parse_argv1($r);
-    }
+    $self->_parse_argv1($r);
+
+    #$log->tracef("ARGV=%s", \@ARGV);
+    #$log->tracef("words=%s", $words);
 
     # force format to text for completion, because user might type 'cmd --format
     # blah -^'.
@@ -469,6 +471,8 @@ sub do_completion {
 
     my $scd = $r->{subcommand_data};
     my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
+
+    my $subcommand_name_from = $r->{subcommand_name_from} // '';
 
     require Perinci::Sub::Complete;
     my $compres = Perinci::Sub::Complete::complete_cli_arg(
@@ -480,6 +484,7 @@ sub do_completion {
         riap_uri        => undef,
         riap_client     => $self->riap_client,
         extras          => {r=>$r, cmdline=>$self},
+        func_arg_starts_at => ($subcommand_name_from eq 'arg' ? 1:0),
         completion      => sub {
             my %args = @_;
             my $type = $args{type};
@@ -492,8 +497,8 @@ sub do_completion {
             # if subcommand name has not been supplied and we're at arg#0,
             # complete subcommand name
             if ($self->subcommands &&
-                    ($r->{subcommand_name_from}//'') ne '--cmd' &&
-                        $args{type} eq 'arg' && $args{argpos}==0) {
+                    $subcommand_name_from ne '--cmd' &&
+                         $args{type} eq 'arg' && $args{argpos}==0) {
                 require Complete::Util;
                 return Complete::Util::complete_array_elem(
                     array => [keys %{ $self->list_subcommands }],

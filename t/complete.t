@@ -16,5 +16,14 @@ test_complete(
     result     => ['apple', 'apricot'],
 );
 
+test_complete(
+    name       => 'completing positional argument, with subcommands',
+    args       => {subcommands=>{
+        sc1 => {url=>'/Perinci/Examples/test_completion'},
+    }},
+    comp_line0 => 'cmd sc1 9^',
+    result     => [9, 90..99],
+);
+
 DONE_TESTING:
 done_testing;
