@@ -542,6 +542,7 @@ sub _read_config {
     my $reader = Config::IOD::Reader->new;
     my %res;
     for my $path (@{ $r->{config_paths} }) {
+        $log->tracef("Reading config file %s ...", $path);
         my $hoh = $reader->read_file($path);
         $r->{read_config_file} = $path;
         for my $section (keys %$hoh) {
@@ -665,19 +666,21 @@ sub _parse_argv2 {
             my $scn  = $r->{subcommand_name};
             my $profile = $r->{config_profile};
             my $found;
-            for my $section (keys %$conf) {
+            # put GLOBAL before all other sections
+            my @sections = sort {
+                ($a eq 'GLOBAL' ? 0:1) <=> ($b eq 'GLOBAL' ? 0:1) ||
+                    $a cmp $b
+            } keys %$conf;
+            for my $section (@sections) {
                 if (defined $profile) {
                     if (length $scn) {
-                        next unless
-                            $section =~ /\A\Q$scn\E\s+\Q$profile\E\z/ # old, deprecated
-                                || $section =~ /\A\Q$scn\E\s+\Qprofile=$profile\E\z/;
+                        next unless $section =~ /\A(\Q$scn\E|GLOBAL)\s+\Qprofile=$profile\E\z/;
                     } else {
-                        next unless $section eq $profile # old, deprecated
-                            || $section eq "profile=$profile";
+                        next unless $section eq "profile=$profile";
                     }
                 } else {
                     if (length $scn) {
-                        next unless $section eq $scn;
+                        next unless $section eq $scn || $section eq 'GLOBAL';
                     } else {
                         next unless $section eq 'GLOBAL';
                     }
@@ -698,7 +701,6 @@ sub _parse_argv2 {
                 }
                 $log->tracef("args after reading config: %s", \%args);
                 $found++;
-                last;
             }
             if (defined($profile) && !$found &&
                     defined($r->{read_config_file}) &&
