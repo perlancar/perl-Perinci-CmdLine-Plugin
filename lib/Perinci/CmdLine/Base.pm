@@ -573,8 +573,10 @@ sub _parse_argv1 {
                 $co->{$k}{handler}->($go, $val, $r);
             };
         }
+        #$log->tracef("\@ARGV before parsing common opts: %s", \@ARGV);
         Getopt::Long::GetOptions(@go_spec);
         Getopt::Long::Configure($old_go_conf);
+        #$log->tracef("\@ARGV after  parsing common opts: %s", \@ARGV);
     }
 
     # select subcommand and fill subcommand data
@@ -1089,6 +1091,138 @@ sub run {
 
 =for Pod::Coverage ^(.+)$
 
+=head1 DESCRIPTION
+
+
+=head1 PROGRAM FLOW (NORMAL)
+
+If you execute C<run()>, this is what will happen, in order:
+
+=over
+
+=item * Detect if we are running under tab completion mode
+
+This is done by checking the existence of special environment varibles like
+C<COMP_LINE> or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM FLOW
+(TAB COMPLETION)">. Otherwise, continue.
+
+=item * Run hook_before_run, if defined
+
+This hook (and every other hook) will be passed a single argument C<$r>, a hash
+that contains request data (see L</"REQUEST KEYS">).
+
+Some ideas that you can do in this hook: XXX.
+
+=item * Parse command-line arguments (@ARGV) and set C<action>
+
+If C<read_env> attribute is set to true, and there is environment variable
+defined to set default options (see documentation on L<read_env> and C<env_name>
+attributes) then the environment variable is parsed and prepended first to the
+command-line, so it can be parsed together. For example, if your program is
+called C<foo> and environment variable C<FOO_OPT> is set to C<--opt1 --opt2
+val>. When you execute:
+
+ % foo --no-opt1 --trace 1 2
+
+then C<@ARGV> will be set to C<<('--opt1', '--opt2', 'val', '--no-opt1',
+'--trace', 1, 2)>>. This way, command-line arguments can have a higher
+precedence and override setting from the environment variable (in the example,
+C<--opt1> is negated by C<--no-opt1>).
+
+Currently, parsing is done in two steps. The first step is to extract subcommand
+name. Because we want to allow e.g. C<cmd --verbose subcmd> in addition to C<cmd
+subcmd> (that is, user is allowed to specify options before subcommand name) we
+cannot simply get subcommand name from the first element of C<@ARGV> but must
+parse command-line options. Also, we want to allow user specifying subcommand
+name from option C<cmd --cmd subcmd> because we want to support the notion of
+"default subcommand" (subcommand that takes effect if there is no subcommand
+specified).
+
+In the first step, since we do not know the subcommand yet, we only parse common
+options and strip them. Unknown options at this time will be passed through.
+
+If user specifies common option like C<--help> or <--version>, then action will
+be set to (respectively) C<help> and C<version> and the second step will be
+skipped. Otherwise we continue the the second step and action by default is set
+to C<call>.
+
+At the end of the first step, we already know the subcommand name (of course, if
+subcommand name is unknown, we exit with error) along with subcommand spec: its
+URL, per-subcommand settings, and so on (see the C<subcommands> attribute). If
+there are no subcommands, subcommand name is set to C<''> (empty string) and the
+subcommand spec is filled from the attributes, e.g. C<url>, C<summary>, <tags>,
+and so on.
+
+We then perform a C<meta> Riap request to the URL to get the Rinci metadata.
+From the Rinci metadata we get list of arguments (the C<args> property). From
+this, we generate a spec of command-line options to feed to L<Getopt::Long>.
+There are some conversions being done, e.g. an argument called C<foo_bar> will
+become command-line option C<--foo-bar>. Command-line aliases from metadata are
+also added to the C<Getopt::Long> spec.
+
+It is also at this step that we read config file (if C<read_config> attribute is
+true). We run B<hook_before_read_config_file> first. Some ideas to do in this
+hook: setting default config profile.
+
+We then pass the spec to C<Getopt::Long::GetOptions>, we get function arguments.
+
+We then run B<hook_after_parse_argv>. Some ideas to do in this hook: XXX.
+
+Function arguments that are still missing can be filled from STDIN or files, if
+the metadata specifies C<cmdline_src> property (see L<Rinci::function> for more
+details).
+
+=item * Delegate to C<run_$action> method
+
+After we get the action from the previous step, we delegate to separate
+C<run_$action> method (so there is C<run_version>, C<run_help>, and so on; and
+also C<run_call>). These methods also receive C<$r> as their argument and must
+return an enveloped result (see L<Rinci::function> for more details).
+
+Result is put in C<< $r->{res} >>.
+
+=item * Run hook_format_result
+
+Hook must set C<< $r->{fres} >> (formatted result).
+
+If result has C<cmdline.skip_format> result metadata property, then this step is
+skipped and C<< $r->{fres} >> is simply taken from C<< $r->{res}[2] >>.
+
+A C<run_$action> method can set
+
+=item * Run hook_display_result
+
+This hook is used by XXX.
+
+=item * Run hook_after_run, if defined
+
+Some ideas to do in this hook: XXX.
+
+=item * Exit (or return result)
+
+If C<exit> attribute is true, will C<exit()> with the action's envelope result
+status. If status is 200, exit code is 0. Otherwise exit code is status minus
+300. So, a response C<< [501, "Not implemented"] >> will result in exit code of
+201.
+
+If C<exit> attribute is false, will simply return the action result (C<<
+$r->{res} >>). And will also set exit code in C<<
+$r->{res}[3]{'x.perinci.cmdline.base.exit_code'} >>.
+
+=back
+
+
+=head1 PROGRAM FLOW (TAB COMPLETION)
+
+If program is detected running in tab completion mode, there is some differences
+in the flow. First, C<@ARGV> is set from C<COMP_LINE> (or C<COMMAND_LINE>)
+environment variable. Afterwards, completion is done by calling
+L<Perinci::Sub::Complete>'s C<complete_cli_arg>.
+
+The result is then output to STDOUT (resume from Run hook_format_result step in
+the normal program flow).
+
+
 =head1 REQUEST KEYS
 
 The various values in the C<$r> hash/stash.
@@ -1511,22 +1645,8 @@ C<foo-bar.conf>.
 
 =head2 $cmd->run() => ENVRES
 
-Will parse command-line arguments with C<parse_argv()>, select/set subcommand,
-call hooks, run the appropriate C<run_ACTION()> method, and finally format and
-display the result.
-
-The C<run_ACTION()> methods will be passed C<$r> and is supposed to return an
-enveloped result. The result will then be put in C<< $r->{res} >>.
-
-If C<exit> attribute is true, will exit with the action's envelope result
-status. If status is 200, exit code is 0. Otherwise exit code is status minus
-300. So, a response C<< [501, "Not implemented"] >> will result in exit code of
-201.
-
-If C<exit> attribute is false, will simply return the action result (C<<
-$r->{res} >>). And will also return the exit code in C<<
-$r->{res}[3]{'x.perinci.cmdline.base.exit_code'} >>.
-
+The main method to run your application. See L</"PROGRAM FLOW"> for more details
+on what this method does.
 
 =head2 $cmd->do_completion() => ENVRES
 
