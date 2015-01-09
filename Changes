@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.76    2015-01-09 (PERLANCAR)
+
+	- [Bugfix] Fix completing positional function arguments when there
+	  are subcommands.
+
+
 0.75    2015-01-09 (PERLANCAR)
 
         - No functional changes.
