@@ -491,8 +491,9 @@ sub do_completion {
             }
             # if subcommand name has not been supplied and we're at arg#0,
             # complete subcommand name
-            if ($self->subcommands && $r->{subcommand_name_from} ne '--cmd' &&
-                    $args{type} eq 'arg' && $args{argpos}==0) {
+            if ($self->subcommands &&
+                    ($r->{subcommand_name_from}//'') ne '--cmd' &&
+                        $args{type} eq 'arg' && $args{argpos}==0) {
                 require Complete::Util;
                 return Complete::Util::complete_array_elem(
                     array => [keys %{ $self->list_subcommands }],
