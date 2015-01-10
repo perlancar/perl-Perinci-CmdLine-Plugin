@@ -322,6 +322,7 @@ sub get_meta {
     die $res unless $res->[0] == 200;
     my $meta = $res->[2];
     $r->{meta} = $meta;
+    $log->tracef("[pericmd] Running hook_after_get_meta ...");
     $self->hook_after_get_meta($r);
     $meta;
 }
@@ -399,6 +400,7 @@ sub _read_env {
     return [] unless $self->read_env;
     my $env_name = $self->env_name;
     my $env = $ENV{$env_name};
+    $log->tracef("[pericmd] Checking env %s: %s", $env_name, $env);
     return [] unless defined $env;
 
     # XXX is it "proper" to use Complete::* modules to parse cmdline, outside
@@ -420,7 +422,7 @@ sub _read_env {
     } else {
         die "Unsupported shell '$r->{shell}'";
     }
-    $log->tracef("words from environment %s (%s): %s", $env_name, $env, $words);
+    $log->tracef("[pericmd] Words from env: %s", $words);
     $words;
 }
 
@@ -536,6 +538,7 @@ sub _read_config {
 
     my ($self, $r) = @_;
 
+    $log->tracef("[pericmd] Finding config files ...");
     if (!$r->{config_paths}) {
         $r->{config_paths} = [];
         my $name = $self->config_filename //
@@ -545,11 +548,12 @@ sub _read_config {
             push @{ $r->{config_paths} }, $path if -e $path;
         }
     }
+    $log->tracef("[pericmd] Found config files: %s", $r->{config_paths});
 
     my $reader = Config::IOD::Reader->new;
     my %res;
     for my $path (@{ $r->{config_paths} }) {
-        $log->tracef("Reading config file %s ...", $path);
+        $log->tracef("[pericmd] Reading config file %s ...", $path);
         my $hoh = $reader->read_file($path);
         $r->{read_config_file} = $path;
         for my $section (keys %$hoh) {
@@ -667,6 +671,7 @@ sub _parse_argv2 {
 
         # then read from configuration
         if ($r->{read_config}) {
+            $log->tracef("[pericmd] Running hook_before_read_config_file ...");
             $self->hook_before_read_config_file($r);
 
             my $conf = $self->_read_config($r);
@@ -706,7 +711,7 @@ sub _parse_argv2 {
                         $args{$k} = $v;
                     }
                 }
-                $log->tracef("args after reading config: %s", \%args);
+                $log->tracef("[pericmd] args after reading config files: %s", \%args);
                 $found++;
             }
             if (defined($profile) && !$found &&
@@ -775,6 +780,8 @@ sub _parse_argv2 {
 
 sub parse_argv {
     my ($self, $r) = @_;
+
+    $log->tracef("[pericmd] Parsing \@ARGV: %s", \@ARGV);
 
     # we parse argv twice. the first parse is with common_opts only so we're
     # able to catch --help, --version, etc early without having to know about
@@ -989,6 +996,7 @@ sub display_result {
         } elsif (ref($x) eq 'ARRAY') {
             # tied array
             while (~~(@$x) > 0) {
+                $log->tracef("[pericmd] Running hook_format_row ...");
                 print $handle $self->hook_format_row($r, shift(@$x));
             }
         } else {
@@ -1002,6 +1010,7 @@ sub display_result {
 
 sub run {
     my ($self) = @_;
+    $log->tracef("[pericmd] -> run(), \@ARGV=%s", \@ARGV);
 
     my $r = {orig_argv=>[@ARGV]};
 
@@ -1017,6 +1026,7 @@ sub run {
     }
 
     eval {
+        $log->tracef("[pericmd] Running hook_before_run ...");
         $self->hook_before_run($r);
 
         {
@@ -1039,6 +1049,7 @@ sub run {
         # set defaults
         $r->{action} //= 'call';
 
+        $log->tracef("[pericmd] Running hook_after_parse_argv ...");
         $self->hook_after_parse_argv($r);
         $self->parse_cmdline_src($r);
         my $missing = $parse_res->[3]{"func.missing_args"};
@@ -1051,6 +1062,7 @@ sub run {
 
         my $meth = "run_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
+        $log->tracef("[pericmd] Running %s() ...", $meth);
         $r->{res} = $self->$meth($r);
     };
     my $err = $@;
@@ -1074,10 +1086,13 @@ sub run {
     } elsif ($r->{res}[3]{stream}) {
         # stream will be formatted as displayed by display_result()
     } else {
+        $log->tracef("[pericmd] Running hook_format_result ...");
         $r->{fres} = $self->hook_format_result($r) // '';
     }
     $self->select_output_handle($r);
+    $log->tracef("[pericmd] Running hook_display_result ...");
     $self->hook_display_result($r);
+    $log->tracef("[pericmd] Running hook_after_run ...");
     $self->hook_after_run($r);
 
     my $exitcode;
@@ -1087,9 +1102,11 @@ sub run {
         $exitcode = $self->status2exitcode($r->{res}[0]);
     }
     if ($self->exit) {
+        $log->tracef("[pericmd] exit(%s)", $exitcode);
         exit $exitcode;
     } else {
         # so this can be tested
+        $log->tracef("[pericmd] <- run(), exitcode=%s", $exitcode);
         $r->{res}[3]{'x.perinci.cmdline.base.exit_code'} = $exitcode;
         return $r->{res};
     }

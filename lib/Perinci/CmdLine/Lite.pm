@@ -350,6 +350,7 @@ sub run_call {
 
     my %extra;
     if ($r->{send_argv}) {
+        $log->tracef("[pericmd] Sending argv to server: %s", $extra{argv});
         $extra{argv} = $r->{orig_argv};
     } else {
         $extra{args} = $r->{args};
@@ -357,8 +358,13 @@ sub run_call {
 
     $extra{stream_arg} = 1 if $r->{stream_arg};
 
+    my $url = $r->{subcommand_data}{url};
+
+    # currently we don't log args because it's potentially large
+    $log->tracef("[pericmd] Riap request: action=call, url=%s", $url);
+
     $self->riap_client->request(
-        call => $r->{subcommand_data}{url}, \%extra);
+        call => $url, \%extra);
 }
 
 1;
