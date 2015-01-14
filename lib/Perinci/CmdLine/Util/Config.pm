@@ -10,6 +10,10 @@ use warnings;
 
 our %SPEC;
 
+$SPEC{get_default_config_dirs} = {
+    v => 1.1,
+    args => {},
+};
 sub get_default_config_dirs {
     my @dirs;
     if ($^O eq 'MSWin32') {

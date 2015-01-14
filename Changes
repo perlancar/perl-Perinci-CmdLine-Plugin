@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.78    2015-01-14 (PERLANCAR)
+
+	- Refactor config reading routine to
+	  Perinci::CmdLine::Util::Config, change 'read_config_file' request
+	  key to 'read_config_files', add request key 'config' containing
+	  the whole config.
+
+
 0.77    2015-01-10 (PERLANCAR)
 
 	- No functional changes.
