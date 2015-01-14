@@ -57,17 +57,8 @@ has config_filename => (is=>'rw');
 has config_dirs => (
     is=>'rw',
     default => sub {
-        my @dirs;
-        if ($^O eq 'MSWin32') {
-            require File::HomeDir;
-            # currently i don't know where is the appropriate place equivalent
-            # to /etc on windows
-            push @dirs, "$ENV{HOMEDRIVE}$ENV{HOMEPATH}";
-        } else {
-            push @dirs, $ENV{HOME};
-            push @dirs, "/etc";
-        }
-        [grep {defined} @dirs];
+        require Perinci::CmdLine::Util::Config;
+        Perinci::CmdLine::Util::Config::get_default_config_dirs();
     },
 );
 
@@ -236,20 +227,21 @@ _
             }
 
             # we are not reading any config file, return empty list
-            return [] if !$r->{read_config_file};
+            return [] unless $r->{config};
 
-            # we then re-read the config file and get the profiles
-            require Config::IOD::Reader;
-            my $reader = Config::IOD::Reader->new;
-            my $hoh = $reader->read_file($r->{read_config_file});
             my @profiles;
-            for (sort keys %$hoh) {
-                push @profiles, $1 if /\Aprofile=(.+)/;
+            for (keys %{$r->{config}}) {
+                if (length $r->{subcommand_name}) {
+                    push @profiles, $1
+                        if /\A\Q$r->{subcommand_name}\E \s+ profile=(.+)/x;
+                } else {
+                    push @profiles, $1 if /\Aprofile=(.+)/;
+                }
             }
 
             require Complete::Util;
             Complete::Util::complete_array_elem(
-                array=>\@profiles, word=>$word, ci=>1);
+                array=>[sort @profiles], word=>$word, ci=>1);
         },
     },
 
@@ -534,36 +526,22 @@ sub do_completion {
 }
 
 sub _read_config {
-    require Config::IOD::Reader;
+    require Perinci::CmdLine::Util::Config;
 
     my ($self, $r) = @_;
 
     $log->tracef("[pericmd] Finding config files ...");
-    if (!$r->{config_paths}) {
-        $r->{config_paths} = [];
-        my $name = $self->config_filename //
-            $self->program_name . ".conf";
-        for my $dir (@{ $self->config_dirs }) {
-            my $path = "$dir/" . $name;
-            push @{ $r->{config_paths} }, $path if -e $path;
-        }
-    }
-    $log->tracef("[pericmd] Found config files: %s", $r->{config_paths});
-
-    my $reader = Config::IOD::Reader->new;
-    my %res;
-    for my $path (@{ $r->{config_paths} }) {
-        $log->tracef("[pericmd] Reading config file %s ...", $path);
-        my $hoh = $reader->read_file($path);
-        $r->{read_config_file} = $path;
-        for my $section (keys %$hoh) {
-            my $hash = $hoh->{$section};
-            for (keys %$hash) {
-                $res{$section}{$_} = $hash->{$_};
-            }
-        }
-    }
-    \%res;
+    my $res = Perinci::CmdLine::Util::Config::read_config(
+        config_paths    => $r->{config_paths},
+        config_filename => $self->config_filename,
+        config_dirs     => $self->config_dirs,
+        program_name    => $self->program_name,
+    );
+    die $res unless $res->[0] == 200;
+    $r->{config} = $res->[2];
+    $r->{read_config_files} = $res->[3]{'func.read_files'};
+    $log->tracef("[pericmd] Read config files: %s",
+                 $r->{'read_config_files'});
 }
 
 sub _parse_argv1 {
@@ -653,6 +631,8 @@ sub _parse_argv1 {
 }
 
 sub _parse_argv2 {
+    require Perinci::CmdLine::Util::Config;
+
     my ($self, $r) = @_;
 
     my %args;
@@ -674,51 +654,24 @@ sub _parse_argv2 {
             $log->tracef("[pericmd] Running hook_before_read_config_file ...");
             $self->hook_before_read_config_file($r);
 
-            my $conf = $self->_read_config($r);
-            my $scn  = $r->{subcommand_name};
-            my $profile = $r->{config_profile};
-            my $found;
-            # put GLOBAL before all other sections
-            my @sections = sort {
-                ($a eq 'GLOBAL' ? 0:1) <=> ($b eq 'GLOBAL' ? 0:1) ||
-                    $a cmp $b
-            } keys %$conf;
-            for my $section (@sections) {
-                if (defined $profile) {
-                    if (length $scn) {
-                        next unless $section =~ /\A(\Q$scn\E|GLOBAL)\s+\Qprofile=$profile\E\z/;
-                    } else {
-                        next unless $section eq "profile=$profile";
-                    }
-                } else {
-                    if (length $scn) {
-                        next unless $section eq $scn || $section eq 'GLOBAL';
-                    } else {
-                        next unless $section eq 'GLOBAL';
-                    }
-                }
-                my $as = $meta->{args} // {};
-                for my $k (keys %{ $conf->{$section} }) {
-                    my $v = $conf->{$section}{$k};
-                    # since IOD might return a scalar or an array (depending on
-                    # whether there is a single param=val or multiple param=
-                    # lines), we need to arrayify the value if the argument is
-                    # expected to be an array.
-                    if (ref($v) ne 'ARRAY' && $as->{$k} && $as->{$k}{schema} &&
-                            $as->{$k}{schema}[0] eq 'array') {
-                        $args{$k} = [$v];
-                    } else {
-                        $args{$k} = $v;
-                    }
-                }
-                $log->tracef("[pericmd] args after reading config files: %s", \%args);
-                $found++;
-            }
-            if (defined($profile) && !$found &&
-                    defined($r->{read_config_file}) &&
-                        !$r->{ignore_missing_config_profile_section}) {
-                return [412,
-                        "Profile '$profile' not found in configuration file"];
+            $self->_read_config($r);
+            my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
+                config          => $r->{config},
+                args            => \%args,
+                subcommand_name => $r->{subcommand_name},
+                config_profile  => $r->{config_profile},
+                meta            => $meta,
+            );
+            die $res unless $res->[0] == 200;
+            $log->tracef("[pericmd] args after reading config files: %s",
+                         \%args);
+            my $found = $res->[3]{'func.found'};
+            if (defined($r->{config_profile}) && !$found &&
+                    defined($r->{read_config_files}) &&
+                        @{$r->{read_config_files}} &&
+                            !$r->{ignore_missing_config_profile_section}) {
+                return [412, "Profile '$r->{config_profile}' not found ".
+                            "in configuration file"];
             }
         }
 
@@ -1270,10 +1223,17 @@ set to true even though config file does not exist). This is never set to true
 when C<read_config> attribute is set, which means that we never try to read any
 config file.
 
-=item * read_config_file => str
+=item * config => hash
 
-This is set in the routine that reads config file, C<_read_config()>, containing
-the path to the config file that is used.
+This is set in the routine that reads config file, containing the config hash.
+It might be an empty hash (if there is on config file to read), or a hash with
+sections as keys and hashrefs as values (configuration for each section). The
+data can be merged from several existing config files.
+
+=item * read_config_files => array
+
+This is set in the routine that reads config file, containing the list of config
+files actually read, in order.
 
 =item * config_paths => array of str
 
