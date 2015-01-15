@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.79    2015-01-15 (PERLANCAR)
+
+	- Fixes in help message (program summary from meta was not
+	  displayed, show subcommands, passed wrong variable).
+
+
 0.78    2015-01-14 (PERLANCAR)
 
 	- Refactor config reading routine to
