@@ -328,15 +328,15 @@ sub run_help {
     my $has_sc_no_sc = $self->subcommands && !length($r->{subcommand_name});
     delete $common_opts->{subcommands} if $self->subcommands && !$has_sc_no_sc;
 
-    my $meta   = $has_sc_no_sc ? {v=>1.1} :
-        $self->get_meta($r, $scd->{url} // $self->{url});
+    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
 
     my $res = Perinci::CmdLine::Help::gen_help(
         program_name => $self->get_program_and_subcommand_name($r),
-        program_summary => $scd ? $scd->{summary} : undef,
+        program_summary => ($scd ? $scd->{summary}:undef ) // $meta->{summary},
         program_description => $scd ? $scd->{description} : undef,
         meta => $meta,
-        common_opts => $self->common_opts,
+        subcommands => $has_sc_no_sc ? $self->subcommands : undef,
+        common_opts => $common_opts,
         per_arg_json => $self->per_arg_json,
         per_arg_yaml => $self->per_arg_yaml,
     );
