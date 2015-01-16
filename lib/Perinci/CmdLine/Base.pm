@@ -755,6 +755,19 @@ sub parse_argv {
     $self->_parse_argv2($r);
 }
 
+sub __gen_iter {
+    my $fh = shift;
+    return sub {
+        state $eof;
+        return undef if $eof;
+        my $l = <$fh>;
+        unless (defined $l) {
+            $eof++; return undef;
+        }
+        $l;
+    };
+}
+
 # parse cmdline_src argument spec properties for filling argument value from
 # file and/or stdin. currently does not support argument submetadata.
 sub parse_cmdline_src {
@@ -834,7 +847,8 @@ sub parse_cmdline_src {
                             $r->{args}{$an} ne '-';
                     #$log->trace("Getting argument '$an' value from stdin ...");
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        \*STDIN : $is_ary ? [<STDIN>] : do {local $/;<STDIN>};
+                        __gen_iter(\*STDIN) : $is_ary ? [<STDIN>] :
+                            do {local $/; ~~<STDIN>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin';
                 } elsif ($src eq 'stdin_or_files') {
                     # push back argument value to @ARGV so <> can work to slurp
@@ -852,7 +866,8 @@ sub parse_cmdline_src {
                     }
 
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        \*ARGV : $is_ary ? [<>] : do { local $/; <> };
+                        __gen_iter(\*ARGV) : $is_ary ? [<>] :
+                            do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
@@ -874,7 +889,8 @@ sub parse_cmdline_src {
                                  ": $!"];
                     }
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        $fh : $is_ary ? [<$fh>] : do { local $/; <$fh> };
+                        __gen_iter($fh) : $is_ary ? [<$fh>] :
+                            do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
                     $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
                 }
