@@ -756,8 +756,12 @@ sub parse_argv {
 }
 
 sub __gen_iter {
-    my $fh = shift;
+    my ($fh, $type) = @_;
     return sub {
+        # XXX this will be configurable later. currently by default reading
+        # binary is per-64k while reading string is line-by-line.
+        local $/ = \(64*1024) if $type eq 'buf';
+
         state $eof;
         return undef if $eof;
         my $l = <$fh>;
@@ -847,7 +851,7 @@ sub parse_cmdline_src {
                             $r->{args}{$an} ne '-';
                     #$log->trace("Getting argument '$an' value from stdin ...");
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter(\*STDIN) : $is_ary ? [<STDIN>] :
+                        __gen_iter(\*STDIN, $type) : $is_ary ? [<STDIN>] :
                             do {local $/; ~~<STDIN>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin';
                 } elsif ($src eq 'stdin_or_files') {
@@ -866,7 +870,7 @@ sub parse_cmdline_src {
                     }
 
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter(\*ARGV) : $is_ary ? [<>] :
+                        __gen_iter(\*ARGV, $iter) : $is_ary ? [<>] :
                             do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
                 } elsif ($src eq 'file') {
@@ -889,7 +893,7 @@ sub parse_cmdline_src {
                                  ": $!"];
                     }
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter($fh) : $is_ary ? [<$fh>] :
+                        __gen_iter($fh, $iter) : $is_ary ? [<$fh>] :
                             do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
                     $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
