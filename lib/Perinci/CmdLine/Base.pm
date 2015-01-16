@@ -954,27 +954,14 @@ sub display_result {
 
     my $handle = $r->{output_handle};
 
-    use experimental 'smartmatch';
     if ($resmeta->{stream}) {
         my $x = $res->[2];
-        if (ref($x) eq 'GLOB') {
-            while (!eof($x)) {
-                while(<$x>) { print $handle $_ }
-            }
-        } elsif (blessed($x) && $x->can('getline') && $x->can('eof')) {
-            # IO::Handle-like object
-            while (!$x->eof) {
-                print $handle $x->getline;
-            }
-        } elsif (ref($x) eq 'ARRAY') {
-            # tied array
-            while (~~(@$x) > 0) {
-                $log->tracef("[pericmd] Running hook_format_row ...");
-                print $handle $self->hook_format_row($r, shift(@$x));
+        if (ref($x) eq 'CODE') {
+            while (defined(my $l = $x->())) {
+                print $l;
             }
         } else {
-            die [500, "Invalid stream in result (not a glob/IO::Handle-like ".
-                     "object/(tied) array)\n"];
+            die [500, "Invalid stream in result (not a coderef)"];
         }
     } else {
         print $handle $fres;
