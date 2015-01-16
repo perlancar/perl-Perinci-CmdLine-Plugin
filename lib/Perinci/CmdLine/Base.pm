@@ -870,7 +870,7 @@ sub parse_cmdline_src {
                     }
 
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter(\*ARGV, $iter) : $is_ary ? [<>] :
+                        __gen_iter(\*ARGV, $type) : $is_ary ? [<>] :
                             do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
                 } elsif ($src eq 'file') {
@@ -893,7 +893,7 @@ sub parse_cmdline_src {
                                  ": $!"];
                     }
                     $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter($fh, $iter) : $is_ary ? [<$fh>] :
+                        __gen_iter($fh, $type) : $is_ary ? [<$fh>] :
                             do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
                     $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
