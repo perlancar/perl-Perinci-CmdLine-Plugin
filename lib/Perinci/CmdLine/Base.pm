@@ -948,13 +948,14 @@ sub select_output_handle {
 sub display_result {
     my ($self, $r) = @_;
 
+    my $meta = $r->{meta};
     my $res = $r->{res};
     my $fres = $r->{fres};
     my $resmeta = $res->[3] // {};
 
     my $handle = $r->{output_handle};
 
-    if ($resmeta->{stream}) {
+    if ($resmeta->{stream} // $meta->{result}{stream}) {
         my $x = $res->[2];
         if (ref($x) eq 'CODE') {
             while (defined(my $l = $x->())) {
@@ -1043,7 +1044,7 @@ sub run {
   FORMAT:
     if ($r->{res}[3]{'cmdline.skip_format'}) {
         $r->{fres} = $r->{res}[2];
-    } elsif ($r->{res}[3]{stream}) {
+    } elsif ($r->{res}[3]{stream} // $r->{meta}{result}{stream}) {
         # stream will be formatted as displayed by display_result()
     } else {
         $log->tracef("[pericmd] Running hook_format_result ...");
