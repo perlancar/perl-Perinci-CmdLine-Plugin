@@ -1,5 +1,18 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.80    2015-01-17 (PERLANCAR)
+
+        - Support Rinci 1.1.71, where streaming input & output uses coderef
+          only.
+
+        - [Bugfix] Respect 'result/stream' metadata property which provides
+          default for whether result is streaming or not (it is overriden by the
+          'stream' result metadata property).
+
+        - [doc] Reorganize manual: to avoid confusion, move all examples from
+          FAQ to Examples. Add examples for result streaming. Update examples.
+
+
 0.79    2015-01-15 (PERLANCAR)
 
 	- Fixes in help message (program summary from meta was not

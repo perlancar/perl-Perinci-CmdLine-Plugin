@@ -476,6 +476,8 @@ When run:
  | words |    61 |
  +-------+-------+
 
+Note: by default you will get string/text input line-by-line, and for binary
+(C<buf>) per-64k. This will be configurable in the future.
 
 
 =head1 OUTPUT
