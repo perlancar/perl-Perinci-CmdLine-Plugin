@@ -811,6 +811,80 @@ _
     );
 };
 
+subtest "stream input (simple types)" => sub {
+    my ($fh, $filename) = tempfile();
+    write_file($filename, "one\ntwo three\nfour\n");
+    test_run(
+        args => {
+            url => '/Perinci/Examples/Stream/wc',
+        },
+        argv => [$filename],
+        exit_code => 0,
+        output_re => qr/
+                           ^chars \s+ 19\n
+                           ^lines \s+ 3\n
+                           ^words \s+ 4\n
+                       /mx,
+    );
+};
+
+subtest "stream input (json stream)" => sub {
+    my ($fh, $filename) = tempfile();
+    write_file($filename, qq({}\n{"a":1}\n{"b":2,"c":3}\n{"d":4}\n));
+    test_run(
+        args => {
+            url => '/Perinci/Examples/Stream/wc_keys',
+        },
+        argv => [$filename],
+        exit_code => 0,
+        output_re => qr/
+                           ^keys \s+ 4\n
+                       /mx,
+    );
+
+    write_file($filename, qq({}\n{\n));
+    test_run(
+        name => 'records need to be json',
+        args => {
+            url => '/Perinci/Examples/Stream/wc_keys',
+        },
+        argv => [$filename],
+        exit_code => 200,
+    );
+};
+
+subtest "stream output (simple types)" => sub {
+    my ($fh, $filename) = tempfile();
+    write_file($filename, qq(1\n3\n5\n));
+    test_run(
+        args => {
+            url => '/Perinci/Examples/Stream/square_input',
+        },
+        argv => [$filename],
+        exit_code => 0,
+        output_re => qr/
+                           ^1\n
+                           ^9\n
+                           ^25\n
+                       /mx,
+    );
+};
+
+subtest "stream output (json stream)" => sub {
+    test_run(
+        args => {
+            url => '/Perinci/Examples/Stream/hash_stream',
+        },
+        argv => [qw/-n 3/],
+        exit_code => 0,
+        output_re => qr/
+                           ^\Q{"num":1}\E\n
+                           ^\Q{"num":2}\E\n
+                           ^\Q{"num":3}\E\n
+                       /mx,
+    );
+};
+
 # XXX test logging
 
 DONE_TESTING:

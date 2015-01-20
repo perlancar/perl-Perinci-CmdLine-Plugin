@@ -690,10 +690,22 @@ sub _parse_argv2 {
         }
 
         my $has_cmdline_src;
-        for my $av (values %{ $meta->{args} // {} }) {
+        for my $ak (keys %{$meta->{args} // {}}) {
+            my $av = $meta->{args}{$ak};
             if ($av->{cmdline_src}) {
                 $has_cmdline_src = 1;
                 last;
+            }
+            # this will probably be eventually checked by the rinci function's
+            # schema: stream arguments need to have cmdline_src set to
+            # stdin_or_files, stdin, or file.
+            if ($av->{stream}) {
+                unless ($av->{cmdline_src} &&
+                            $av->{cmdline_src} =~
+                                /\A(stdin|file|stdin_or_files)\z/) {
+                    die "BUG: stream argument '$ak' needs to have cmdline_src ".
+                        "set to stdin, file, or stdin_or_files";
+                }
             }
         }
 
@@ -756,20 +768,45 @@ sub parse_argv {
 }
 
 sub __gen_iter {
-    my ($fh, $type) = @_;
-    return sub {
-        # XXX this will be configurable later. currently by default reading
-        # binary is per-64k while reading string is line-by-line.
-        local $/ = \(64*1024) if $type eq 'buf';
+    require Data::Sah::Util::Type;
 
-        state $eof;
-        return undef if $eof;
-        my $l = <$fh>;
-        unless (defined $l) {
-            $eof++; return undef;
-        }
-        $l;
-    };
+    my ($fh, $sch, $argname) = @_;
+    my $type = Data::Sah::Util::Type::get_type($sch);
+
+    if (Data::Sah::Util::Type::is_simple($sch)) {
+        return sub {
+            # XXX this will be configurable later. currently by default reading
+            # binary is per-64k while reading string is line-by-line.
+            local $/ = \(64*1024) if $type eq 'buf';
+
+            state $eof;
+            return undef if $eof;
+            my $l = <$fh>;
+            unless (defined $l) {
+                $eof++; return undef;
+            }
+            $l;
+        };
+    } else {
+        # expect JSON stream for non-simple types
+        require JSON;
+        state $json = JSON->new->allow_nonref;
+        my $i = -1;
+        return sub {
+            state $eof;
+            return undef if $eof;
+            $i++;
+            my $l = <$fh>;
+            unless (defined $l) {
+                $eof++; return undef;
+            }
+            eval { $l = $json->decode($l) };
+            if ($@) {
+                die "Invalid JSON in stream argument '$argname' record #$i: $@";
+            }
+            $l;
+        };
+    }
 }
 
 # parse cmdline_src argument spec properties for filling argument value from
@@ -815,7 +852,7 @@ sub parse_cmdline_src {
             my $type = $as->{schema}[0]
                 or die "BUG: No schema is defined for arg '$an'";
             # Riap::HTTP currently does not support streaming input
-            $r->{stream_arg} = $an if $as->{stream} && $url !~ /^https?:/;
+            my $do_stream = $as->{stream} && $url !~ /^https?:/;
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
@@ -823,7 +860,7 @@ sub parse_cmdline_src {
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
                          "is not str/buf/array, only those are supported now"]
-                    unless $type =~ /\A(str|buf|array)\z/;
+                    unless $do_stream || $type =~ /\A(str|buf|array)\z/;
                 if ($src =~ /\A(stdin|stdin_or_files)\z/) {
                     die [531, "Only one argument can be specified ".
                              "cmdline_src stdin/stdin_or_files"]
@@ -850,9 +887,10 @@ sub parse_cmdline_src {
                         if defined($r->{args}{$an}) &&
                             $r->{args}{$an} ne '-';
                     #$log->trace("Getting argument '$an' value from stdin ...");
-                    $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter(\*STDIN, $type) : $is_ary ? [<STDIN>] :
-                            do {local $/; ~~<STDIN>};
+                    $r->{args}{$an} = $do_stream ?
+                        __gen_iter(\*STDIN, $as->{schema}, $an) :
+                            $is_ary ? [<STDIN>] :
+                                do {local $/; ~~<STDIN>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin';
                 } elsif ($src eq 'stdin_or_files') {
                     # push back argument value to @ARGV so <> can work to slurp
@@ -869,9 +907,10 @@ sub parse_cmdline_src {
                         die [500, "Can't read file '$_': $!"] if !(-r $_);
                     }
 
-                    $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter(\*ARGV, $type) : $is_ary ? [<>] :
-                            do {local $/; ~~<>};
+                    $r->{args}{$an} = $do_stream ?
+                        __gen_iter(\*ARGV, $as->{schema}, $an) :
+                            $is_ary ? [<>] :
+                                do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
@@ -892,9 +931,10 @@ sub parse_cmdline_src {
                         die [500, "Can't open file '$fname' for argument '$an'".
                                  ": $!"];
                     }
-                    $r->{args}{$an} = $r->{stream_arg} ?
-                        __gen_iter($fh, $type) : $is_ary ? [<$fh>] :
-                            do { local $/; ~~<$fh> };
+                    $r->{args}{$an} = $do_stream ?
+                        __gen_iter($fh, $as->{schema}, $an) :
+                            $is_ary ? [<$fh>] :
+                                do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
                     $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
                 }
@@ -946,6 +986,8 @@ sub select_output_handle {
 }
 
 sub display_result {
+    require Data::Sah::Util::Type;
+
     my ($self, $r) = @_;
 
     my $meta = $r->{meta};
@@ -955,11 +997,23 @@ sub display_result {
 
     my $handle = $r->{output_handle};
 
+    my $sch = $meta->{result}{schema};
+    my $type = Data::Sah::Util::Type::get_type($sch) // '';
+
     if ($resmeta->{stream} // $meta->{result}{stream}) {
         my $x = $res->[2];
         if (ref($x) eq 'CODE') {
-            while (defined(my $l = $x->())) {
-                print $l;
+            if (Data::Sah::Util::Type::is_simple($sch)) {
+                while (defined(my $l = $x->())) {
+                    print $l;
+                    print "\n" unless $type eq 'buf';
+                }
+            } else {
+                require JSON;
+                state $json = JSON->new->allow_nonref;
+                while (defined(my $rec = $x->())) {
+                    print $json->encode($rec), "\n";
+                }
             }
         } else {
             die [500, "Invalid stream in result (not a coderef)"];
@@ -1315,10 +1369,6 @@ Result from C<hook_format_result()>.
 
 Set by select_output_handle() to choose output handle. Normally it's STDOUT but
 can also be pipe to pager (if paging is turned on).
-
-=item * stream_arg => str
-
-If we are doing streaming argument, this will be set to the argument name.
 
 =back
 

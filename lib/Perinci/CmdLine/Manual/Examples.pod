@@ -547,7 +547,7 @@ caller to read data from.
  };
  sub nat {
      my $n = 1;
-     [200, "OK", sub { $n++; "$n\n" }];
+     [200, "OK", sub { $n++ }];
  }
 
 =head2 Adding support for new format
