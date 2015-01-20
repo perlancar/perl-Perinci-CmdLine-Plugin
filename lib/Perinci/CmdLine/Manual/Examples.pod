@@ -479,6 +479,9 @@ When run:
 Note: by default you will get string/text input line-by-line, and for binary
 (C<buf>) per-64k. This will be configurable in the future.
 
+If argument type is not simple (e.g. an array or hash), then JSON stream input
+will be assumed. This means, each line of input will be parsed as JSON.
+
 
 =head1 OUTPUT
 
@@ -549,6 +552,9 @@ caller to read data from.
      my $n = 1;
      [200, "OK", sub { $n++ }];
  }
+
+If result type is not simple (e.g. an array or hash), then each record will be
+encoded into JSON, to produce JSON stream.
 
 =head2 Adding support for new format
 
