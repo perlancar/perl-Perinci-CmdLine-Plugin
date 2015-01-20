@@ -1,5 +1,15 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.81    2015-01-20 (PERLANCAR)
+
+        - Add JSON stream (input, output) support. Currently this is only
+          minimally documented. Basically, if argument type is non-simple, then
+          each input stream line will be assumed to be in JSON (an exception
+          will be thrown if it does not parse as valid JSON) and will be decoded
+          before fed to function. Likewise, if result type is non-simple, then
+          every record will be encoded to JSON to produce JSON stream.
+
+
 0.80    2015-01-17 (PERLANCAR)
 
         - Support Rinci 1.1.71, where streaming input & output uses coderef
