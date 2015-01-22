@@ -119,6 +119,58 @@ sub BUILD {
     $self->{per_arg_json} //= 1;
 }
 
+my ($ph1); # patch handles
+my $setup_progress;
+sub _setup_progress_output {
+    my $self = shift;
+
+    if ($ENV{PROGRESS} // (-t STDOUT)) {
+        require Progress::Any::Output;
+        my $out = Progress::Any::Output->set("TermProgressBarColor");
+        $setup_progress = 1;
+        # we need to patch the logger adapters so it won't interfere with
+        # progress meter's output
+        require Monkey::Patch::Action;
+        $ph1 = Monkey::Patch::Action::patch_package(
+            'Log::Any::Adapter::ScreenColoredLevel', '_log',
+            'wrap', sub {
+                my $ctx = shift;
+                my $method = shift;
+                #my ($self, $msg, @params) = @_;
+                my $self = $_[0];
+
+                return if $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$method} <
+                    $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$self->{min_level}};
+
+                # clean currently displayed progress bar first
+                if ($out->{lastlen}) {
+                    print
+                        "\b" x $out->{lastlen},
+                            " " x $out->{lastlen},
+                                "\b" x $out->{lastlen};
+                    undef $out->{lastlen};
+                }
+
+                # force output update so progress bar is displayed again
+                # immediately
+                $Progress::Any::output_data{"$out"}{force_update} = 1;
+
+                $ctx->{orig}->(@_);
+            },
+        ) if defined &{"Log::Any::Adapter::ScreenColoredLevel::_log"};
+    }
+}
+
+sub _unsetup_progress_output {
+    my $self = shift;
+
+    return unless $setup_progress;
+    my $out = $Progress::Any::outputs{''}[0];
+    $out->cleanup if $out->can("cleanup");
+    undef $ph1;
+    $setup_progress = 0;
+}
+
 sub hook_before_run {}
 
 sub hook_after_parse_argv {
@@ -256,7 +308,10 @@ sub hook_display_result {
     $self->display_result($r);
 }
 
-sub hook_after_run {}
+sub hook_after_run {
+    my ($self, $r) = @_;
+    $self->_unsetup_progress_output;
+}
 
 sub hook_after_get_meta {
     my ($self, $r) = @_;
@@ -363,6 +418,11 @@ sub run_call {
     # currently we don't log args because it's potentially large
     $log->tracef("[pericmd] Riap request: action=call, url=%s", $url);
 
+    # setup output progress indicator
+    if ($r->{meta}{features}{progress}) {
+        $self->_setup_progress_output;
+    }
+
     $self->riap_client->request(
         call => $url, \%extra);
 }
@@ -405,7 +465,9 @@ Below is summary of the differences between P::C::Lite and P::C:
 =item * P::C::Lite starts much faster
 
 The target is under 0.04-0.05s to make shell tab completion convenient. On the
-other hand, P::C can start between 0.20-0.50s.
+other hand, P::C application can spend between 0.20-0.50s before displaying
+output, due to various abovementioned overheads: loading more libraries,
+validator code generation, etc.
 
 =item * P::C::Lite uses simpler formatting
 
@@ -440,8 +502,8 @@ L<Text::Table::Tiny>.
 =item * No support for some protocols
 
 Instead of L<Perinci::Access>, this module uses the more lightweight alternative
-L<Perinci::Access::Lite> which does not support some URL schemes (http/https and
-local are supported though).
+L<Perinci::Access::Lite> which does not support some URL schemes. http/https and
+local are supported though.
 
 =item * No automatic validation from schema in P::C::Lite
 
@@ -458,15 +520,12 @@ Perinci::Access::Lite) adds too much startup overhead.
 Only logging to screen is supported, using
 L<Log::Any::Adapter::ScreenColoredLevel>.
 
-=item * P::C::Lite does not support progress indicator
-
 =item * P::C::Lite does not support I18N
 
 =item * P::C::Lite does not yet support these environment variables
 
  PERINCI_CMDLINE_COLOR_THEME
  PERINCI_CMDLINE_SERVER
- PROGRESS
  COLOR
  UTF8
 
@@ -538,6 +597,10 @@ Set log level to 'trace'.
 =head2 LOG_LEVEL
 
 Set log level.
+
+=head2 PROGRESS => BOOL
+
+Explicitly turn the progress bar on/off.
 
 
 =head1 RESULT METADATA
