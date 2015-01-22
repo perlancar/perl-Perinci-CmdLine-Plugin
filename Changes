@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.82    2015-01-22 (PERLANCAR)
+
+	- Add progress bar feature to Perinci::CmdLine::Lite, like in
+	  Perinci::CmdLine.
+
+
 0.81    2015-01-20 (PERLANCAR)
 
         - Add JSON stream (input, output) support. Currently this is only
