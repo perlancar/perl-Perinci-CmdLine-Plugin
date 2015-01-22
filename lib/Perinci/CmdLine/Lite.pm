@@ -141,7 +141,7 @@ sub _setup_progress_output {
                 #my ($self, $msg, @params) = @_;
                 my $self = $_[0];
 
-                return unless $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$meth} <
+                return if $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$meth} <
                     $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$self->{min_level}};
 
                 # clean currently displayed progress bar first
