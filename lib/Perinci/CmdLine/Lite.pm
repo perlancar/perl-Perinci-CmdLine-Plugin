@@ -119,7 +119,6 @@ sub BUILD {
     $self->{per_arg_json} //= 1;
 }
 
-my %ph; # patch handles
 my $setup_progress;
 sub _setup_progress_output {
     my $self = shift;
@@ -127,40 +126,8 @@ sub _setup_progress_output {
     return unless $ENV{PROGRESS} // (-t STDOUT);
 
     require Progress::Any::Output;
-    my $out = Progress::Any::Output->set("TermProgressBarColor");
+    Progress::Any::Output->set("TermProgressBarColor");
     $setup_progress = 1;
-
-    # we need to patch the logger adapters so it won't interfere with
-    # progress meter's output
-    require Monkey::Patch::Action;
-    for my $meth (Log::Any->logging_methods) {
-        $ph{$meth} = Monkey::Patch::Action::patch_package(
-            'Log::Any::Adapter::ScreenColoredLevel', $meth,
-            'wrap', sub {
-                my $ctx = shift;
-                #my ($self, $msg, @params) = @_;
-                my $self = $_[0];
-
-                return if $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$meth} <
-                    $Log::Any::Adapter::ScreenColoredLevel::logging_levels{$self->{min_level}};
-
-                # clean currently displayed progress bar first
-                if ($out->{lastlen}) {
-                    print
-                        "\b" x $out->{lastlen},
-                            " " x $out->{lastlen},
-                                "\b" x $out->{lastlen};
-                    undef $out->{lastlen};
-                }
-
-                # force output update so progress bar is displayed again
-                # immediately
-                $Progress::Any::output_data{"$out"}{force_update} = 1;
-
-                $ctx->{orig}->(@_);
-            },
-        ) if defined &{"Log::Any::Adapter::ScreenColoredLevel::$meth"};
-    }
 }
 
 sub _unsetup_progress_output {
@@ -169,7 +136,6 @@ sub _unsetup_progress_output {
     return unless $setup_progress;
     my $out = $Progress::Any::outputs{''}[0];
     $out->cleanup if $out->can("cleanup");
-    delete $ph{$_} for keys %ph;
     $setup_progress = 0;
 }
 
