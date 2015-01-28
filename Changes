@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.83    2015-01-28 (PERLANCAR)
+
+	- No functional changes.
+
+	- Move patching of Log::Any::Adapter::ScreenColoredLevel to
+	  Progress::Any::Output::Term* so it can be used outside of
+	  Perinci::CmdLine.
+
+
 0.82    2015-01-22 (PERLANCAR)
 
 	- Add progress bar feature to Perinci::CmdLine::Lite, like in
