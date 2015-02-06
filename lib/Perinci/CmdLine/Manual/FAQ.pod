@@ -8,40 +8,125 @@ package Perinci::CmdLine::Manual::FAQ; # just to make podweaver happy
 
 =head1 NOMENCLATURE
 
-C<[Classic]> denotes that the answer applies to L<Perinci::CmdLine> only and not
-L<Perinci::CmdLine::Lite>. C<[Lite]> denotes that the answer is specific to
-Perinci::CmdLine::Lite. C<[Any]> denotes that the answer is specific to
-L<Perinci::CmdLine::Any>.
+C<[PC::Classic]> denotes that the answer applies to L<Perinci::CmdLine::Classic>
+only and not L<Perinci::CmdLine::Lite>. C<[PC::Lite]> denotes that the answer is
+specific to Perinci::CmdLine::Lite. C<[PC::Any]> denotes that the answer is
+specific to L<Perinci::CmdLine::Any>.
 
 
 =head1 GENERAL
 
-=head2 Why are there two frameworks Perinci::CmdLine and Perinci::CmdLine::Lite?
+=head2 Why are there two frameworks Perinci::CmdLine::Classic and Perinci::CmdLine::Lite?
 
-First there is Perinci::CmdLine (that's why it's refered to as C<[Classic]> in
-this document). But as it grows in features, the startup overhead also grows.
-Perinci::CmdLine::Lite is a reimplementation that is focused on keeping startup
-overhead low to avoid making tab completion noticeably slow. However, some
-features are still missing in Lite. For more information, see the documentation
-of L<Perinci::CmdLine::Lite>.
+There used to be a single flavor Perinci::CmdLine. As it grows in features, the
+startup overhead also grows. So another project is started,
+L<Perinci::CmdLine::Lite> (hereby called PC::Lite) that focuses on keeping
+startup overhead low to avoid making tab completion noticeably slow. It also
+tries to reduce the number of dependencies. Later, the original Perinci::CmdLine
+is renamed to L<Perinci::CmdLine::Classic> (hereby called PC::Classic). However,
+some PC::Classic features are still missing in PC::Lite.
+
+PC::Lite stays lightweight by avoiding the use of libraries that have large
+dependencies or add too much to startup overhead. This includes replacing
+L<Perinci::Access> with L<Perinci::Access::Lite> for metadata access, currently
+not using L<Data::Sah> for validator generation, avoiding L<Text::ANSITable> for
+formatting results, and replacing L<Log::Any::App> (which uses the relatively
+heavy L<Log::Log4perl>) with L<Log::Any::Adapter::ScreenColoredLevel> for
+logging.
+
+PC::Lite tries to start under 0.04-0.05s to make shell tab completion
+convenient. On the other hand, PC::Classic application can spend between
+0.20-0.50s before displaying output, due to various abovementioned overheads:
+loading more libraries, validator code generation, etc.
 
 Implementation-wise, the two share a lot of common code in the form of their
 base class, L<Perinci::CmdLine::Base>. The interface is also 99% the same.
 
 It is possible that in the future the two versions will merge again.
 
+=head2 What Classic features are currently still missing in Lite?
+
+=over
+
+=item * More sophisticated formatting
+
+Instead of L<Perinci::Result::Format> (especially for 'text*' formats which use
+L<Data::Format::Pretty::Console> and L<Text::ANSITable>), to keep dependencies
+minimal and formatting quick, PC::Lite uses the following simple rules that work
+for a significant portion of common data structures:
+
+1) if result is undef, print nothing.
+
+2) if result is scalar, print it (with newline automatically added).
+
+3) if result is an array of scalars (check at most 5 first rows), print it one
+line for each element.
+
+4) if result is a hash of scalars (check at most 5 keys), print a two column
+table, first column is key and second column is value. Keys will be sorted.
+
+5) if result is an array of hashes of scalars (check at most 5 elements), print
+as table.
+
+6) if result is an array of arrays of scalars (check at most 5 elements), print
+as table.
+
+7) otherwise print as JSON (after cleaning it with L<Data::Clean::JSON>).
+
+YAML and the other formats are not supported.
+
+Table is printed using the more lightweight and much faster
+L<Text::Table::Tiny>.
+
+PC::Classic supports more sophisticated formatting, can keep colored and
+full-width Unicode characters stay aligned in a table.
+
+=item * Support for extra protocols
+
+Instead of L<Perinci::Access>, PC::Lite uses the more lightweight alternative
+L<Perinci::Access::Lite> which does not support some URL schemes (riap+tcp,
+riap+unix, riap+pipe). http/https and local are supported though.
+
+=item * Automatic validation of schemas
+
+Perinci::Access automatically wraps subroutines with L<Perinci::Sub::Wrapper>,
+which generates schema validation code using L<Data::Sah>. This adds too much
+startup overhead, so currently PC::Lite avoids it. Some minimal/rudimentary
+validation is done instead.
+
+=item * Color themes
+
+=item * Undo
+
+=item * More advanced logging
+
+Only logging to screen is currently supported by PC::Lite, using
+L<Log::Any::Adapter::ScreenColoredLevel>. PC::Classic, using L<Log::Any::App>
+can log to files, directories, syslog, and other outputs.
+
+=item * I18N
+
+=item * The following environment variables
+
+ PERINCI_CMDLINE_COLOR_THEME
+ PERINCI_CMDLINE_SERVER
+ COLOR
+ UTF8
+
+=back
+
+
 =head2 What is Perinci::CmdLine::Any then?
 
-This is a module that allows you to select Perinci::CmdLine or
-Perinci::CmdLine::Lite. So your scripts do not need to be modified when user
-wants to switch between the two.
+This is a module that allows you to select PC::Classic or PC::Lite. So your
+scripts do not need to be modified when user wants to switch between the two.
 
-=head2 How does P::C compare with other CLI-app frameworks?
+=head2 How does Perinci::CmdLine compare with other CLI-app frameworks?
 
 The main difference is that Perinci::CmdLine accesses your code through L<Riap>
-protocol, not directly. This means that aside from local Perl code, P::C can
-also provide CLI for code in remote hosts/languages. For a very rough demo,
-download and run this PHP Riap::TCP server
+protocol, not directly. This means that aside from local Perl code,
+Perinci::CmdLine can also provide CLI for code in remote hosts/languages. For a
+very rough demo, download and run this PHP Riap::TCP server
 https://github.com/sharyanto/php-Phinci/blob/master/demo/phi-tcpserve-terbilang.php
 on your system. After that, try running:
 

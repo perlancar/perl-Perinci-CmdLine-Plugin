@@ -96,12 +96,12 @@ necessary.
 
 Finally, you "run" your function:
 
- use Perinci::CmdLine; # or ::Any, or ::Lite
- Perinci::CmdLine->new(url => '/main/cliapp')->run;
+ use Perinci::CmdLine::Any;
+ Perinci::CmdLine::Any->new(url => '/main/cliapp')->run;
 
 For a multi-subcommand application:
 
- Perinci::CmdLine->new(
+ Perinci::CmdLine::Any->new(
      url => '/main/cliapp',
      subcommands => {
          sc1 => { url => '/main/do_sc1' },
@@ -128,10 +128,11 @@ TODO
 
 =head1 LOGGING
 
-Logging is done with L<Log::Any> (for producing). For displaying logs, P::C uses
-L<Log::Any::App> currently which supports multiple outputs (screen, file, etc)
-while P::C::Lite currently uses L<Log::Any::Adapter::ScreenColoredLevel> which
-only supports displaying to screen.
+Logging is done with L<Log::Any> (for producing). For displaying logs,
+PC::Classic uses L<Log::Any::App> currently which supports multiple outputs
+(screen, file, etc) while PC::Lite currently uses
+L<Log::Any::Adapter::ScreenColoredLevel> which only supports displaying to
+screen.
 
 Loading Log::Any adapters adds to startup overhead time, so the framework tries
 to be smart when determining whether or not to do logging output. Here are the

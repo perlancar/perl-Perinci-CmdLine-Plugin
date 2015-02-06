@@ -12,8 +12,9 @@ use Log::Any '$log';
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
 # have attributes), Role::Basic, or Moo::Role.
 
-use if  $INC{'Perinci/CmdLine.pm'}, qw(Moo);
-use if !$INC{'Perinci/CmdLine.pm'}, qw(Mo  build default);
+use if  $INC{'Perinci/CmdLine.pm'}, qw(Moo); # XXX support will be removed later
+use if  $INC{'Perinci/CmdLine/Classic.pm'}, qw(Moo);
+use if !$INC{'Perinci/CmdLine/Classic.pm'}, qw(Mo  build default);
 
 has actions => (is=>'rw');
 has common_opts => (is=>'rw');
@@ -72,11 +73,10 @@ has config_dirs => (
 # role: requires 'hook_after_run'
 # role: requires 'default_prompt_template'
 
-# we put common stuffs here, but Perinci::CmdLine's final version will differ
-# from PC::Lite's in several aspects: translation, supported output formats, PC
-# currently adds some extra keys, some options are not added by PC (like --json
-# if required version < 1.04) and vice versa (PC::Lite doesn't have --yaml,
-# --perl, history/undo stuffs).
+# we put common stuffs here, but PC::Classic's final version will differ from
+# PC::Lite's in several aspects: translation, supported output formats,
+# PC::Classic currently adds some extra keys, some options are not added by
+# PC::Lite (e.g. history/undo stuffs).
 our %copts = (
 
     version => {
@@ -1128,7 +1128,7 @@ sub run {
 }
 
 1;
-# ABSTRACT: Base class for Perinci::CmdLine{,::Lite}
+# ABSTRACT: Base class for Perinci::CmdLine{Classic,::Lite}
 
 =for Pod::Coverage ^(.+)$
 
@@ -1526,13 +1526,11 @@ A partial example from the default set by the framework:
 
 The default contains: help (getopt C<help|h|?>), version (getopt C<version|v>),
 action (getopt C<action>), format (getopt C<format=s>), format_options (getopt
-C<format-options=s>), json*, yaml*, perl*. If there are more than one
-subcommands, this will also be added: list (getopt C<list|l>). If dry-run is
-supported by function, there will also be: dry_run (getopt C<dry-run>). If undo
-is turned on, there will also be: undo (getopt C<undo>), redo (getopt C<redo>),
-history (getopt C<history>), clear_history (getopt C<clear-history>).
-
-*) Currently only added if you say C<use Perinci::CmdLine 1.04>.
+C<format-options=s>), json). If there are more than one subcommands, this will
+also be added: list (getopt C<list|l>). If dry-run is supported by function,
+there will also be: dry_run (getopt C<dry-run>). If undo is turned on, there
+will also be: undo (getopt C<undo>), redo (getopt C<redo>), history (getopt
+C<history>), clear_history (getopt C<clear-history>).
 
 Sometimes you do not want some options, e.g. to remove C<format> and
 C<format_options>:
@@ -1609,12 +1607,8 @@ Specify L<Riap> protocol version to use. Will be passed to C<riap_client_args>.
 
 =head2 riap_client => obj
 
-Optional. Can be set to L<Perinci::Access> (or compatible) instance. Sometimes a
-Riap request needs to be performed, e.g. when requesting completion to the
-server. If this is empty, the request won't be done.
-
-See Perinci::CmdLine where it is set by default. In Perinci::CmdLine::Lite, this
-is left undefined by default.
+Set to L<Perinci::Access> (or compatible) instance. PC::Lite uses lighter
+version L<Perinci::Access::Lite>.
 
 =head2 riap_version => float (default: 1.1)
 
@@ -1849,8 +1843,7 @@ This module interprets the following result metadata property/attribute:
 
 =head2 attribute: cmdline.exit_code => int
 
-Instruct Perinci::CmdLine to use this exit code, instead of using (function
-status - 300).
+Instruct to use this exit code, instead of using (function status - 300).
 
 =head2 attribute: cmdline.result => any
 
@@ -1888,8 +1881,8 @@ For example:
 
 =head2 attribute: cmdline.pager => STR
 
-Instruct Perinci::CmdLine to use specified pager instead of C<$ENV{PAGER}> or
-the default C<less> or C<more>.
+Instruct to use specified pager instead of C<$ENV{PAGER}> or the default C<less>
+or C<more>.
 
 =head2 attribute: cmdline.skip_format => bool (default: 0)
 

@@ -9,12 +9,12 @@ package Perinci::CmdLine::Manual::Examples; # just to make podweaver happy
 =head1 DESCRIPTION
 
 In the examples, L<Perinci::CmdLine::Any> is used to show examples that are
-applicable to either L<Perinci::CmdLine> or L<Perinci::CmdLine::Lite>. For
-examples that are more appropriate or only applicable to specific
+applicable to either L<Perinci::CmdLine::Classic> or L<Perinci::CmdLine::Lite>.
+For examples that are more appropriate or only applicable to specific
 implementation, the specific module will be used.
 
-Perinci::CmdLine is hereby referred to as C<P::C>, while Perinci::CmdLine as
-C<P::C::Lite>.
+Perinci::CmdLine::Classic is hereby referred to as C<PC::Classic>, while
+Perinci::CmdLine as C<PC::Lite>.
 
 
 =head1 BASICS
@@ -55,8 +55,8 @@ describe the function).
 In this example, the function and its metadata is put inside the same script.
 You can of course put them in a separate Perl module, and use them with e.g. C<<
 url => '/Your/Module/func' >>. It is also worth mentioning that if you use the
-P::C framework, your functions can also be used directly by other Perl
-modules/code since they are just regular Perl functions.
+Perinci::CmdLine framework, your functions can also be used directly by other
+Perl modules/code since they are just regular Perl functions.
 
 The function returns a 3-element array containing HTTP-like status code, a
 status message, and the actual result.
@@ -77,7 +77,7 @@ different format:
  % ./hello --json
  [200,"OK","Hello, world!"]
 
- % ./hello --format perl; # only in P::C, not available in P::C::Lite
+ % ./hello --format perl; # only in PC::Classic, not available in PC::Lite
  [200, "OK", "Hello, world!"]
 
 
@@ -168,7 +168,7 @@ Extra arguments will also result in an error:
 =head2 Argument schema (and more on text output formats)
 
 Following up from the previous example, here's another example with more
-arguments. Also note that I use P::C since P::C::Lite doesn't do schema
+arguments. Also note that I use PC::Classic since PC::Lite doesn't do schema
 validation.
 
  #!perl
@@ -245,11 +245,11 @@ See L<Data::Sah> for more about the schema syntax.
 
 Fourth, you return the result as a data structure (an array) instead of directly
 printing the result using C<print()> or C<say()>. This is done to make your
-function more reusable outside the context of CLI. P::C will format your data
-structure nicely using L<Data::Format::Pretty>. Your array will be printed as a
-multicolumn ANSI table by default, on interactive mode. If you pipe the output
-of your program, you will by default get a simpler text output. This can be
-chosen explicitly using the C<--format> common option.
+function more reusable outside the context of CLI. PC::Classic will format your
+data structure nicely using L<Data::Format::Pretty>. Your array will be printed
+as a multicolumn ANSI table by default, on interactive mode. If you pipe the
+output of your program, you will by default get a simpler text output. This can
+be chosen explicitly using the C<--format> common option.
 
  % ./hello Jimmy Sion Habil --format text; # will output pretty or simple depending on whether interactive
  % ./hello Jimmy Sion Habil --format text-simple; # will still output simple table even when interactive
@@ -806,9 +806,9 @@ XXX mention about C<testcomp>.
 
 The choice as JSON as the network transport protocol for Riap (because it is the
 lowest common denominator across languages like JavaScript, PHP, Python, Ruby,
-Perl) makes dealing with binary data requires an extra step or two. The P::C
-framework are equipped with some features to make this simpler and more
-convenient.
+Perl) makes dealing with binary data requires an extra step or two. The
+Perinci::CmdLine framework are equipped with some features to make this simpler
+and more convenient.
 
 First, to make a function that accepts binary data (in its arguments), you need
 to specify the argument type as C<buf>. To return binary data as result, you
@@ -837,9 +837,10 @@ need to specify C<result>'s schema type as C<buf>. Example:
      [200, "OK", $compressed];
  }
 
-If you use this function in P::C, you will get the command-line option
-C<--data-base64> in addition to the usual C<--data>. With C<--data-base64>, you
-can specify binary data including NUL bytes from the command-line.
+If you use this function in Perinci::CmdLine, you will get the command-line
+option C<--data-base64> in addition to the usual C<--data>. With
+C<--data-base64>, you can specify binary data including NUL bytes from the
+command-line.
 
 If you specify the argument as accepting data from stdin or files like this:
 
@@ -859,9 +860,9 @@ you can pass binary data, e.g.:
 P:C will take care of encoding this data to network server when you specify
 C<riap_version> attribute to 1.2. So this process is transparent to you.
 
-When outputing binary result, in the C<text> output formats, P::C will also
-print the binary result from server as-is without any newline added. So you can
-pipe binary data to files/processes unmodified.
+When outputing binary result, in the C<text> output formats, Perinci::CmdLine
+will also print the binary result from server as-is without any newline added.
+So you can pipe binary data to files/processes unmodified.
 
 
 =head1 SEE ALSO

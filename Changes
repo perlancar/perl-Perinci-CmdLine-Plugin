@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.84    2015-02-06 (PERLANCAR) (unreleased)
+
+        - No functional changes.
+
+        - [doc] Reflect the Perinci::CmdLine -> Perinci::CmdLine::Classic rename
+          in the documentation.
+
+
 0.83    2015-01-28 (PERLANCAR)
 
 	- No functional changes.
