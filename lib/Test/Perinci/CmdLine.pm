@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(test_run test_complete);
 
-our $CLASS = "Perinci::CmdLine";
+our $CLASS = "Perinci::CmdLine::Lite";
 
 sub test_run {
     my %args = @_;
@@ -112,7 +112,7 @@ sub test_complete {
 }
 
 1;
-# ABSTRACT: Test library for Perinci::CmdLine{,::Lite}
+# ABSTRACT: Test library for Perinci::CmdLine{::Classic,::Lite}
 
 =head1 FUNCTIONS
 
