@@ -857,8 +857,8 @@ you can pass binary data, e.g.:
 
  % yourprog < /some/bindata
 
-P:C will take care of encoding this data to network server when you specify
-C<riap_version> attribute to 1.2. So this process is transparent to you.
+Perinci::CmdLine will take care of encoding this data to network server when you
+specify C<riap_version> attribute to 1.2. So this process is transparent to you.
 
 When outputing binary result, in the C<text> output formats, Perinci::CmdLine
 will also print the binary result from server as-is without any newline added.
