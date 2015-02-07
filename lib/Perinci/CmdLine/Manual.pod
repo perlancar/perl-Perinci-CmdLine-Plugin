@@ -191,7 +191,7 @@ determined from L<UTF8> environment as well as terminal's capabilities.
 =back
 
 
-=head1 COLOR THEMES [Classic]
+=head1 [Classic] COLOR THEMES
 
 By default colors are used, but if terminal is detected as not having color
 support, they are turned off. You can also turn off colors by setting COLOR=0 or
