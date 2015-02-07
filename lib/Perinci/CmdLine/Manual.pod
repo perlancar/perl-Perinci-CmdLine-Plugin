@@ -62,11 +62,11 @@ recognized.
 
 =head1 CONCEPTS
 
-P::C is very function-oriented (and very not object-oriented, on purpose). You
-write your "business logic" in a function (of course, you are free to subdivide
-or delegate to other functions, but there must be one main function for a
-single-subcommand CLI application, or one function for each subcommand in a
-multiple-subcommand CLI application.
+Perinci::CmdLine is very function-oriented (and very not object-oriented, on
+purpose). You write your "business logic" in a function (of course, you are free
+to subdivide or delegate to other functions, but there must be one main function
+for a single-subcommand CLI application, or one function for each subcommand in
+a multiple-subcommand CLI application.
 
  sub cliapp {
      ...
@@ -154,7 +154,7 @@ This allows you, e.g. to turn off logging by default for subcommands that need
 faster startup time. You can still turn on logging for those subcommands by
 LOG=1.
 
-=item * [P::C] If action metadata's default_log setting is defined, use that
+=item * [Classic] If action metadata's default_log setting is defined, use that
 
 For example, actions like C<help>, C<list>, and C<version> has C<default_log>
 set to 0, for faster startup time. You can still turn on logging for those
@@ -165,7 +165,7 @@ actions by LOG=1.
 =back
 
 
-=head1 [P::C] UTF8 OUTPUT
+=head1 [Classic] UTF8 OUTPUT
 
 By default, C<< binmode(STDOUT, ":utf8") >> is issued if utf8 output is desired.
 This is determined by, in order:
@@ -191,7 +191,7 @@ determined from L<UTF8> environment as well as terminal's capabilities.
 =back
 
 
-=head1 COLOR THEMES [P::C]
+=head1 COLOR THEMES [Classic]
 
 By default colors are used, but if terminal is detected as not having color
 support, they are turned off. You can also turn off colors by setting COLOR=0 or
@@ -399,13 +399,13 @@ For other shells: some shells can emulate bash (like zsh) and for some other
 command-line option.
 
 C<shcompgen> is a CLI tool that can detect all scripts in PATH if they are using
-P::C (as well as a few other frameworks) and generate shell completion scripts
-for them. It supports several shells. Combined with
+Perinci::CmdLine (as well as a few other frameworks) and generate shell
+completion scripts for them. It supports several shells. Combined with
 L<Dist::Zilla::Plugin::GenShellCompletion>, you can make it so that users
 installing your distribution can immediately/automatically activate tab
 completion for your scripts.
 
-=head1 PROGRESS INDICATOR [P::C]
+=head1 PROGRESS INDICATOR
 
 For functions that express that they do progress updating (by setting their
 C<progress> feature to true), Perinci::CmdLine will setup an output, currently
