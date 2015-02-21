@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.85    2015-02-21 (PERLANCAR)
+
+        - [Bugfix] Assume all 2xx (not just 200) as well as 304 as success (exit
+          code 0).
+
+
 0.84    2015-02-06 (PERLANCAR)
 
         - No functional changes.
