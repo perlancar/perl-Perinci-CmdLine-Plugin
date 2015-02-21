@@ -362,7 +362,7 @@ sub list_subcommands {
 
 sub status2exitcode {
     my ($self, $status) = @_;
-    return 0 if $status == 200;
+    return 0 if $status =~ /^2..|304/;
     $status - 300;
 }
 
