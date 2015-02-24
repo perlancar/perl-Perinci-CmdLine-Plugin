@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.86    2015-02-24 (PERLANCAR)
+
+        - [ux] Reorder columns in table output according to result metadata's
+          result_format_options->table_column_orders, result metadata's
+          table.fields, or FORMAT_PRETTY_TABLE_COLUMN_ORDERS.
+
+        - [ux] Tweak formatting of table with header row.
+
+
 0.85    2015-02-21 (PERLANCAR)
 
         - [Bugfix] Assume all 2xx (not just 200) as well as 304 as success (exit
