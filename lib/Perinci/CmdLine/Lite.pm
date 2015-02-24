@@ -213,7 +213,8 @@ sub hook_format_result {
                     require Text::Table::Tiny;
                     $data = [map {[$_, $data->{$_}]} sort keys %$data];
                     unshift @$data, ["key", "value"];
-                    return Text::Table::Tiny::table(rows=>$data) . "\n";
+                    return Text::Table::Tiny::table(
+                        rows=>$data, header_row=>1) . "\n";
                 } else {
                     return join("", map {"$_\t$data->{$_}\n"} sort keys %$data);
                 }
@@ -231,7 +232,8 @@ sub hook_format_result {
                 if ($is_pretty) {
                     unshift @$newdata, \@fieldnames;
                     require Text::Table::Tiny;
-                    return Text::Table::Tiny::table(rows=>$newdata) . "\n";
+                    return Text::Table::Tiny::table(
+                        rows=>$newdata, header_row=>1) . "\n";
                 } else {
                     return join("", map {join("\t", @$_)."\n"} @$newdata);
                 }
