@@ -170,6 +170,95 @@ sub hook_after_parse_argv {
     }
 }
 
+sub __cleanser {
+    state $cleanser = do {
+        require Data::Clean::JSON;
+        Data::Clean::JSON->get_cleanser;
+    };
+    $cleanser;
+}
+
+sub __json {
+    state $json = do {
+        require JSON;
+        JSON->new->canonical(1)->allow_nonref;
+    };
+    $json;
+}
+
+sub __gen_table {
+    my ($data, $header_row, $resmeta) = @_;
+
+    $resmeta //= {};
+
+    my @columns;
+    if ($header_row) {
+        @columns = @{$data->[0]};
+    } else {
+        @columns = map {"col$_"} 0..@{$data->[0]}-1;
+    }
+
+    my $column_orders; # e.g. [col2, col1, col3, ...]
+  SET_COLUMN_ORDERS: {
+
+        # find column orders from 'table_column_orders' in result metadata (or
+        # from env)
+        my $tcos;
+        if ($ENV{FORMAT_PRETTY_TABLE_COLUMN_ORDERS}) {
+            $tcos = __json->decode($ENV{FORMAT_PRETTY_TABLE_COLUMN_ORDERS});
+        } elsif (my $rfos = $resmeta->{result_format_options}) {
+            my $rfo = $rfos->{'text-pretty'} // $rfos->{text} // $rfos->{any};
+            if ($rfo) {
+                $tcos = $rfo->{table_column_orders};
+            }
+        }
+        if ($tcos) {
+            use experimental 'smartmatch';
+            # find an entry in tcos that @columns contains all the columns of
+          COLS:
+            for my $cols (@$tcos) {
+                for (@$cols) {
+                    next COLS unless $_ ~~ @columns;
+                }
+                $column_orders = $cols;
+                last SET_COLUMN_ORDERS;
+            }
+        }
+
+        # find column orders from table spec
+        $column_orders = $resmeta->{'table.fields'};
+    }
+
+    # reorder each row according to requested column order
+    if ($column_orders) {
+        require List::MoreUtils;
+
+        # 0->2, 1->0, ... (map column position from unordered to ordered)
+        my @map0 = sort {
+            my $idx_a = List::MoreUtils::firstidx(sub {$_ eq $a->[1]},
+                                                  @$column_orders) // 9999;
+            my $idx_b = List::MoreUtils::firstidx(sub {$_ eq $b->[1]},
+                                                  @$column_orders) // 9999;
+            $idx_a <=> $idx_b || $a->[1] cmp $b->[1];
+        } map {[$_, $columns[$_]]} 0..@columns-1;
+        #use DD; dd \@map0;
+        my @map;
+        for (0..@map0-1) {
+            $map[$_] = $map0[$_][0];
+        }
+        #use DD; dd \@map;
+        my $newdata = [];
+        for my $row (@$data) {
+            my @newrow;
+            for (0..@map-1) { $newrow[$_] = $row->[$map[$_]] }
+            push @$newdata, \@newrow;
+        }
+        $data = $newdata;
+    }
+
+    Text::Table::Tiny::table(rows=>$data, header_row=>$header_row) . "\n";
+}
+
 sub hook_format_result {
     my ($self, $r) = @_;
 
@@ -204,7 +293,7 @@ sub hook_format_result {
             } elsif (Data::Check::Structure::is_aoaos($data, {max=>$max})) {
                 if ($is_pretty) {
                     require Text::Table::Tiny;
-                    return Text::Table::Tiny::table(rows=>$data) . "\n";
+                    return __gen_table($data, 0, $res->[3]);
                 } else {
                     return join("", map {join("\t", @$_)."\n"} @$data);
                 }
@@ -213,8 +302,7 @@ sub hook_format_result {
                     require Text::Table::Tiny;
                     $data = [map {[$_, $data->{$_}]} sort keys %$data];
                     unshift @$data, ["key", "value"];
-                    return Text::Table::Tiny::table(
-                        rows=>$data, header_row=>1) . "\n";
+                    return __gen_table($data, 1, $res->[3]);
                 } else {
                     return join("", map {"$_\t$data->{$_}\n"} sort keys %$data);
                 }
@@ -232,8 +320,7 @@ sub hook_format_result {
                 if ($is_pretty) {
                     unshift @$newdata, \@fieldnames;
                     require Text::Table::Tiny;
-                    return Text::Table::Tiny::table(
-                        rows=>$newdata, header_row=>1) . "\n";
+                    return __gen_table($newdata, 1, $res->[3]);
                 } else {
                     return join("", map {join("\t", @$_)."\n"} @$newdata);
                 }
@@ -247,19 +334,11 @@ sub hook_format_result {
 
     warn "Unknown format '$format', fallback to json-pretty"
         unless $format =~ /\Ajson(-pretty)?\z/;
-    state $cleanser = do {
-        require Data::Clean::JSON;
-        Data::Clean::JSON->get_cleanser;
-    };
-    $cleanser->clean_in_place($res);
-    state $json = do {
-        require JSON;
-        JSON->new->canonical(1)->allow_nonref;
-    };
+    __cleanser->clean_in_place($res);
     if ($format eq 'json') {
-        return $json->encode($res) . "\n";
+        return __json->encode($res) . "\n";
     } else {
-        return $json->canonical(1)->pretty->encode($res);
+        return __json->canonical(1)->pretty->encode($res);
     }
 }
 
@@ -477,6 +556,12 @@ Set log level.
 =head2 PROGRESS => BOOL
 
 Explicitly turn the progress bar on/off.
+
+=head2 FORMAT_PRETTY_TABLE_COLUMN_ORDERS => array (json)
+
+Set the default of C<table_column_orders> in C<result_format_options> in result
+metadata, similar to what's implemented in L<Perinci::Result::Format> and
+L<Data::Format::Pretty::Console>.
 
 
 =head1 RESULT METADATA
