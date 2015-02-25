@@ -439,7 +439,7 @@ sub run_help {
         program_summary => ($scd ? $scd->{summary}:undef ) // $meta->{summary},
         program_description => $scd ? $scd->{description} : undef,
         meta => $meta,
-        subcommands => $has_sc_no_sc ? $self->subcommands : undef,
+        subcommands => $has_sc_no_sc ? $self->list_subcommands : undef,
         common_opts => $common_opts,
         per_arg_json => $self->per_arg_json,
         per_arg_yaml => $self->per_arg_yaml,
