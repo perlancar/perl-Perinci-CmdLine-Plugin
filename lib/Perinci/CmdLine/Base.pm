@@ -342,8 +342,7 @@ sub get_subcommand_data {
 
 sub list_subcommands {
     my ($self) = @_;
-    state $cached;
-    return $cached if $cached;
+    return $self->{_cache_subcommands} if $self->{_cache_subcommands};
 
     my $scs = $self->subcommands;
     my $res;
@@ -357,7 +356,8 @@ sub list_subcommands {
     } else {
         $res = {};
     }
-    $cached = $res;
+    $self->{_cache_subcommands} = $res;
+    $res;
 }
 
 sub status2exitcode {

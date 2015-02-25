@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.87    2015-02-26 (PERLANCAR)
+
+	- [Bugfix] Pass subcommands hash to Perinci::CmdLine::Help even
+	  though subcommands list is dynamic (coderef).
+
+
 0.86    2015-02-24 (PERLANCAR)
 
         - [ux] Reorder columns in table output according to result metadata's
