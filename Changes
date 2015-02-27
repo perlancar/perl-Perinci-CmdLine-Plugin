@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.88    2015-02-27 (PERLANCAR)
+
+	- Search $HOME/.config before $HOME for config files.
+
+
 0.87    2015-02-26 (PERLANCAR)
 
 	- [Bugfix] Pass subcommands hash to Perinci::CmdLine::Help even
