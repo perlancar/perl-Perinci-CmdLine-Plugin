@@ -20,7 +20,16 @@ sub get_default_config_dirs {
         require File::HomeDir;
         push @dirs, File::HomeDir->my_home;
     } else {
-        push @dirs, $ENV{HOME};
+        my $home = $ENV{HOME};
+        unless ($home) {
+            # sometimes HOME is not defined, in that case we'll use getpwuid()
+            my @pw = getpwuid($>);
+            $home = $pw[7] if @pw;
+        }
+        if ($home) {
+            push @dirs, "$home/.config";
+            push @dirs, $home;
+        }
         push @dirs, "/etc";
     }
     [grep {defined} @dirs];

@@ -1379,9 +1379,9 @@ Configuration can be used to set function arguments.
 
 Configuration is currently in the L<IOD> (basically INI) format.
 
-By default these paths are searched: C<$HOME/$prog_name.conf>,
-C</etc/$prog_name.conf>. The location can be customized from command-line option
-C<--config-path>.
+By default these paths are searched: C<$HOME/.config/$prog_name.conf>,
+C<$HOME/$prog_name.conf>, C</etc/$prog_name.conf>. The location can be
+customized from command-line option C<--config-path>.
 
 All existing configuration files will be read in order.
 
@@ -1740,8 +1740,9 @@ Whether to read configuration files.
 =head2 config_dirs => array of str
 
 Which directories to look for configuration file. The default is to look at the
-system location and then per-user home directory. On Unix, it's C<< ["/etc",
-$ENV{HOME}] >>.
+user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
+$ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
+directory entry.
 
 =head2 config_filename => str
 
