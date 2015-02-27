@@ -23,5 +23,7 @@ test_complete(
     result     => [9, 90..99],
 );
 
+# XXX test complete for cli with subcommands + PROG_OPT
+
 DONE_TESTING:
 done_testing;

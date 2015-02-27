@@ -442,12 +442,6 @@ sub do_completion {
 
     shift @$words; $cword--; # strip program name
 
-    {
-        my $env_words = $self->_read_env($r);
-        unshift @$words, @$env_words;
-        $cword += @$env_words;
-    }
-
     # @ARGV given by bash is messed up / different. during completion, we
     # get ARGV from parsing COMP_LINE/COMP_POINT.
     @ARGV = @$words;
@@ -455,6 +449,12 @@ sub do_completion {
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
     $self->_parse_argv1($r);
+
+    {
+        my $env_words = $self->_read_env($r);
+        unshift @ARGV, @$env_words;
+        $cword += @$env_words;
+    }
 
     #$log->tracef("ARGV=%s", \@ARGV);
     #$log->tracef("words=%s", $words);
@@ -636,6 +636,11 @@ sub _parse_argv2 {
     my ($self, $r) = @_;
 
     my %args;
+
+    {
+        my $env_words = $self->_read_env($r);
+        unshift @ARGV, @$env_words;
+    }
 
     # parse argv for per-subcommand command-line opts
     if ($r->{skip_parse_subcommand_argv}) {
@@ -1043,11 +1048,6 @@ sub run {
     eval {
         $log->tracef("[pericmd] Running hook_before_run ...");
         $self->hook_before_run($r);
-
-        {
-            my $env_words = $self->_read_env($r);
-            unshift @ARGV, @$env_words;
-        }
 
         my $parse_res = $self->parse_argv($r);
         if ($parse_res->[0] == 501) {
