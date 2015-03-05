@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.89    2015-03-05 (PERLANCAR)
+
+	- [Bugfix] Environment PROG_OPT should be read and added to ARGV
+	  after _parse_argv1 (after we extract subcommand name).
+
+
 0.88    2015-02-27 (PERLANCAR)
 
 	- Search $HOME/.config before $HOME for config files.
