@@ -377,6 +377,17 @@ sub hook_after_get_meta {
             },
         };
     }
+
+    # check deps property. XXX this should be done only when we don't wrap
+    # subroutine, because Perinci::Sub::Wrapper already checks the deps
+    # property.
+    if ($r->{meta}{deps}) {
+        require Perinci::Sub::DepChecker;
+        my $res = Perinci::Sub::DepChecker::check_deps($r->{meta}{deps});
+        if ($res) {
+            die [412, "Dependency failed: $res"];
+        }
+    }
 }
 
 sub run_subcommands {
