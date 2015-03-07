@@ -661,11 +661,12 @@ sub _parse_argv2 {
 
             $self->_read_config($r);
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
-                config          => $r->{config},
-                args            => \%args,
-                subcommand_name => $r->{subcommand_name},
-                config_profile  => $r->{config_profile},
-                meta            => $meta,
+                config             => $r->{config},
+                args               => \%args,
+                subcommand_name    => $r->{subcommand_name},
+                config_profile     => $r->{config_profile},
+                meta               => $meta,
+                meta_is_normalized => 1,
             );
             die $res unless $res->[0] == 200;
             $log->tracef("[pericmd] args after reading config files: %s",

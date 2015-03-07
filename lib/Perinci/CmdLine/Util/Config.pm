@@ -86,6 +86,8 @@ $SPEC{get_args_from_config} = {
         args => {},
         subcommand_name => {},
         config_profile => {},
+        meta => {},
+        meta_is_normalized => {},
     },
 };
 sub get_args_from_config {
@@ -97,6 +99,11 @@ sub get_args_from_config {
     my $args    = $fargs{args} // {};
     my $meta    = $fargs{meta};
     my $found;
+
+    unless ($fargs{meta_is_normalized}) {
+        require Perinci::Sub::Normalize;
+        $meta = Perinci::Sub::Normalize::normalize_function_metadata($meta);
+    }
 
     # put GLOBAL before all other sections
     my @sections = sort {
