@@ -1195,19 +1195,20 @@ subcommand spec is filled from the attributes, e.g. C<url>, C<summary>, <tags>,
 and so on.
 
 We then perform a C<meta> Riap request to the URL to get the Rinci metadata.
-From the Rinci metadata we get list of arguments (the C<args> property). From
-this, we generate a spec of command-line options to feed to L<Getopt::Long>.
-There are some conversions being done, e.g. an argument called C<foo_bar> will
-become command-line option C<--foo-bar>. Command-line aliases from metadata are
-also added to the C<Getopt::Long> spec.
+After that, C<hook_after_get_meta> is run if provided. From the Rinci metadata
+we get list of arguments (the C<args> property). From this, we generate a spec
+of command-line options to feed to L<Getopt::Long>. There are some conversions
+being done, e.g. an argument called C<foo_bar> will become command-line option
+C<--foo-bar>. Command-line aliases from metadata are also added to the
+C<Getopt::Long> spec.
 
 It is also at this step that we read config file (if C<read_config> attribute is
-true). We run B<hook_before_read_config_file> first. Some ideas to do in this
+true). We run C<hook_before_read_config_file> first. Some ideas to do in this
 hook: setting default config profile.
 
 We then pass the spec to C<Getopt::Long::GetOptions>, we get function arguments.
 
-We then run B<hook_after_parse_argv>. Some ideas to do in this hook: XXX.
+We then run C<hook_after_parse_argv>. Some ideas to do in this hook: XXX.
 
 Function arguments that are still missing can be filled from STDIN or files, if
 the metadata specifies C<cmdline_src> property (see L<Rinci::function> for more
