@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.91    2015-03-07 (PERLANCAR)
+
+	- Add option to normalize metadata in get_args_from_config(), for
+	  lcpanm.
+
+
 0.90    2015-03-07 (PERLANCAR)
 
         - Check dependencies before run ('deps' property).
