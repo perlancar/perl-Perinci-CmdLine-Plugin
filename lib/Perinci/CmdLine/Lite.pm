@@ -206,7 +206,8 @@ sub __gen_table {
         my $tcos;
         if ($ENV{FORMAT_PRETTY_TABLE_COLUMN_ORDERS}) {
             $tcos = __json->decode($ENV{FORMAT_PRETTY_TABLE_COLUMN_ORDERS});
-        } elsif (my $rfos = $resmeta->{result_format_options}) {
+        } elsif (my $rfos = ($resmeta->{'cmdline.format_options'} //
+                                 $resmeta->{format_options})) {
             my $rfo = $rfos->{'text-pretty'} // $rfos->{text} // $rfos->{any};
             if ($rfo) {
                 $tcos = $rfo->{table_column_orders};
@@ -570,7 +571,7 @@ Explicitly turn the progress bar on/off.
 
 =head2 FORMAT_PRETTY_TABLE_COLUMN_ORDERS => array (json)
 
-Set the default of C<table_column_orders> in C<result_format_options> in result
+Set the default of C<table_column_orders> in C<format_options> in result
 metadata, similar to what's implemented in L<Perinci::Result::Format> and
 L<Data::Format::Pretty::Console>.
 
