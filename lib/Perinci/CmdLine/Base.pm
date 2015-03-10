@@ -1080,6 +1080,7 @@ sub run {
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
         $log->tracef("[pericmd] Running %s() ...", $meth);
         $r->{res} = $self->$meth($r);
+        #$log->tracef("[pericmd] res=%s", $r->{res}); #1
     };
     my $err = $@;
     if ($err || !$r->{res}) {
@@ -1090,6 +1091,13 @@ sub run {
         } else {
             $r->{res} = [500, "Bug: no response produced"];
         }
+    } elsif (ref($r->{res}) ne 'ARRAY') {
+        $log->tracef("[pericmd] res=%s", $r->{res}); #2
+        $r->{res} = [500, "Bug in program: result not an array"];
+    } elsif (!$r->{res}[0] || $r->{res}[0] < 200 || $r->{res}[0] > 555) {
+        $log->tracef("[pericmd] res=%s", $r->{res}); #3
+        $r->{res} = [500, "Bug in program: invalid result status, ".
+                         "must be 200 <= x <= 555"];
     }
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
