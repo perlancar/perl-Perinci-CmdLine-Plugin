@@ -1,5 +1,18 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.92    2015-03-10 (PERLANCAR)
+
+	- [Incompatible change] Rename result metadata key
+	  'result_format_options' to 'format_options' (also, try to look
+	  for 'cmdline.format_options' first).
+
+	- [Bugfix] Do not set actual result to cmdline.result (but only set
+	  it temporarily for formatting purposes).
+
+	- Check invalid result from run_XXX method() (not an array, invalid
+	  status).
+
+
 0.91    2015-03-07 (PERLANCAR)
 
 	- Add option to normalize metadata in get_args_from_config(), for
