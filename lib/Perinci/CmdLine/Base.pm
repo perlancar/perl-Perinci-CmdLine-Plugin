@@ -1101,7 +1101,12 @@ sub run {
     }
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
+    my $restore_orig_result;
+    my $orig_result;
     if (exists $r->{res}[3]{'cmdline.result'}) {
+        # temporarily change the result for formatting
+        $restore_orig_result = 1;
+        $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
   FORMAT:
@@ -1118,6 +1123,10 @@ sub run {
     $self->hook_display_result($r);
     $log->tracef("[pericmd] Running hook_after_run ...");
     $self->hook_after_run($r);
+
+    if ($restore_orig_result) {
+        $r->{res}[2] = $orig_result;
+    }
 
     my $exitcode;
     if ($r->{res}[3] && defined($r->{res}[3]{'cmdline.exit_code'})) {
