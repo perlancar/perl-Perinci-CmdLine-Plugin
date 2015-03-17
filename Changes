@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.93    2015-03-17 (PERLANCAR)
+
+	- [Bugfix] dry_run hasn't been passed to function yet.
+
+
 0.92    2015-03-10 (PERLANCAR)
 
 	- [Incompatible change] Rename result metadata key
