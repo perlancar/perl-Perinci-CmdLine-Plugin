@@ -373,6 +373,7 @@ sub hook_after_get_meta {
             summary => "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {
                 my ($go, $val, $r) = @_;
+                $log->debugf("[pericmd] Dry-run mode is activated");
                 $r->{dry_run} = 1;
                 #$ENV{VERBOSE} = 1;
             },
@@ -469,7 +470,9 @@ sub run_call {
         $log->tracef("[pericmd] Sending argv to server: %s", $extra{argv});
         $extra{argv} = $r->{orig_argv};
     } else {
-        $extra{args} = $r->{args};
+        my %extra_args;
+        $extra_args{-dry_run} = 1 if $r->{dry_run};
+        $extra{args} = {%extra_args, %{$r->{args}}};
     }
 
     $extra{stream_arg} = 1 if $r->{stream_arg};
