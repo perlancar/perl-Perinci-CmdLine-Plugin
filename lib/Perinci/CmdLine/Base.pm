@@ -913,6 +913,7 @@ sub parse_cmdline_src {
                         die [500, "Can't read file '$_': $!"] if !(-r $_);
                     }
 
+                    $r->{args}{"-cmdline_srcfilenames_$an"} = [@ARGV];
                     $r->{args}{$an} = $do_stream ?
                         __gen_iter(\*ARGV, $as->{schema}, $an) :
                             $is_ary ? [<>] :
