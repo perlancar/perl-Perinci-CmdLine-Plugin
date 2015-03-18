@@ -1848,15 +1848,21 @@ Only when in dry run mode, to notify function that we are in dry run mode.
 Only when C<pass_cmdline_object> attribute is set to true. This can be useful
 for the function to know about various stuffs, by probing the framework object.
 
+=head2 -cmdline_r => hash
+
+Only when C<pass_cmdline_object> attribute is set to true. Contains the C<$r>
+per-request hash/stash. This can be useful for the function to know about
+various stuffs, e.g. parsed configuration data, etc.
+
 =head2 -cmdline_src_ARGNAME => str
 
 This will be set if argument is retrieved from C<file>, C<stdin>,
-C<stdin_or_files>, or C<stdin_line>.
+C<stdin_or_file>, C<stdin_or_files>, or C<stdin_line>.
 
-=head2 -cmdline_srcfilename_ARGNAME => str
+=head2 -cmdline_srcfilenames_ARGNAME => array
 
-An extra information if argument value is retrieved from C<file>, so the
-function can know the filename.
+An extra information if argument value is retrieved from file(s), so the
+function can know the filename(s).
 
 
 =head1 METADATA PROPERTY ATTRIBUTE
