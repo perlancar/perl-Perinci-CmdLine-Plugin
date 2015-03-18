@@ -119,7 +119,7 @@ our %copts = (
     },
 
     naked_res => {
-        getopt  => 'naked-res',
+        getopt  => 'naked-res!',
         summary => 'When outputing as JSON, strip result envelope',
         description => <<'_',
 
@@ -138,7 +138,7 @@ you want to pipe the result for more post-processing. In this case you can use
 _
         handler => sub {
             my ($go, $val, $r) = @_;
-            $r->{naked_res} = 1;
+            $r->{naked_res} = $val ? 1:0;
         },
     },
 
