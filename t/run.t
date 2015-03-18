@@ -380,7 +380,7 @@ subtest 'cmdline_src' => sub {
             output_re => qr/
                                "-cmdline_src_a1"\s*:\s*"file"
                                .+
-                               "-cmdline_srcfilename_a1"\s*:\s*"
+                               "-cmdline_srcfilenames_a1"\s*:\s*\[
                            /sx,
         );
         test_run(
@@ -400,9 +400,9 @@ subtest 'cmdline_src' => sub {
                                .+
                                "-cmdline_src_a2"\s*:\s*"file"
                                .+
-                               "-cmdline_srcfilename_a1"\s*:\s*"
+                               "-cmdline_srcfilenames_a1"\s*:\s*\[
                                .+
-                               "-cmdline_srcfilename_a2"\s*:\s*"
+                               "-cmdline_srcfilenames_a2"\s*:\s*\[
                            /sx,
         );
         test_run(
@@ -419,6 +419,75 @@ subtest 'cmdline_src' => sub {
         );
     }
 
+    # stdin_or_file
+    {
+        my ($fh, $filename)   = tempfile();
+        my ($fh2, $filename2) = tempfile();
+        write_file($filename , 'foo');
+        write_file($filename2, "bar\nbaz");
+        test_run(
+            name => 'stdin_or_file file',
+            args => {url=>"$prefix/cmdline_src_stdin_or_file_str"},
+            argv => [$filename],
+            exit_code => 0,
+            output_re => qr/a1=foo$/,
+        );
+        test_run(
+            name => 'stdin_or_file file (extra argument)',
+            args => {url=>"$prefix/cmdline_src_stdin_or_file_str"},
+            argv => [$filename, $filename],
+            exit_code => 0,
+            output_re => qr/a1=foo$/,
+        );
+        test_run(
+            name => 'stdin_or_file file (special hint arguments passed)',
+            args => {url=>"$prefix/cmdline_src_stdin_or_file_str"},
+            argv => ['--json', $filename],
+            exit_code => 0,
+            output_re => qr/
+                               "-cmdline_src_a1"\s*:\s*"stdin_or_file"
+                               .+
+                               "-cmdline_srcfilenames_a1"\s*:\s*\[
+                           /sx,
+        );
+        test_run(
+            name   => 'stdin_or_files file not found',
+            args   => {url=>"$prefix/cmdline_src_stdin_or_file_str"},
+            argv   => [$filename . "/x"],
+            status => 500,
+        );
+
+        # i don't know why these tests don't work, they should though. and if
+        # tested via a cmdline script like
+        # examples/cmdline_src-stdin_or_file-{str,array} they work fine.
+        if (0) {
+            open $fh, '<', $filename2;
+            local *STDIN = $fh;
+            local @ARGV;
+            test_run(
+                name => 'stdin_or_file stdin str',
+                args => {url=>"$prefix/cmdline_src_stdin_or_file_str"},
+                argv => [],
+                exit_code => 0,
+                output_re => qr/a1=bar\nbaz$/,
+            );
+            # XXX test special hint arguments passed
+        }
+        if (0) {
+            open $fh, '<', $filename2;
+            local *STDIN = $fh;
+            local @ARGV;
+            test_run(
+                name => 'stdin_or_file stdin str',
+                args => {url=>"$prefix/cmdline_src_stdin_or_file_array"},
+                argv => [],
+                exit_code => 0,
+                output_re => qr/a1=\[bar\n,baz\]/,
+            );
+            # XXX test special hint arguments passed
+        }
+    }
+
     # stdin_or_files
     {
         my ($fh, $filename)   = tempfile();
@@ -427,10 +496,10 @@ subtest 'cmdline_src' => sub {
         write_file($filename2, "bar\nbaz");
         test_run(
             name => 'stdin_or_files file',
-            args => {url=>"$prefix/cmdline_src_stdin_or_files_str"},
-            argv => [$filename],
+            args => {url=>"$prefix/cmdline_src_stdin_or_files_array"},
+            argv => [$filename, $filename2],
             exit_code => 0,
-            output_re => qr/a1=foo$/,
+            output_re => qr/a1=\[foo,bar\n,baz\]$/,
         );
         test_run(
             name => 'stdin_or_files file (special hint arguments passed)',
@@ -439,6 +508,8 @@ subtest 'cmdline_src' => sub {
             exit_code => 0,
             output_re => qr/
                                "-cmdline_src_a1"\s*:\s*"stdin_or_files"
+                               .+
+                               "-cmdline_srcfilenames_a1"\s*:\s*\[
                            /sx,
         );
         test_run(

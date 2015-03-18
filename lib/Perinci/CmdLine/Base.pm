@@ -923,7 +923,7 @@ sub parse_cmdline_src {
                         __gen_iter(\*ARGV, $as->{schema}, $an) :
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
-                    $r->{args}{"-cmdline_src_$an"} = 'stdin_or_files';
+                    $r->{args}{"-cmdline_src_$an"} = $src;
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
                         if ($as->{req}) {

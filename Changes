@@ -1,5 +1,15 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.96    2015-03-18 (PERLANCAR)
+
+        - Support cmdline_src=stdin_or_file (Rinci 1.1.74).
+
+        - [Incompatible changes] When cmdline_src=file, special argument is now
+          -cmdline_srcfilenames_ARG (single-element array) like in the case of
+          cmdline_src=stdin_or_files, instead of -cmdline_srcfilename_ARG. The
+          same for when cmdline_src=stdin_or_file.
+
+
 0.95    2015-03-18 (PERLANCAR)
 
 	- Provide special arguments -cmdline_srcfilenames_ARG for arguments
