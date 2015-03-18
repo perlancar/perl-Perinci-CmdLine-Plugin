@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.95    2015-03-18 (PERLANCAR)
+
+	- Provide special arguments -cmdline_srcfilenames_ARG for arguments
+	  with cmdline_src=stdin_or_files.
+
+
 0.94    2015-03-18 (PERLANCAR)
 
 	- Allow --no-naked-res.
