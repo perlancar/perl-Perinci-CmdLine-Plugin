@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.94    2015-03-18 (PERLANCAR)
+
+	- Allow --no-naked-res.
+
+	- Pass -cmdline_r special argument so function gets access to 'r'
+	  structure.
+
+
 0.93    2015-03-17 (PERLANCAR)
 
 	- [Bugfix] dry_run hasn't been passed to function yet.

@@ -1616,7 +1616,11 @@ Whether to pass special argument C<-cmdline> containing the cmdline object to
 function. This can be overriden using the C<pass_cmdline_object> on a
 per-subcommand basis.
 
-Passing the cmdline object can be useful, e.g. to call run_help(), etc.
+In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
+C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
+
+Passing the cmdline object can be useful, e.g. to call run_help(), to get the
+settings of the Perinci::CmdLine, etc.
 
 =head2 program_name => str
 
