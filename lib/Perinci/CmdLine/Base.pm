@@ -1073,8 +1073,10 @@ sub run {
             if $missing && @$missing;
 
         my $scd = $r->{subcommand_data};
-        $r->{args}{-cmdline} = $self if $scd->{pass_cmdline_object} //
-            $self->pass_cmdline_object;
+        if ($scd->{pass_cmdline_object} // $self->pass_cmdline_object) {
+            $r->{args}{-cmdline} = $self;
+            $r->{args}{-cmdline_r} = $r;
+        }
 
         my $meth = "run_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
