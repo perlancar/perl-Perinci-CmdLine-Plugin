@@ -704,13 +704,13 @@ sub _parse_argv2 {
             }
             # this will probably be eventually checked by the rinci function's
             # schema: stream arguments need to have cmdline_src set to
-            # stdin_or_files, stdin, or file.
+            # stdin_or_file, stdin_or_files, stdin, or file.
             if ($av->{stream}) {
                 unless ($av->{cmdline_src} &&
                             $av->{cmdline_src} =~
-                                /\A(stdin|file|stdin_or_files)\z/) {
+                                /\A(stdin|file|stdin_or_files?)\z/) {
                     die "BUG: stream argument '$ak' needs to have cmdline_src ".
-                        "set to stdin, file, or stdin_or_files";
+                        "set to stdin, file, stdin_or_file, or stdin_or_files";
                 }
             }
         }
@@ -840,8 +840,8 @@ sub parse_cmdline_src {
             (
                 !$csa || !$csb ? 0 :
                     $csa eq 'stdin_line' && $csb eq 'stdin_line' ? 0 :
-                    $csa eq 'stdin_line' && $csb =~ /^(stdin|stdin_or_files)/ ? -1 :
-                    $csb eq 'stdin_line' && $csa =~ /^(stdin|stdin_or_files)/ ? 1 : 0
+                    $csa eq 'stdin_line' && $csb =~ /^(stdin|stdin_or_files?)/ ? -1 :
+                    $csb eq 'stdin_line' && $csa =~ /^(stdin|stdin_or_files?)/ ? 1 : 0
             )
             ||
 
@@ -862,14 +862,14 @@ sub parse_cmdline_src {
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
-                    unless $src =~ /\A(stdin|file|stdin_or_files|stdin_line)\z/;
+                    unless $src =~ /\A(stdin|file|stdin_or_files?|stdin_line)\z/;
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
                          "is not str/buf/array, only those are supported now"]
                     unless $do_stream || $type =~ /\A(str|buf|array)\z/;
-                if ($src =~ /\A(stdin|stdin_or_files)\z/) {
+                if ($src =~ /\A(stdin|stdin_or_files?)\z/) {
                     die [531, "Only one argument can be specified ".
-                             "cmdline_src stdin/stdin_or_files"]
+                             "cmdline_src stdin/stdin_or_file/stdin_or_files"]
                         if $stdin_seen++;
                 }
                 my $is_ary = $type eq 'array';
@@ -898,14 +898,19 @@ sub parse_cmdline_src {
                             $is_ary ? [<STDIN>] :
                                 do {local $/; ~~<STDIN>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin';
-                } elsif ($src eq 'stdin_or_files') {
+                } elsif ($src eq 'stdin_or_file' || $src eq 'stdin_or_files') {
                     # push back argument value to @ARGV so <> can work to slurp
                     # all the specified files
                     local @ARGV = @ARGV;
                     unshift @ARGV, $r->{args}{$an}
                         if defined $r->{args}{$an};
+
+                    # with stdin_or_file, we only accept one file
+                    splice @ARGV, 1
+                        if @ARGV > 1 && $src eq 'stdin_or_file';
+
                     #$log->tracef("Getting argument '$an' value from ".
-                    #                 "stdin_or_files, \@ARGV=%s ...", \@ARGV);
+                    #                 "$src, \@ARGV=%s ...", \@ARGV);
 
                     # perl doesn't seem to check files, so we check it here
                     for (@ARGV) {
@@ -943,7 +948,7 @@ sub parse_cmdline_src {
                             $is_ary ? [<$fh>] :
                                 do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
-                    $r->{args}{"-cmdline_srcfilename_$an"} = $fname;
+                    $r->{args}{"-cmdline_srcfilenames_$an"} = [$fname];
                 }
             }
 
