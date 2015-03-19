@@ -108,6 +108,7 @@ our %copts = (
             my ($go, $val, $r) = @_;
             $r->{format} = $val;
         },
+        default => undef,
     },
     json => {
         getopt  => 'json',
@@ -121,6 +122,7 @@ our %copts = (
     naked_res => {
         getopt  => 'naked-res!',
         summary => 'When outputing as JSON, strip result envelope',
+        'summary.alt.bool.not' => 'When outputing as JSON, add result envelope',
         description => <<'_',
 
 By default, when outputing as JSON, the full enveloped result is returned, e.g.:
@@ -140,6 +142,7 @@ _
             my ($go, $val, $r) = @_;
             $r->{naked_res} = $val ? 1:0;
         },
+        default => 0,
     },
 
     subcommands => {
@@ -1039,13 +1042,22 @@ sub run {
     my ($self) = @_;
     $log->tracef("[pericmd] -> run(), \@ARGV=%s", \@ARGV);
 
-    my $r = {orig_argv=>[@ARGV]};
+    my $co = $self->common_opts;
+
+    my $r = {
+        orig_argv   => [@ARGV],
+        common_opts => $co,
+    };
 
     # completion is special case, we delegate to do_completion()
     if ($self->_detect_completion($r)) {
         $r->{res} = $self->do_completion($r);
         goto FORMAT;
     }
+
+    # set default from common options
+    $r->{naked_res} = $co->{naked_res}{default} if $co->{naked_res};
+    $r->{format}    = $co->{format}{default} if $co->{format};
 
     if ($self->read_config) {
         # note that we have read the config
@@ -1296,6 +1308,14 @@ the normal program flow).
 The various values in the C<$r> hash/stash.
 
 =over
+
+=item * orig_argv => array
+
+Original C<@ARGV> at the beginning of C<run()>.
+
+=item * common_opts => hash
+
+Value of C<common_opts> attribute, for convenience.
 
 =item * action => str
 
