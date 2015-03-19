@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.97    2015-03-19 (PERLANCAR)
+
+	- Set naked_res & format from common option's default.
+
+
 0.96    2015-03-18 (PERLANCAR)
 
         - Support cmdline_src=stdin_or_file (Rinci 1.1.74).
