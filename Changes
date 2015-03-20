@@ -1,5 +1,15 @@
 Revision history for Perinci-CmdLine-Lite
 
+0.98    2015-03-20 (PERLANCAR)
+
+	- No functional changes.
+
+	- Update prereq version (Config::IOD::Reader 0.14) to avoid CT
+	  failure reports.
+
+	- [opt] Replace Log::Any if Log::Any::IfLOG.
+
+
 0.97    2015-03-19 (PERLANCAR)
 
 	- Set naked_res & format from common option's default.
