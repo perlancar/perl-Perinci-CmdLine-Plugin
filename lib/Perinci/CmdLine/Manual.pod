@@ -128,7 +128,7 @@ TODO
 
 =head1 LOGGING
 
-Logging is done with L<Log::Any> (for producing). For displaying logs,
+Logging is done with L<Log::Any::IfLOG> (for producing). For displaying logs,
 PC::Classic uses L<Log::Any::App> currently which supports multiple outputs
 (screen, file, etc) while PC::Lite currently uses
 L<Log::Any::Adapter::ScreenColoredLevel> which only supports displaying to
@@ -140,25 +140,23 @@ order of rules being used:
 
 =over
 
+=item * If LOG environment is undefined or false, turn off logging
+
+So you need to use LOG=1 to turn on logging.
+
 =item * If running shell completion (C<COMP_LINE> is defined), output is off
 
 Normally, shell completion does not need to show log output.
 
-=item * If LOG environment is defined, use that
-
-You can make a command-line program start a bit faster if you use LOG=0.
-
 =item * If subcommand's C<log> setting is defined, use that
 
 This allows you, e.g. to turn off logging by default for subcommands that need
-faster startup time. You can still turn on logging for those subcommands by
-LOG=1.
+faster startup time.
 
 =item * [Classic] If action metadata's default_log setting is defined, use that
 
 For example, actions like C<help>, C<list>, and C<version> has C<default_log>
-set to 0, for faster startup time. You can still turn on logging for those
-actions by LOG=1.
+set to 0, for faster startup time.
 
 =item * Use log attribute setting
 
