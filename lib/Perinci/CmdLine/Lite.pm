@@ -498,12 +498,16 @@ sub run_call {
 
 =head1 SYNOPSIS
 
-See L<Perinci::CmdLine::Manual::Examples>.
+#RENDER_TEMPLATE: file=>"share/templates/synopsis.txt", context=>{module=>"Perinci::CmdLine::Lite"}
 
 
 =head1 DESCRIPTION
 
-See L<Perinci::CmdLine::Manual>.
+#RENDER_TEMPLATE: file=>"share/templates/description.txt"
+
+Perinci::CmdLine::Lite is the default backend implementation. You normally
+should use L<Perinci::CmdLine::Any> instead to be able to switch backend on the
+fly.
 
 
 =head1 REQUEST KEYS
@@ -587,8 +591,6 @@ any newline to keep the data being printed unmodified.
 
 =head1 SEE ALSO
 
-L<Perinci::CmdLine>, L<Perinci::CmdLine::Manual>
-
-L<Perinci::CmdLine::Any>
+L<Perinci::CmdLine::Any>, L<Perinci::CmdLine::Classic>
 
 =cut
