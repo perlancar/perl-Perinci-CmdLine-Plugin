@@ -512,10 +512,6 @@ All those supported by L<Perinci::CmdLine::Base>, plus:
 
 =over
 
-=item * naked_res => bool
-
-Set to true if user specifies C<--naked-res>.
-
 =back
 
 

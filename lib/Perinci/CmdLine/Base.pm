@@ -1419,6 +1419,10 @@ Result from C<hook_format_result()>.
 Set by select_output_handle() to choose output handle. Normally it's STDOUT but
 can also be pipe to pager (if paging is turned on).
 
+=item * naked_res => bool
+
+Set to true if user specifies C<--naked-res>.
+
 =back
 
 
