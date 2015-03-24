@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.00    2015-03-24 (PERLANCAR)
+
+        - No functional changes.
+
+        - [opt] Shave +- 2-3ms startup time by avoiding experimental+Carp.
+
+
 0.99    2015-03-22 (PERLANCAR)
 
 	- No functional changes.
