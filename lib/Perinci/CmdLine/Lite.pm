@@ -8,6 +8,7 @@ use 5.010001;
 # use warnings; # already enabled by Mo
 use Log::Any::IfLOG '$log';
 
+use List::Util qw(first);
 use Mo qw(build default);
 #use Moo;
 extends 'Perinci::CmdLine::Base';
@@ -214,12 +215,11 @@ sub __gen_table {
             }
         }
         if ($tcos) {
-            use experimental 'smartmatch';
             # find an entry in tcos that @columns contains all the columns of
           COLS:
             for my $cols (@$tcos) {
-                for (@$cols) {
-                    next COLS unless $_ ~~ @columns;
+                for my $col (@$cols) {
+                    next COLS unless first {$_ eq $col} @columns;
                 }
                 $column_orders = $cols;
                 last SET_COLUMN_ORDERS;
