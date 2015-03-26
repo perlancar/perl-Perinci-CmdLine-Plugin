@@ -12,9 +12,13 @@ use Log::Any::IfLOG '$log';
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
 # have attributes), Role::Basic, or Moo::Role.
 
-use if  $INC{'Perinci/CmdLine.pm'}, qw(Moo); # XXX support will be removed later
-use if  $INC{'Perinci/CmdLine/Classic.pm'}, qw(Moo);
-use if !$INC{'Perinci/CmdLine/Classic.pm'}, qw(Mo  build default);
+BEGIN {
+    if ($INC{'Perinci/CmdLine/Classic.pm'}) {
+        require Moo; Moo->import;
+    } else {
+        require Mo; Mo->import(qw(build default));
+    }
+}
 
 has actions => (is=>'rw');
 has common_opts => (is=>'rw');
