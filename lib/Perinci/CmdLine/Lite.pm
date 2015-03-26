@@ -171,14 +171,6 @@ sub hook_after_parse_argv {
     }
 }
 
-sub __cleanser {
-    state $cleanser = do {
-        require Data::Clean::JSON;
-        Data::Clean::JSON->get_cleanser;
-    };
-    $cleanser;
-}
-
 sub __json {
     state $json = do {
         require JSON;
@@ -335,7 +327,7 @@ sub hook_format_result {
 
     warn "Unknown format '$format', fallback to json-pretty"
         unless $format =~ /\Ajson(-pretty)?\z/;
-    __cleanser->clean_in_place($res);
+    $self->cleanser->clean_in_place($res);
     if ($format eq 'json') {
         return __json->encode($res) . "\n";
     } else {

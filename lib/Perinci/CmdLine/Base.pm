@@ -67,6 +67,15 @@ has config_dirs => (
     },
 );
 
+has cleanser => (
+    is => 'rw',
+    lazy => 1,
+    default => sub {
+        require Data::Clean::JSON;
+        Data::Clean::JSON->get_cleanser;
+    },
+);
+
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_before_run'
 # role: optional 'hook_before_read_config_file'
