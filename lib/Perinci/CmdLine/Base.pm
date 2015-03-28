@@ -488,7 +488,7 @@ sub do_completion {
 
     require Perinci::Sub::Complete;
     my $compres = Perinci::Sub::Complete::complete_cli_arg(
-        meta            => $meta,
+        meta            => $meta, # must be normalized
         words           => $words,
         cword           => $cword,
         common_opts     => $self->common_opts,
@@ -738,6 +738,7 @@ sub _parse_argv2 {
             argv                => \@ARGV,
             args                => \%args,
             meta                => $meta,
+            meta_is_normalized  => 1,
             allow_extra_elems   => $has_cmdline_src ? 1:0,
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
@@ -756,6 +757,15 @@ sub _parse_argv2 {
                     return 0;
                 }
             },
+        );
+
+        return $res unless $res->[0] == 200;
+
+        require Perinci::Sub::CoerceArgs;
+        $res = Perinci::Sub::CoerceArgs::coerce_args(
+            meta                => $meta,
+            meta_is_normalized  => 1,
+            args                => $res->[2],
         );
 
         # restore
