@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.02    2015-03-30 (PERLANCAR)
+
+	- Add argument coercing (Perinci::Sub::CoerceArgs).
+
+
 1.01    2015-03-26 (PERLANCAR)
 
 	- Put cleanser as an attribute to allow it be configurable.
