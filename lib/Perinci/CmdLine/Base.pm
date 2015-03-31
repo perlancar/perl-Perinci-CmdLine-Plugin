@@ -419,7 +419,7 @@ sub _read_env {
     my $words;
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
-        ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0,'') };
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0) };
     } elsif ($r->{shell} eq 'fish') {
         require Complete::Fish;
         ($words, undef) = @{ Complete::Fish::parse_cmdline($env) };
@@ -444,16 +444,16 @@ sub do_completion {
     my ($words, $cword);
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
-        ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef,undef,'=') };
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
     } elsif ($r->{shell} eq 'fish') {
         require Complete::Fish;
-        ($words, $cword) = @{ Complete::Fish::parse_cmdline(undef) }; # XXX also break on '='
+        ($words, $cword) = @{ Complete::Fish::parse_cmdline() };
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
-        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline(undef) }; # XXX also break on '='
+        ($words, $cword) = @{ Complete::Tcsh::parse_cmdline() };
     } elsif ($r->{shell} eq 'zsh') {
         require Complete::Zsh;
-        ($words, $cword) = @{ Complete::Zsh::parse_cmdline(undef) }; # XXX also break on '='
+        ($words, $cword) = @{ Complete::Zsh::parse_cmdline() };
     } else {
         die "Unsupported shell '$r->{shell}'";
     }
