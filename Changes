@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.03    2015-04-01 (PERLANCAR)
+
+	- Add hook: after_read_config_file.
+
+	- Replace File::HomeDir with PERLANCAR::File::HomeDir.
+
+	- New Complete::Bash no longer has 3rd parameter (word_breaks).
+
+
 1.02    2015-03-30 (PERLANCAR)
 
 	- Add argument coercing (Perinci::Sub::CoerceArgs).
