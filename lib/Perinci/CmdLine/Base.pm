@@ -80,6 +80,7 @@ has cleanser => (
 # role: requires 'hook_before_run'
 # role: optional 'hook_before_read_config_file'
 # role: requires 'hook_after_parse_argv'
+# role: optional 'hook_after_read_config_file'
 # role: requires 'hook_format_result'
 # role: requires 'hook_format_row'
 # role: requires 'hook_display_result'
@@ -324,6 +325,8 @@ sub __default_env_name {
 }
 
 sub hook_before_read_config_file {}
+
+sub hook_after_read_config_file {}
 
 sub get_meta {
     my ($self, $r, $url) = @_;
@@ -674,10 +677,15 @@ sub _parse_argv2 {
 
         # then read from configuration
         if ($r->{read_config}) {
+
             $log->tracef("[pericmd] Running hook_before_read_config_file ...");
             $self->hook_before_read_config_file($r);
 
             $self->_read_config($r);
+
+            $log->tracef("[pericmd] Running hook_after_read_config_file ...");
+            $self->hook_after_read_config_file($r);
+
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
                 config             => $r->{config},
                 args               => \%args,
@@ -697,6 +705,7 @@ sub _parse_argv2 {
                 return [412, "Profile '$r->{config_profile}' not found ".
                             "in configuration file"];
             }
+
         }
 
         # finally get from argv
@@ -1860,6 +1869,14 @@ below is by order of calling.
 
 Called at the start of C<run()>. Can be used to set some initial values of other
 C<$r> keys. Or setup the logger.
+
+=head2 $cmd->hook_before_read_config_file($r)
+
+Only called when C<read_config> attribute is true.
+
+=head2 $cmd->hook_after_read_config_file($r)
+
+Only called when C<read_config> attribute is true.
 
 =head2 $cmd->hook_after_parse_argv($r)
 
