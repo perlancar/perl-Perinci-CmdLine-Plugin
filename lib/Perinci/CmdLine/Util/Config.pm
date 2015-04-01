@@ -8,6 +8,8 @@ use strict;
 use warnings;
 #use Log::Any '$log';
 
+use PERLANCAR::File::HomeDir qw(get_my_home_dir);
+
 our %SPEC;
 
 $SPEC{get_default_config_dirs} = {
@@ -16,23 +18,14 @@ $SPEC{get_default_config_dirs} = {
 };
 sub get_default_config_dirs {
     my @dirs;
+    local $PERLANCAR::File::HomeDir::DIE_ON_FAILURE = 1;
+    my $home = get_my_home_dir();
     if ($^O eq 'MSWin32') {
-        require File::HomeDir;
-        push @dirs, File::HomeDir->my_home;
+        push @dirs, $home;
     } else {
-        my $home = $ENV{HOME};
-        unless ($home) {
-            # sometimes HOME is not defined, in that case we'll use getpwuid()
-            my @pw = getpwuid($>);
-            $home = $pw[7] if @pw;
-        }
-        if ($home) {
-            push @dirs, "$home/.config";
-            push @dirs, $home;
-        }
-        push @dirs, "/etc";
+        push @dirs, "$home/.config", $home, "/etc";
     }
-    [grep {defined} @dirs];
+    \@dirs;
 }
 
 $SPEC{read_config} = {
