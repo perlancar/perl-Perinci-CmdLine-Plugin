@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.04    2015-04-02 (PERLANCAR)
+
+	- [Bugfix] Fix/tweak config reading, when running subcommand
+	  [profile=PROFILE] section is also read in addition to [SUBCMD
+	  profile=PROFILE] section.
+
+
 1.03    2015-04-01 (PERLANCAR)
 
 	- Add hook: after_read_config_file.
