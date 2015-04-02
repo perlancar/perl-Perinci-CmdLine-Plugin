@@ -6,7 +6,7 @@ package Perinci::CmdLine::Util::Config;
 use 5.010;
 use strict;
 use warnings;
-#use Log::Any '$log';
+use Log::Any::IfLOG '$log';
 
 use PERLANCAR::File::HomeDir qw(get_my_home_dir);
 
@@ -104,12 +104,17 @@ sub get_args_from_config {
             $a cmp $b
         } keys %$conf;
 
+    my %seen_profiles; # for debugging message
     for my $section (@sections) {
         if (defined $profile) {
             if (length $scn) {
-                next unless $section =~ /\A(\Q$scn\E|GLOBAL)\s+\Qprofile=$profile\E\z/;
+                next unless $section =~ /\A(?:(?:\Q$scn\E|GLOBAL)\s+)?profile=(.+)\z/;
+                $seen_profiles{$1}++;
+                next unless $1 eq $profile;
             } else {
-                next unless $section eq "profile=$profile";
+                next unless $section =~ /\Aprofile=(.+)\z/;
+                $seen_profiles{$1}++;
+                next unless $1 eq $profile;
             }
         } else {
             if (length $scn) {
@@ -133,6 +138,8 @@ sub get_args_from_config {
         }
         $found++;
     }
+    $log->tracef("[pericmd] Seen config profiles: %s",
+                 [sort keys %seen_profiles]);
 
     [200, "OK", $args, {'func.found'=>$found}];
 }
