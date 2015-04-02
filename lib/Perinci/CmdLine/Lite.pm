@@ -515,7 +515,7 @@ All those supported by L<Perinci::CmdLine::Base>, plus:
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=head2 log => bool (default: 0, or from env)
+=head2 log => bool (default: from env or 0)
 
 Whether to enable logging. This currently means setting up L<Log::Any::Adapter>
 to display logging (set in C<hook_after_parse_argv>, so tab completion skips
@@ -525,7 +525,7 @@ The default is off. If you set LOG=1 or LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET,
 then the default will be on. It defaults to off if you set LOG=0 or
 LOG_LEVEL=off.
 
-=head2 log_level => str (default: warning, or from env)
+=head2 log_level => str (default: from env, or 'warning')
 
 Set default log level. The default can also be set via
 LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
