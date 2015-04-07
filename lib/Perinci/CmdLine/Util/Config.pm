@@ -75,10 +75,12 @@ sub read_config {
 $SPEC{get_args_from_config} = {
     v => 1.1,
     args => {
+        r => {},
         config => {},
         args => {},
         subcommand_name => {},
         config_profile => {},
+        common_opts => {},
         meta => {},
         meta_is_normalized => {},
     },
@@ -86,10 +88,12 @@ $SPEC{get_args_from_config} = {
 sub get_args_from_config {
     my %fargs = @_;
 
+    my $r       = $fargs{r};
     my $conf    = $fargs{config};
     my $scn     = $fargs{subcommand_name} // '';
     my $profile = $fargs{config_profile};
     my $args    = $fargs{args} // {};
+    my $copts   = $fargs{common_opts};
     my $meta    = $fargs{meta};
     my $found;
 
@@ -136,13 +140,33 @@ sub get_args_from_config {
         my $as = $meta->{args} // {};
         for my $k (keys %{ $conf->{$section} }) {
             my $v = $conf->{$section}{$k};
-            # since IOD might return a scalar or an array (depending on whether
-            # there is a single param=val or multiple param= lines), we need to
-            # arrayify the value if the argument is expected to be an array.
-            if (ref($v) ne 'ARRAY' && $as->{$k} && $as->{$k}{schema} &&
-                    $as->{$k}{schema}[0] eq 'array') {
-                $args->{$k} = [$v];
+            if ($copts->{$k} && $copts->{$k}{is_settable_via_config}) {
+                my $sch = $copts->{$k}{schema};
+                if ($sch) {
+                    require Data::Sah::Normalize;
+                    $sch = Data::Sah::Normalize::normalize_schema($sch);
+                    # since IOD might return a scalar or an array (depending on
+                    # whether there is a single param=val or multiple param=
+                    # lines), we need to arrayify the value if the argument is
+                    # expected to be an array.
+                    if (ref($v) ne 'ARRAY' && $sch->[0] eq 'array') {
+                        $v = [$v];
+                    }
+                }
+                $copts->{$k}{handler}->(undef, $v, $r);
             } else {
+                # when common option clashes with function argument name, user
+                # can use NAME.arg to refer to function argument.
+                $k =~ s/\.arg\z//;
+
+                # since IOD might return a scalar or an array (depending on
+                # whether there is a single param=val or multiple param= lines),
+                # we need to arrayify the value if the argument is expected to
+                # be an array.
+                if (ref($v) ne 'ARRAY' && $as->{$k} && $as->{$k}{schema} &&
+                        $as->{$k}{schema}[0] eq 'array') {
+                    $v = [$v];
+                }
                 $args->{$k} = $v;
             }
         }

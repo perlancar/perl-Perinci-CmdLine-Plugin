@@ -882,6 +882,25 @@ _
         exit_code => 0,
         output_re => qr/^0$/,
     );
+    # TODO array-ify common option
+
+    write_file("$dir/prog3.conf", <<'_');
+format=json
+naked_res=1
+a.arg=101
+_
+    test_run(
+        name => 'can also set common option',
+        args => {
+            url=>$url,
+            program_name=>'prog3',
+            read_config=>1,
+            config_dirs=>[$dir],
+        },
+        argv => [],
+        exit_code => 0,
+        output_re => qr/^"a=101\\nb=\\nc=\\nd=\\ne="/,
+    );
 };
 
 subtest "stream input (simple types)" => sub {

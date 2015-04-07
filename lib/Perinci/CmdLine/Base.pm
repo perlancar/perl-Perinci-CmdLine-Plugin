@@ -123,6 +123,7 @@ our %copts = (
             $r->{format} = $val;
         },
         default => undef,
+        is_settable_via_config => 1,
     },
     json => {
         getopt  => 'json',
@@ -157,6 +158,7 @@ _
             $r->{naked_res} = $val ? 1:0;
         },
         default => 0,
+        is_settable_via_config => 1,
     },
 
     subcommands => {
@@ -276,6 +278,7 @@ _
             $r->{log_level} = $val;
             $ENV{LOG_LEVEL} = $val;
         },
+        is_settable_via_config => 1,
     },
     trace => {
         getopt  => "trace",
@@ -687,10 +690,12 @@ sub _parse_argv2 {
             $self->hook_after_read_config_file($r);
 
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
+                r                  => $r,
                 config             => $r->{config},
                 args               => \%args,
                 subcommand_name    => $r->{subcommand_name},
                 config_profile     => $r->{config_profile},
+                common_opts        => $self->common_opts,
                 meta               => $meta,
                 meta_is_normalized => 1,
             );
@@ -1460,7 +1465,8 @@ Set to true if user specifies C<--naked-res>.
 
 =head1 CONFIGURATION
 
-Configuration can be used to set function arguments.
+Configuration can be used to set function arguments as well as some common
+options.
 
 Configuration is currently in the L<IOD> (basically INI) format.
 
@@ -1471,8 +1477,8 @@ customized from command-line option C<--config-path>.
 All existing configuration files will be read in order, and the result merged if
 more than one files exist.
 
-For application that does not have subcommand, you can put parameters outside
-any section, e.g.:
+Section names map to subcommand names. For application that does not have
+subcommand, you can put parameters outside any section, e.g.:
 
  param=val
  otherparam=val
@@ -1503,9 +1509,10 @@ all subcommands:
  ...
 
 A configuration file can also have (multiple) profiles, to allow multiple
-configuration to be stored in a single file. Parameters in sections with
-matching "profile=PROFILENAME" will be read. Parameters in sections without any
-profile names will still be read. Example:
+configuration to be stored in a single file. Section names can have
+"profile=PROFILENAME" suffix to mark it as belonging to a certain profile.
+Parameters in sections with matching "profile=PROFILENAME" will be read.
+Parameters in sections without any profile names will still be read. Example:
 
  a=0
  b=0
@@ -1538,6 +1545,14 @@ then your subcommand1 function will get: a=1, b=2, c=3, d=9. If you run:
  % cmd subcommand1 --config-profile p2
 
 then your subcommand1 function will get: a=10, b=20, c=30, d=9.
+
+Parameter names map to function argument names or common option. If a common
+option name clashes with a function argument name, the function argument is
+accessible using the C<NAME.arg> syntax. For example, C<log_level> is a common
+option name. If your function also has a C<log_level> argument, to set this
+function argument, you write:
+
+ log_level.arg=blah
 
 
 =head1 ATTRIBUTES
