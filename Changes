@@ -1,5 +1,24 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.05    2015-04-07 (PERLANCAR)
+
+        - Configuration can now set some common options like log_level, format,
+          and naked_res (any option that is specified as is_settable_via_config
+          => 1). If a function argument happens to clash with common option
+          name, user can use 'NAME.arg' to refer to function argument
+          unambiguously.
+
+        - Tweak configuration parameter reading: GLOBAL section will still be
+          read even when subcommand is specified, non-profiled section will
+          still be read even when profile name is specified. This means we can
+          add common parameters that will be used by any profile, and/or any
+          subcommand.
+
+        - Tweak common option's categories. Now most common options have
+          category (e.g. logging, output) so list of options in help message (as
+          well as POD/manpage) looks nicer and more scannable/skimmable.
+
+
 1.04    2015-04-02 (PERLANCAR)
 
 	- [Bugfix] Fix/tweak config reading, when running subcommand

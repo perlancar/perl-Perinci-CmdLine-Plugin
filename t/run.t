@@ -17,7 +17,7 @@ subtest 'help action' => sub {
         args      => {url=>'/Perinci/Examples/noop'},
         argv      => [qw/--help/],
         exit_code => 0,
-        output_re => qr/- Do nothing.+^Options:/ms,
+        output_re => qr/- Do nothing.+^Other options:/ms,
     );
     test_run(
         name      => 'has subcommands',
@@ -263,7 +263,7 @@ subtest 'call action' => sub {
                   },
         argv      => [qw//],
         exit_code => 0,
-        output_re => qr/^Options/m,
+        output_re => qr/^Other options/m,
     );
     test_run(
         name      => 'multiple subcommands (subc specified via first cli arg)',
