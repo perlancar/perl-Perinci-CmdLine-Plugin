@@ -95,6 +95,7 @@ our %copts = (
 
     version => {
         getopt  => "version|v",
+        summary => "Display program's version and exit",
         usage   => "--version (or -v)",
         handler => sub {
             my ($go, $val, $r) = @_;
@@ -105,7 +106,7 @@ our %copts = (
 
     help => {
         getopt  => 'help|h|?',
-        summary => 'Display this help message',
+        summary => 'Display help message and exit',
         usage   => "--help (or -h, -?)",
         handler => sub {
             my ($go, $val, $r) = @_;
