@@ -123,6 +123,7 @@ our %copts = (
             $r->{format} = $val;
         },
         default => undef,
+        tags => ['category:output'],
         is_settable_via_config => 1,
     },
     json => {
@@ -132,6 +133,7 @@ our %copts = (
             my ($go, $val, $r) = @_;
             $r->{format} = 'json';
         },
+        tags => ['category:output'],
     },
 
     naked_res => {
@@ -158,6 +160,7 @@ _
             $r->{naked_res} = $val ? 1:0;
         },
         default => 0,
+        tags => ['category:output'],
         is_settable_via_config => 1,
     },
 
@@ -208,6 +211,7 @@ _
             $r->{config_paths} //= [];
             push @{ $r->{config_paths} }, $val;
         },
+        tags => ['category:configuration'],
     },
     no_config => {
         getopt  => 'no-config',
@@ -216,6 +220,7 @@ _
             my ($go, $val, $r) = @_;
             $r->{read_config} = 0;
         },
+        tags => ['category:configuration'],
     },
     config_profile => {
         getopt  => 'config-profile=s',
@@ -264,6 +269,7 @@ _
             Complete::Util::complete_array_elem(
                 array=>[sort @profiles], word=>$word, ci=>1);
         },
+        tags => ['category:configuration'],
     },
 
     # since the cmdline opts is consumed, Log::Any::App doesn't see this. we
@@ -279,6 +285,7 @@ _
             $ENV{LOG_LEVEL} = $val;
         },
         is_settable_via_config => 1,
+        tags => ['category:logging'],
     },
     trace => {
         getopt  => "trace",
@@ -287,6 +294,7 @@ _
             my ($go, $val, $r) = @_;
             $ENV{TRACE} = 1;
         },
+        tags => ['category:logging'],
     },
     debug => {
         getopt  => "debug",
@@ -295,6 +303,7 @@ _
             my ($go, $val, $r) = @_;
             $ENV{DEBUG} = 1;
         },
+        tags => ['category:logging'],
     },
     verbose => {
         getopt  => "verbose",
@@ -304,6 +313,7 @@ _
             $ENV{VERBOSE} = 1;
             $r->{_help_verbose} = 1;
         },
+        tags => ['category:logging'],
     },
     quiet => {
         getopt  => "quiet",
@@ -312,6 +322,7 @@ _
             my ($go, $val, $r) = @_;
             $ENV{QUIET} = 1;
         },
+        tags => ['category:logging'],
     },
 
 );
