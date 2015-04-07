@@ -1468,7 +1468,8 @@ By default these paths are searched: C<$HOME/.config/$prog_name.conf>,
 C<$HOME/$prog_name.conf>, C</etc/$prog_name.conf>. The location can be
 customized from command-line option C<--config-path>.
 
-All existing configuration files will be read in order.
+All existing configuration files will be read in order, and the result merged if
+more than one files exist.
 
 For application that does not have subcommand, you can put parameters outside
 any section, e.g.:
@@ -1502,7 +1503,13 @@ all subcommands:
  ...
 
 A configuration file can also have (multiple) profiles, to allow multiple
-configuration to be stored in a single file. Example:
+configuration to be stored in a single file. Parameters in sections with
+matching "profile=PROFILENAME" will be read. Parameters in sections without any
+profile names will still be read. Example:
+
+ a=0
+ b=0
+ d=9
 
  [profile=p1]
  a=1
@@ -1520,13 +1527,17 @@ configuration to be stored in a single file. Example:
 
 If you run:
 
+ % cmd subcommand1
+
+then your subcommand1 function will get: a=0, b=0, d=9.
+
  % cmd subcommand1 --config-profile p1
 
-then your subcommand1 function will get: a=1, b=2, c=3. If you run:
+then your subcommand1 function will get: a=1, b=2, c=3, d=9. If you run:
 
  % cmd subcommand1 --config-profile p2
 
-then your subcommand1 function will get: a=10, b=20, c=30.
+then your subcommand1 function will get: a=10, b=20, c=30, d=9.
 
 
 =head1 ATTRIBUTES

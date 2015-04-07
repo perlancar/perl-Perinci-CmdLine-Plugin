@@ -106,23 +106,33 @@ sub get_args_from_config {
 
     my %seen_profiles; # for debugging message
     for my $section (@sections) {
-        if (defined $profile) {
-            if (length $scn) {
-                next unless $section =~ /\A(?:(?:\Q$scn\E|GLOBAL)\s+)?profile=(.+)\z/;
-                $seen_profiles{$1}++;
-                next unless $1 eq $profile;
-            } else {
-                next unless $section =~ /\Aprofile=(.+)\z/;
-                $seen_profiles{$1}++;
-                next unless $1 eq $profile;
-            }
+        my ($sect_scn, $sect_profile);
+        if ($section =~ /\A\w+\z/) {
+            $sect_scn = $section;
+        } elsif ($section =~ /\Aprofile=(.*)\z/) {
+            $sect_scn = 'GLOBAL';
+            $sect_profile = $1;
+        } elsif ($section =~ /\A(\w+)\s+profile=(.*)\z/) {
+            $sect_scn = $1;
+            $sect_profile = $2;
         } else {
-            if (length $scn) {
-                next unless $section eq $scn || $section eq 'GLOBAL';
-            } else {
-                next unless $section eq 'GLOBAL';
-            }
+            die [412, "Error in config file: invalid section name ".
+                     "'$section', please use subcommand name + optional ".
+                         "' profile=PROFILE' only"];
         }
+        $seen_profiles{$sect_profile}++ if defined $sect_profile;
+        if (length $scn) {
+            next if $sect_scn ne 'GLOBAL' && $sect_scn ne $scn;
+        } else {
+            next if $sect_scn ne 'GLOBAL';
+        }
+        if (defined $profile) {
+            next if defined($sect_profile) && $sect_profile ne $profile;
+            $found++ if defined($sect_profile) && $sect_profile eq $profile;
+        } else {
+            next if defined($sect_profile);
+        }
+
         my $as = $meta->{args} // {};
         for my $k (keys %{ $conf->{$section} }) {
             my $v = $conf->{$section}{$k};
@@ -136,7 +146,6 @@ sub get_args_from_config {
                 $args->{$k} = $v;
             }
         }
-        $found++;
     }
     $log->tracef("[pericmd] Seen config profiles: %s",
                  [sort keys %seen_profiles]);
