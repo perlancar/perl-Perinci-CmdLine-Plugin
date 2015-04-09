@@ -172,7 +172,43 @@ sub hook_after_parse_argv {
 sub hook_before_action {
     my ($self, $r) = @_;
 
+    # validate arguments using schema from metadata
+  VALIDATE_ARGS:
+    {
+        # unless we're feeding the arguments to function, don't bother
+        # validating arguments
+        last unless $r->{action} eq 'call';
 
+        my $meta = $r->{meta};
+
+        # function is probably already wrapped
+        last if $meta->{'x.perinci.sub.wrapper.logs'} &&
+            (grep { $_->{validate_args} }
+             @{ $meta->{'x.perinci.sub.wrapper.logs'} });
+
+        require Data::Sah;
+
+        # to be cheap, we simply use "$ref" as key as cache key. to be proper,
+        # it should be hash of serialized content.
+        my %validators; # key = "$schema"
+
+        for my $arg (sort keys %{ $meta->{args} // {} }) {
+            next unless exists($r->{args}{$arg});
+            my $schema = $meta->{args}{$arg}{schema};
+            next unless $schema;
+            unless ($validators{"$schema"}) {
+                my $v = Data::Sah::gen_validator($schema, {
+                    return_type => 'str',
+                    schema_is_normalized => 1,
+                });
+                $validators{"$schema"} = $v;
+            }
+            my $res = $validators{"$schema"}->($r->{args}{$arg});
+            if ($res) {
+                die [400, "Argument '$arg' fails validation: $res"];
+            }
+        }
+    }
 }
 
 sub __json {
