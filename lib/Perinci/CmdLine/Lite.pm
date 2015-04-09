@@ -140,8 +140,6 @@ sub _unsetup_progress_output {
     $setup_progress = 0;
 }
 
-sub hook_before_run {}
-
 sub hook_after_parse_argv {
     my ($self, $r) = @_;
 
@@ -169,6 +167,12 @@ sub hook_after_parse_argv {
             formatter => sub { $self->program_name . ": $_[1]" },
         );
     }
+}
+
+sub hook_before_action {
+    my ($self, $r) = @_;
+
+
 }
 
 sub __json {
@@ -384,7 +388,7 @@ sub hook_after_get_meta {
     }
 }
 
-sub run_subcommands {
+sub action_subcommands {
     my ($self, $r) = @_;
 
     if (!$self->subcommands) {
@@ -403,7 +407,7 @@ sub run_subcommands {
       )];
 }
 
-sub run_version {
+sub action_version {
     my ($self, $r) = @_;
 
     my $meta = $r->{meta} = $self->get_meta($r, $self->url);
@@ -421,7 +425,7 @@ sub run_version {
       )];
 }
 
-sub run_help {
+sub action_help {
     require Perinci::CmdLine::Help;
 
     my ($self, $r) = @_;
@@ -454,7 +458,7 @@ sub run_help {
     $res;
 }
 
-sub run_call {
+sub action_call {
     my ($self, $r) = @_;
 
     my %extra;
@@ -486,7 +490,7 @@ sub run_call {
 1;
 # ABSTRACT: A lightweight Rinci/Riap-based command-line application framework
 
-=for Pod::Coverage ^(BUILD|get_meta|hook_.+|run_.+)$
+=for Pod::Coverage ^(BUILD|get_meta|hook_.+|action_.+)$
 
 =head1 SYNOPSIS
 

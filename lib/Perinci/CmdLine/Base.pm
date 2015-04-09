@@ -84,8 +84,8 @@ has cleanser => (
 # role: requires 'hook_before_read_config_file'
 # role: requires 'hook_after_read_config_file'
 # role: requires 'hook_after_parse_argv'
-# role: requires 'hook_before_run_action'
-# role: requires 'hook_after_run_action'
+# role: requires 'hook_before_action'
+# role: requires 'hook_after_action'
 # role: requires 'hook_format_result'
 # role: requires 'hook_display_result'
 # role: requires 'hook_after_run'
@@ -347,6 +347,10 @@ sub hook_before_run {}
 sub hook_before_read_config_file {}
 
 sub hook_after_read_config_file {}
+
+sub hook_before_action {}
+
+sub hook_after_action {}
 
 sub get_meta {
     my ($self, $r, $url) = @_;
@@ -1154,17 +1158,17 @@ sub run {
             $r->{args}{-cmdline_r} = $r;
         }
 
-        $log->tracef("[pericmd] Running hook_before_run_action ...");
-        $self->hook_before_run_action($r);
+        $log->tracef("[pericmd] Running hook_before_action ...");
+        $self->hook_before_action($r);
 
-        my $meth = "run_$r->{action}";
+        my $meth = "action_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
         $log->tracef("[pericmd] Running %s() ...", $meth);
         $r->{res} = $self->$meth($r);
         #$log->tracef("[pericmd] res=%s", $r->{res}); #1
 
-        $log->tracef("[pericmd] Running hook_after_run_action ...");
-        $self->hook_after_run_action($r);
+        $log->tracef("[pericmd] Running hook_after_action ...");
+        $self->hook_after_action($r);
     };
     my $err = $@;
     if ($err || !$r->{res}) {
@@ -1316,14 +1320,19 @@ Function arguments that are still missing can be filled from STDIN or files, if
 the metadata specifies C<cmdline_src> property (see L<Rinci::function> for more
 details).
 
-=item * Delegate to C<run_$action> method
+=item * Delegate to C<action_$action> method
+
+Before running the C<action_$action> method, C<hook_before_action> is called
+e.g. to allow changing/fixing action, last chance to check arguments, etc.
 
 After we get the action from the previous step, we delegate to separate
-C<run_$action> method (so there is C<run_version>, C<run_help>, and so on; and
-also C<run_call>). These methods also receive C<$r> as their argument and must
-return an enveloped result (see L<Rinci::function> for more details).
+C<action_$action> method (so there is C<action_version>, C<action_help>, and so
+on; and also C<action_call>). These methods also receive C<$r> as their argument
+and must return an enveloped result (see L<Rinci::function> for more details).
 
 Result is put in C<< $r->{res} >>.
+
+C<hook_after_action> is then called e.g. to preformat result.
 
 =item * Run hook_format_result
 
@@ -1331,8 +1340,6 @@ Hook must set C<< $r->{fres} >> (formatted result).
 
 If result has C<cmdline.skip_format> result metadata property, then this step is
 skipped and C<< $r->{fres} >> is simply taken from C<< $r->{res}[2] >>.
-
-A C<run_$action> method can set
 
 =item * Run hook_display_result
 
@@ -1734,7 +1741,7 @@ per-subcommand basis.
 In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
 C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
 
-Passing the cmdline object can be useful, e.g. to call run_help(), to get the
+Passing the cmdline object can be useful, e.g. to call action_help(), to get the
 settings of the Perinci::CmdLine, etc.
 
 =head2 program_name => str
@@ -1955,15 +1962,18 @@ $r->{args} >> from the Rinci metadata. PC:Classic doesn't do this because it
 uses function wrapper (L<Perinci::Sub::Wrapper>) which will do this as well as
 some other stuffs (validate function arguments, etc).
 
-=head2 $cmd->hook_before_run_action($r)
+=head2 $cmd->hook_before_action($r)
 
-Called before calling the C<run_ACTION> method. Some ideas to do in this hook:
-modifying action to run (C<< $r->{action} >>), last check of arguments (C<<
-$r->{args} >>) before passing them to function.
+Called before calling the C<action_ACTION> method. Some ideas to do in this
+hook: modifying action to run (C<< $r->{action} >>), last check of arguments
+(C<< $r->{args} >>) before passing them to function.
 
-=head2 $cmd->hook_after_run_action($r)
+PC:Lite uses this hook to validate function arguments. PC:Classic does not do
+this because it uses function wrapper which already does this.
 
-Called after calling C<run_ACTION> method. Some ideas to do in this hook:
+=head2 $cmd->hook_after_action($r)
+
+Called after calling C<action_ACTION> method. Some ideas to do in this hook:
 preformatting result (C<< $r->{res} >>).
 
 =head2 $cmd->hook_format_result($r)
