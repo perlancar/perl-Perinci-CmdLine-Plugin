@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+
+use 5.010;
+use strict;
+use warnings;
+
+use Benchmark::Command;
+
+my $code_noop_lite = q|$SPEC{noop}={v=>1.1}; sub noop { [200,"OK",""] } Perinci::CmdLine::Lite->new(url=>"/main/noop")->run|;
+my $code_noop_any  = q|$SPEC{noop}={v=>1.1}; sub noop { [200,"OK",""] } Perinci::CmdLine::Any ->new(url=>"/main/noop")->run|;
+
+Benchmark::Command::run(0, {
+    'perl'            => [$^X, "-e1"],
+    'load_lite'       => [$^X, "-MPerinci::CmdLine::Lite", "-e", 1],
+    'load_any'        => [$^X, "-MPerinci::CmdLine::Any", "-e", 1],
+    'run_lite'        => [$^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop_lite],
+    'run_any'         => [$^X, "-MPerinci::CmdLine::Any" , "-e", $code_noop_any ],
+    'run_lite (comp)' => [{env=>{COMP_LINE=>"foo a", COMP_POINT=>5}}, $^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop_lite],
+    'run_any (comp)'  => [{env=>{COMP_LINE=>"foo a", COMP_POINT=>5}}, $^X, "-MPerinci::CmdLine::Any" , "-e", $code_noop_any ],
+});
