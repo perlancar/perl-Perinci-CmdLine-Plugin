@@ -6,15 +6,19 @@ use warnings;
 
 use Benchmark::Command;
 
-my $code_noop_lite = q|$SPEC{noop}={v=>1.1}; sub noop { [200,"OK",""] } Perinci::CmdLine::Lite->new(url=>"/main/noop")->run|;
-my $code_noop_any  = q|$SPEC{noop}={v=>1.1}; sub noop { [200,"OK",""] } Perinci::CmdLine::Any ->new(url=>"/main/noop")->run|;
+my $code_noop = q|$SPEC{noop}={v=>1.1}; sub noop { [200,"OK",""] } Perinci::CmdLine::Lite->new(url=>"/main/noop")->run|;
+
+my $code_int  = q|$SPEC{int}={v=>1.1, args=>{arg1=>{schema=>"int"}}}; sub int { [200,"OK",""] } Perinci::CmdLine::Lite->new(url=>"/main/int")->run|;
+
+# ::Any only adds <1ms of overhead, no need to bench it
 
 Benchmark::Command::run(0, {
     'perl'            => [$^X, "-e1"],
-    'load_lite'       => [$^X, "-MPerinci::CmdLine::Lite", "-e", 1],
-    'load_any'        => [$^X, "-MPerinci::CmdLine::Any", "-e", 1],
-    'run_lite'        => [$^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop_lite],
-    'run_any'         => [$^X, "-MPerinci::CmdLine::Any" , "-e", $code_noop_any ],
-    'run_lite (comp)' => [{env=>{COMP_LINE=>"foo a", COMP_POINT=>5}}, $^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop_lite],
-    'run_any (comp)'  => [{env=>{COMP_LINE=>"foo a", COMP_POINT=>5}}, $^X, "-MPerinci::CmdLine::Any" , "-e", $code_noop_any ],
+    'load'            => [$^X, "-MPerinci::CmdLine::Lite", "-e", 1],
+
+    'run_noop'        => [$^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop],
+    'run_noop (comp)' => [{env=>{COMP_LINE=>"foo -x", COMP_POINT=>6}}, $^X, "-MPerinci::CmdLine::Lite", "-e", $code_noop],
+
+    'run_int'         => [$^X, "-MPerinci::CmdLine::Lite", "-e", $code_int, "--", "--arg1", "1"],
+    'run_int (comp)'  => [{env=>{COMP_LINE=>"foo -x", COMP_POINT=>6}}, $^X, "-MPerinci::CmdLine::Lite", "-e", $code_int],
 });
