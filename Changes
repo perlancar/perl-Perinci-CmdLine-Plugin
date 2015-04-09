@@ -1,5 +1,23 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.06    2015-04-09 (PERLANCAR)
+
+        [ENHANCEMENTS]
+
+        - Add new hooks: before_action, after_action.
+
+        - Perinci::CmdLine::Lite now validates arguments (in
+          hook_before_action). This closes the gap further between it and
+          Perinci::CmdLine::Classic.
+
+        - [Developer] Add devscripts/bench-startup.
+
+        [INCOMPATIBLE CHANGES]
+
+        - [Internal] run_* methods are now renamed action_* to better reflect
+          their nature.
+
+
 1.05    2015-04-07 (PERLANCAR)
 
         - Configuration can now set some common options like log_level, format,
