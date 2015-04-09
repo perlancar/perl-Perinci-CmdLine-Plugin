@@ -28,16 +28,15 @@ some PC::Classic features are still missing in PC::Lite.
 
 PC::Lite stays lightweight by avoiding the use of libraries that have large
 dependencies or add too much to startup overhead. This includes replacing
-L<Perinci::Access> with L<Perinci::Access::Lite> for metadata access, currently
-not using L<Data::Sah> for validator generation, avoiding L<Text::ANSITable> for
-formatting results, and replacing L<Log::Any::App> (which uses the relatively
-heavy L<Log::Log4perl>) with L<Log::Any::Adapter::ScreenColoredLevel> for
-logging.
+L<Perinci::Access> with L<Perinci::Access::Lite> for metadata access, avoiding
+L<Text::ANSITable> for formatting results, and replacing L<Log::Any::App> (which
+uses the relatively heavy L<Log::Log4perl>) with
+L<Log::Any::Adapter::ScreenColoredLevel> for logging.
 
 PC::Lite tries to start under 0.04-0.05s to make shell tab completion
 convenient. On the other hand, PC::Classic application can spend between
 0.20-0.50s before displaying output, due to various abovementioned overheads:
-loading more libraries, validator code generation, etc.
+loading more libraries, etc.
 
 Implementation-wise, the two share a lot of common code in the form of their
 base class, L<Perinci::CmdLine::Base>. The interface is also 99% the same.
@@ -87,12 +86,14 @@ Instead of L<Perinci::Access>, PC::Lite uses the more lightweight alternative
 L<Perinci::Access::Lite> which does not support some URL schemes (riap+tcp,
 riap+unix, riap+pipe). http/https and local are supported though.
 
-=item * Automatic validation of schemas
+=item * Extra stuffs that Perinci::Sub::Wrapper adds
 
-Perinci::Access automatically wraps subroutines with L<Perinci::Sub::Wrapper>,
-which generates schema validation code using L<Data::Sah>. This adds too much
-startup overhead, so currently PC::Lite avoids it. Some minimal/rudimentary
-validation is done instead.
+PC::Classic uses function wrapper to automatically adds argument validation,
+dependency checking, and so on. However, this adds too much overhead so PC:Lite
+avoids it and do some of the stuffs by itself to avoid the overhead.
+
+PC:Lite does argument validation, as well as dependency checking. But there are
+other "minor" stuffs that Perinci::Sub::Wrapper adds that are not available.
 
 =item * Color themes
 
