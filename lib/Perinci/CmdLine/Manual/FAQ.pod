@@ -93,7 +93,9 @@ dependency checking, and so on. However, this adds too much overhead so PC:Lite
 avoids it and do some of the stuffs by itself to avoid the overhead.
 
 PC:Lite does argument validation, as well as dependency checking. But there are
-other "minor" stuffs that Perinci::Sub::Wrapper adds that are not available.
+other stuffs that Perinci::Sub::Wrapper adds that are not available, including:
+result validation, validation of input stream (streaming argument) as well as
+output stream (streaming result).
 
 =item * Color themes
 

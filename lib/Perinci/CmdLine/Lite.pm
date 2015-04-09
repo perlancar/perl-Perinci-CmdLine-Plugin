@@ -194,6 +194,11 @@ sub hook_before_action {
 
         for my $arg (sort keys %{ $meta->{args} // {} }) {
             next unless exists($r->{args}{$arg});
+
+            # we don't support validation of input stream because this must be
+            # done after each 'get item' (but periswrap does)
+            next if $meta->{args}{$arg}{stream};
+
             my $schema = $meta->{args}{$arg}{schema};
             next unless $schema;
             unless ($validators{"$schema"}) {
