@@ -77,15 +77,18 @@ has cleanser => (
 );
 
 # role: requires 'hook_after_get_meta'
-# role: requires 'hook_before_run'
-# role: optional 'hook_before_read_config_file'
-# role: requires 'hook_after_parse_argv'
-# role: optional 'hook_after_read_config_file'
-# role: requires 'hook_format_result'
 # role: requires 'hook_format_row'
+# role: requires 'default_prompt_template'
+
+# role: requires 'hook_before_run'
+# role: requires 'hook_before_read_config_file'
+# role: requires 'hook_after_read_config_file'
+# role: requires 'hook_after_parse_argv'
+# role: requires 'hook_before_run_action'
+# role: requires 'hook_after_run_action'
+# role: requires 'hook_format_result'
 # role: requires 'hook_display_result'
 # role: requires 'hook_after_run'
-# role: requires 'default_prompt_template'
 
 # we put common stuffs here, but PC::Classic's final version will differ from
 # PC::Lite's in several aspects: translation, supported output formats,
@@ -338,6 +341,8 @@ sub __default_env_name {
     }
     "${prog}_OPT";
 }
+
+sub hook_before_run {}
 
 sub hook_before_read_config_file {}
 
@@ -1136,7 +1141,9 @@ sub run {
 
         $log->tracef("[pericmd] Running hook_after_parse_argv ...");
         $self->hook_after_parse_argv($r);
+
         $self->parse_cmdline_src($r);
+
         my $missing = $parse_res->[3]{"func.missing_args"};
         die [400, "Missing required argument(s): ".join(", ", @$missing)]
             if $missing && @$missing;
@@ -1147,11 +1154,17 @@ sub run {
             $r->{args}{-cmdline_r} = $r;
         }
 
+        $log->tracef("[pericmd] Running hook_before_run_action ...");
+        $self->hook_before_run_action($r);
+
         my $meth = "run_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
         $log->tracef("[pericmd] Running %s() ...", $meth);
         $r->{res} = $self->$meth($r);
         #$log->tracef("[pericmd] res=%s", $r->{res}); #1
+
+        $log->tracef("[pericmd] Running hook_after_run_action ...");
+        $self->hook_after_run_action($r);
     };
     my $err = $@;
     if ($err || !$r->{res}) {
@@ -1916,20 +1929,55 @@ Only called when C<read_config> attribute is true.
 
 Only called when C<read_config> attribute is true.
 
+=head2 $cmd->hook_after_get_meta($r)
+
+Called after the C<get_meta> method gets function metadata, which normally
+happens during parsing argument, because parsing function arguments require the
+metadata (list of arguments, etc).
+
+PC:Lite as well as PC:Classic use this hook to insert a common option
+C<--dry-run> if function metadata expresses that function supports dry-run mode.
+
+PC:Lite also checks the C<deps> property here. PC:Classic doesn't do this
+because it uses function wrapper (L<Perinci::Sub::Wrapper>) which does this.
+
 =head2 $cmd->hook_after_parse_argv($r)
 
 Called after C<run()> calls C<parse_argv()> and before it checks the result.
 C<$r->{parse_argv_res}> will contain the result of C<parse_argv()>. The hook
 gets a chance to, e.g. fill missing arguments from other source.
 
+Note that for sources specified in the C<cmdline_src> property, this base class
+will do the filling in after running this hook, so no need to do that here.
+
+PC:Lite uses this hook to give default values to function arguments C<<
+$r->{args} >> from the Rinci metadata. PC:Classic doesn't do this because it
+uses function wrapper (L<Perinci::Sub::Wrapper>) which will do this as well as
+some other stuffs (validate function arguments, etc).
+
+=head2 $cmd->hook_before_run_action($r)
+
+Called before calling the C<run_ACTION> method. Some ideas to do in this hook:
+modifying action to run (C<< $r->{action} >>), last check of arguments (C<<
+$r->{args} >>) before passing them to function.
+
+=head2 $cmd->hook_after_run_action($r)
+
+Called after calling C<run_ACTION> method. Some ideas to do in this hook:
+preformatting result (C<< $r->{res} >>).
+
 =head2 $cmd->hook_format_result($r)
 
 The hook is supposed to format result in C<$res->{res}> (an array).
+
+All direct subclasses of PC:Base do the formatting here.
 
 =head2 $cmd->hook_display_result($r)
 
 The hook is supposed to display the formatted result (stored in C<$r->{fres}>)
 to STDOUT. But in the case of streaming output, this hook can also set it up.
+
+All direct subclasses of PC:Base do the formatting here.
 
 =head2 $cmd->hook_after_run($r)
 
