@@ -111,12 +111,12 @@ sub get_args_from_config {
     my %seen_profiles; # for debugging message
     for my $section (@sections) {
         my ($sect_scn, $sect_profile);
-        if ($section =~ /\A\w+\z/) {
-            $sect_scn = $section;
-        } elsif ($section =~ /\Aprofile=(.*)\z/) {
+        if ($section =~ /\Aprofile=(.*)\z/) {
             $sect_scn = 'GLOBAL';
             $sect_profile = $1;
-        } elsif ($section =~ /\A(\w+)\s+profile=(.*)\z/) {
+        } elsif ($section =~ /\A\S+\z/) {
+            $sect_scn = $section;
+        } elsif ($section =~ /\A(\S+)\s+profile=(.*)\z/) {
             $sect_scn = $1;
             $sect_profile = $2;
         } else {
