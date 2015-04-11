@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.07    2015-04-11 (PERLANCAR)
+
+	- [Bugfix] regex for checking config section names was too strict.
+
+	- Tweak bench-startup: remove 'run_noop (comp)' because it's not
+	  very useful, add bench for measuring startup overhead of
+	  producing completion for int arg and str arg + in clause.
+
+
 1.06    2015-04-09 (PERLANCAR)
 
         [ENHANCEMENTS]
