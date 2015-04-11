@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.08    2015-04-11 (PERLANCAR)
+
+	- Add common option: --no-env to prevent reading env for default
+	  options.
+
+
 1.07    2015-04-11 (PERLANCAR)
 
 	- [Bugfix] regex for checking config section names was too strict.
