@@ -699,6 +699,20 @@ subtest 'result metadata' => sub {
 };
 
 subtest 'env' => sub {
+    # XXX turned off via read_env attribute
+
+    {
+        local $ENV{SUM_NUMS_OPT} = '1 2';
+        test_run(
+            name      => 'turned off via --no-env',
+            args      => {program_name => 'sum-nums',
+                          url => '/Perinci/Examples/sum'},
+            argv      => [qw/--no-env --json 3/],
+            exit_code => 0,
+            output_re => qr/^\[\s*200,\s*"OK",\s*3,\s*\{\}\s*\]/s,
+        );
+    }
+
     {
         local $ENV{SUM_NUMS_OPT} = '--json 1 2';
         test_run(

@@ -226,6 +226,15 @@ _
         },
         tags => ['category:configuration'],
     },
+    no_env => {
+        getopt  => 'no-env',
+        summary => 'Do not read environment for default options',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{read_env} = 0;
+        },
+        tags => ['category:environment'],
+    },
     config_profile => {
         getopt  => 'config-profile=s',
         summary => 'Set configuration profile to use',
@@ -495,7 +504,7 @@ sub do_completion {
     # command-line argument, or default_subcommand.
     $self->_parse_argv1($r);
 
-    {
+    if ($r->{read_env}) {
         my $env_words = $self->_read_env($r);
         unshift @ARGV, @$env_words;
         $cword += @$env_words;
@@ -682,7 +691,7 @@ sub _parse_argv2 {
 
     my %args;
 
-    {
+    if ($r->{read_env}) {
         my $env_words = $self->_read_env($r);
         unshift @ARGV, @$env_words;
     }
@@ -1120,8 +1129,13 @@ sub run {
     $r->{format}    = $co->{format}{default} if $co->{format};
 
     if ($self->read_config) {
-        # note that we have read the config
+        # note that we will be reading config file
         $r->{read_config} = 1;
+    }
+
+    if ($self->read_env) {
+        # note that we will be reading env for default options
+        $r->{read_env} = 1;
     }
 
     eval {
@@ -1402,6 +1416,13 @@ This is set in run() to signify that we have tried to read config file (this is
 set to true even though config file does not exist). This is never set to true
 when C<read_config> attribute is set, which means that we never try to read any
 config file.
+
+=item * read_env => bool
+
+This is set in run() to signify that we will try to read env for default
+options. This settng can be turned off e.g. in common option C<no_env>. This is
+never set to true when C<read_env> attribute is set to false, which means that
+we never try to read environment.
 
 =item * config => hash
 

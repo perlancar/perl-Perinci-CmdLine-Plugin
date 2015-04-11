@@ -105,6 +105,9 @@ sub BUILD {
             $copts->{no_config}      = { $_t->('no_config') };
             $copts->{config_profile} = { $_t->('config_profile') };
         }
+        if ($self->read_env) {
+            $copts->{no_env} = { $_t->('no_env') };
+        }
         if ($self->log) {
             $copts->{log_level} = { $_t->('log_level'), };
             $copts->{trace}     = { $_t->('trace'), };
