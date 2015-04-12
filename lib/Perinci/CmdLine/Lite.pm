@@ -228,7 +228,7 @@ sub __json {
 }
 
 sub __gen_table {
-    my ($data, $header_row, $resmeta) = @_;
+    my ($data, $header_row, $resmeta, $is_pretty) = @_;
 
     $resmeta //= {};
 
@@ -297,7 +297,14 @@ sub __gen_table {
         $data = $newdata;
     }
 
-    Text::Table::Tiny::table(rows=>$data, header_row=>$header_row) . "\n";
+    if ($is_pretty) {
+        require Text::Table::Tiny;
+        Text::Table::Tiny::table(rows=>$data, header_row=>$header_row) . "\n";
+    } else {
+        no warnings 'uninitialized';
+        shift @$data if $header_row;
+        join("", map {join("\t", @$_)."\n"} @$data);
+    }
 }
 
 sub hook_format_result {
@@ -332,21 +339,11 @@ sub hook_format_result {
             } elsif (Data::Check::Structure::is_aos($data, {max=>$max})) {
                 return join("", map {"$_\n"} @$data);
             } elsif (Data::Check::Structure::is_aoaos($data, {max=>$max})) {
-                if ($is_pretty) {
-                    require Text::Table::Tiny;
-                    return __gen_table($data, 0, $res->[3]);
-                } else {
-                    return join("", map {join("\t", @$_)."\n"} @$data);
-                }
+                return __gen_table($data, 0, $res->[3], $is_pretty);
             } elsif (Data::Check::Structure::is_hos($data, {max=>$max})) {
-                if ($is_pretty) {
-                    require Text::Table::Tiny;
-                    $data = [map {[$_, $data->{$_}]} sort keys %$data];
-                    unshift @$data, ["key", "value"];
-                    return __gen_table($data, 1, $res->[3]);
-                } else {
-                    return join("", map {"$_\t$data->{$_}\n"} sort keys %$data);
-                }
+                $data = [map {[$_, $data->{$_}]} sort keys %$data];
+                unshift @$data, ["key", "value"];
+                return __gen_table($data, 1, $res->[3], $is_pretty);
             } elsif (Data::Check::Structure::is_aohos($data, {max=>$max})) {
                 # collect all mentioned fields
                 my %fieldnames;
@@ -358,13 +355,8 @@ sub hook_format_result {
                 for my $row (@$data) {
                     push @$newdata, [map {$row->{$_}} @fieldnames];
                 }
-                if ($is_pretty) {
-                    unshift @$newdata, \@fieldnames;
-                    require Text::Table::Tiny;
-                    return __gen_table($newdata, 1, $res->[3]);
-                } else {
-                    return join("", map {join("\t", @$_)."\n"} @$newdata);
-                }
+                unshift @$newdata, \@fieldnames;
+                return __gen_table($newdata, 1, $res->[3], $is_pretty);
             } else {
                 $format = 'json-pretty';
             }
