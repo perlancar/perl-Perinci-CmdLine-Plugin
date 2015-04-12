@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.10    2015-04-12 (PERLANCAR)
+
+	- [Bugfix] Respect table_column_orders for table in simple-text
+	  format.
+
+
 1.09    2015-04-12 (PERLANCAR)
 
 	- [Bugfix] Regression since 1.02 (the addition of coercing):
