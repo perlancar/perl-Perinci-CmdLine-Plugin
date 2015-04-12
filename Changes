@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.09    2015-04-12 (PERLANCAR)
+
+	- [Bugfix] Regression since 1.02 (the addition of coercing):
+	  required argument was not checked because of variable reuse.
+
+
 1.08    2015-04-11 (PERLANCAR)
 
 	- Add common option: --no-env to prevent reading env for default
