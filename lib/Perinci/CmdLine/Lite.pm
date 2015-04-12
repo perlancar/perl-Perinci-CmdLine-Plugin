@@ -522,6 +522,8 @@ sub action_call {
     # currently we don't log args because it's potentially large
     $log->tracef("[pericmd] Riap request: action=call, url=%s", $url);
 
+    #$log->tracef("TMP: extra=%s", \%extra);
+
     # setup output progress indicator
     if ($r->{meta}{features}{progress}) {
         $self->_setup_progress_output;

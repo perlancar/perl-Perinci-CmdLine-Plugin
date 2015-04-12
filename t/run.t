@@ -230,6 +230,14 @@ subtest 'output formats' => sub {
 };
 
 subtest 'call action' => sub {
+    # test regression 2015-04-12
+    test_run(
+        name      => 'missing required args -> error',
+        args      => {url=>'/Perinci/Examples/sum'},
+        argv      => [],
+        exit_code => 100,
+    );
+
     test_run(
         name      => 'single command',
         args      => {url=>'/Perinci/Examples/sum'},

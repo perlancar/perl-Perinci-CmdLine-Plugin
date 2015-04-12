@@ -778,7 +778,7 @@ sub _parse_argv2 {
         }
 
         require Perinci::Sub::GetArgs::Argv;
-        my $res = Perinci::Sub::GetArgs::Argv::get_args_from_argv(
+        my $ga_res = Perinci::Sub::GetArgs::Argv::get_args_from_argv(
             argv                => \@ARGV,
             args                => \%args,
             meta                => $meta,
@@ -803,21 +803,23 @@ sub _parse_argv2 {
             },
         );
 
-        return $res unless $res->[0] == 200;
+        return $ga_res unless $ga_res->[0] == 200;
 
         require Perinci::Sub::CoerceArgs;
-        $res = Perinci::Sub::CoerceArgs::coerce_args(
+        my $coerce_res = Perinci::Sub::CoerceArgs::coerce_args(
             meta                => $meta,
             meta_is_normalized  => 1,
-            args                => $res->[2],
+            args                => $ga_res->[2],
         );
+
+        return $coerce_res unless $coerce_res->[0] == 200;
 
         # restore
         for (keys %$copts) {
             $copts->{$_}{handler} = $old_handlers{$_};
         }
 
-        return $res;
+        return $ga_res;
     }
 }
 
@@ -1161,6 +1163,8 @@ sub run {
         $self->hook_after_parse_argv($r);
 
         $self->parse_cmdline_src($r);
+
+        #$log->tracef("TMP: parse_res: %s", $parse_res);
 
         my $missing = $parse_res->[3]{"func.missing_args"};
         die [400, "Missing required argument(s): ".join(", ", @$missing)]
