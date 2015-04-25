@@ -52,6 +52,10 @@ has log_level => (
         'warning';
     },
 );
+has validate_args => (
+    is=>'rw',
+    default => 1,
+);
 
 my $formats = [qw/text text-simple text-pretty json json-pretty/];
 
@@ -178,6 +182,8 @@ sub hook_before_action {
     # validate arguments using schema from metadata
   VALIDATE_ARGS:
     {
+        last unless $self->validate_args;
+
         # unless we're feeding the arguments to function, don't bother
         # validating arguments
         last unless $r->{action} eq 'call';
@@ -571,6 +577,8 @@ LOG_LEVEL=off.
 
 Set default log level. The default can also be set via
 LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
+
+=head2 validate_args => bool (default: 1)
 
 
 =head1 METHODS
