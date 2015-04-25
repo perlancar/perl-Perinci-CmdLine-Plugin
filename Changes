@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.12    2015-04-25 (PERLANCAR)
+
+	- [ux] --json will default to json-pretty when in interactive mode,
+	  but compact when non-interactive.
+
+
 1.11    2015-04-25 (PERLANCAR)
 
 	- Add attribute: validate_args to allow disabling args validation.
