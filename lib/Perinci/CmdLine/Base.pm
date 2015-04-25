@@ -135,7 +135,7 @@ our %copts = (
         summary => 'Set output format to json',
         handler => sub {
             my ($go, $val, $r) = @_;
-            $r->{format} = 'json';
+            $r->{format} = (-t STDOUT) ? 'json-pretty' : 'json';
         },
         tags => ['category:output'],
     },
