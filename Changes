@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.11    2015-04-25 (PERLANCAR)
+
+	- Add attribute: validate_args to allow disabling args validation.
+
+
 1.10    2015-04-12 (PERLANCAR)
 
 	- [Bugfix] Respect table_column_orders for table in simple-text
