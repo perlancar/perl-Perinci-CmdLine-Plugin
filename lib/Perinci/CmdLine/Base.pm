@@ -1252,7 +1252,7 @@ sub run {
 }
 
 1;
-# ABSTRACT: Base class for Perinci::CmdLine{Classic,::Lite}
+# ABSTRACT: Base class for Perinci::CmdLine{::Classic,::Lite}
 
 =for Pod::Coverage ^(.+)$
 
