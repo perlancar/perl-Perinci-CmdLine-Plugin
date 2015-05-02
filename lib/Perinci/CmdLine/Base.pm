@@ -1268,8 +1268,8 @@ If you execute C<run()>, this is what will happen, in order:
 =item * Detect if we are running under tab completion mode
 
 This is done by checking the existence of special environment varibles like
-C<COMP_LINE> or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM FLOW
-(TAB COMPLETION)">. Otherwise, continue.
+C<COMP_LINE> (bash) or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM
+FLOW (TAB COMPLETION)">. Otherwise, continue.
 
 =item * Run hook_before_run, if defined
 
@@ -1281,7 +1281,7 @@ Some ideas that you can do in this hook: XXX.
 =item * Parse command-line arguments (@ARGV) and set C<action>
 
 If C<read_env> attribute is set to true, and there is environment variable
-defined to set default options (see documentation on L<read_env> and C<env_name>
+defined to set default options (see documentation on C<read_env> and C<env_name>
 attributes) then the environment variable is parsed and prepended first to the
 command-line, so it can be parsed together. For example, if your program is
 called C<foo> and environment variable C<FOO_OPT> is set to C<--opt1 --opt2
@@ -1289,9 +1289,9 @@ val>. When you execute:
 
  % foo --no-opt1 --trace 1 2
 
-then C<@ARGV> will be set to C<<('--opt1', '--opt2', 'val', '--no-opt1',
-'--trace', 1, 2)>>. This way, command-line arguments can have a higher
-precedence and override setting from the environment variable (in the example,
+then C<@ARGV> will be set to C<< ('--opt1', '--opt2', 'val', '--no-opt1',
+'--trace', 1, 2) >>. This way, command-line arguments can have a higher
+precedence and override settings from the environment variable (in this example,
 C<--opt1> is negated by C<--no-opt1>).
 
 Currently, parsing is done in two steps. The first step is to extract subcommand
@@ -1306,7 +1306,7 @@ specified).
 In the first step, since we do not know the subcommand yet, we only parse common
 options and strip them. Unknown options at this time will be passed through.
 
-If user specifies common option like C<--help> or <--version>, then action will
+If user specifies common option like C<--help> or C<--version>, then action will
 be set to (respectively) C<help> and C<version> and the second step will be
 skipped. Otherwise we continue the the second step and action by default is set
 to C<call>.
