@@ -222,6 +222,26 @@ sub hook_before_action {
                 die [400, "Argument '$arg' fails validation: $res"];
             }
         }
+
+        if ($meta->{args_rels}) {
+            my $schema = [hash => $meta->{args_rels}];
+            my $sah = Data::Sah->new;
+            my $hc  = $sah->get_compiler("human");
+            my $cd  = $hc->init_cd;
+            $cd->{args}{lang} //= $cd->{default_lang};
+            my $v = Data::Sah::gen_validator($schema, {
+                return_type => 'str',
+                human_hash_values => {
+                    field  => $hc->_xlt($cd, "argument"),
+                    fields => $hc->_xlt($cd, "arguments"),
+                },
+            });
+            my $res = $v->($r->{args});
+            if ($res) {
+                die [400, $res];
+            }
+        }
+
     }
 }
 
