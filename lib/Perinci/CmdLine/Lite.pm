@@ -338,7 +338,6 @@ sub hook_format_result {
 
     my $res    = $r->{res};
     my $format = $r->{format} // 'text';
-    my $meta   = $r->{meta};
 
     if ($format =~ /\Atext(-simple|-pretty)?\z/) {
         my $is_pretty = $format eq 'text-pretty' ? 1 :
