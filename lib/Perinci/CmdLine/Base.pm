@@ -1773,23 +1773,23 @@ settings of the Perinci::CmdLine, etc.
 
 Default is from PERINCI_CMDLINE_PROGRAM_NAME environment or from $0.
 
-=head2 riap_client => float (default: 1.1)
-
-Specify L<Riap> protocol version to use. Will be passed to C<riap_client_args>.
-
 =head2 riap_client => obj
 
-Set to L<Perinci::Access> (or compatible) instance. PC::Lite uses lighter
-version L<Perinci::Access::Lite>.
+Set to Riap client instance, should you want to create one yourself. Otherwise
+will be set L<Perinci::Access> (in PC:Classic), or L<Perinci::Access::Lite> (in
+PC:Lite).
 
 =head2 riap_version => float (default: 1.1)
 
-Will be passed to Riap client constructor as well.
+Specify L<Riap> protocol version to use. Will be passed to Riap client
+constructor (unless you already provide a Riap client object, see
+C<riap_client>).
 
 =head2 riap_client_args => hash
 
-Arguments to pass to L<Perinci::Access> constructor. This is useful for passing
-e.g. HTTP basic authentication to Riap client
+Arguments to pass to Riap client constructor. Will be used unless you create
+your own Riap client object (see C<riap_client>). One of the things this
+attribute is used is to pass HTTP basic authentication to Riap client
 (L<Perinci::Access::HTTP::Client>):
 
  riap_client_args => {handler_args => {user=>$USER, password=>$PASS}}
