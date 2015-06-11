@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.14    2015-06-11 (PERLANCAR)
+
+	- Split Test::Perinci::CmdLine to its own dist (to be modified to
+          support Perinci::CmdLine::Inline as well).
+
+        - Replace tests with test suite from Test::Perinci::CmdLine.
+
+
 1.13    2015-05-06 (PERLANCAR)
 
 	- Check args_rels property.
