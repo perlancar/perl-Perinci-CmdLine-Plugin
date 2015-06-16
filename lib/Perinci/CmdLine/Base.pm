@@ -608,7 +608,7 @@ sub _parse_argv1 {
 
         require Getopt::Long;
         my $old_go_conf = Getopt::Long::Configure(
-            'pass_through', 'permute', 'no_ignore_case', 'no_auto_abbrev');
+            'pass_through', 'no_ignore_case', 'bundling', 'no_auto_abbrev');
         my @go_spec;
         my $co = $self->common_opts // {};
         for my $k (keys %$co) {
