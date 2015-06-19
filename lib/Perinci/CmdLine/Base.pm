@@ -1191,8 +1191,14 @@ sub run {
     my $err = $@;
     if ($err || !$r->{res}) {
         if ($err) {
-            $err =~ s/\n+$//;
             $err = [500, "Died: $err"] unless ref($err) eq 'ARRAY';
+            require Scalar::Util;
+            if (%Devel::Confess::) {
+                my $id = Scalar::Util::refaddr($err);
+                my $stack_trace = $Devel::Confess::MESSAGES{$id};
+                $err->[1] .= "\n$stack_trace" if $stack_trace;
+            }
+            $err->[1] =~ s/\n+$//;
             $r->{res} = $err;
         } else {
             $r->{res} = [500, "Bug: no response produced"];
