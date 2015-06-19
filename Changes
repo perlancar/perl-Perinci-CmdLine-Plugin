@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.15    2015-06-19 (PERLANCAR)
+
+	- Add FAQ items about debugging (show log messages, show stack
+	  trace).
+
+	- Detect if Devel::Confess is loaded and include the stack trace in
+	  error message.
+
+
 1.14    2015-06-11 (PERLANCAR)
 
 	- Split Test::Perinci::CmdLine to its own dist (to be modified to
