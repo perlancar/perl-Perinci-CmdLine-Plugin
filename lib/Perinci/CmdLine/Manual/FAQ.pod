@@ -30,8 +30,8 @@ PC::Lite stays lightweight by avoiding the use of libraries that have large
 dependencies or add too much to startup overhead. This includes replacing
 L<Perinci::Access> with L<Perinci::Access::Lite> for metadata access, avoiding
 L<Text::ANSITable> for formatting results, and replacing L<Log::Any::App> (which
-uses the relatively heavy L<Log::Log4perl>) with
-L<Log::Any::Adapter::ScreenColoredLevel> for logging.
+uses the relatively heavy L<Log::Log4perl>) with L<Log::Any::Adapter::Screen>
+for logging.
 
 PC::Lite tries to start under 0.04-0.05s to make shell tab completion
 convenient. On the other hand, PC::Classic application can spend between
@@ -104,8 +104,8 @@ output stream (streaming result).
 =item * More advanced logging
 
 Only logging to screen is currently supported by PC::Lite, using
-L<Log::Any::Adapter::ScreenColoredLevel>. PC::Classic, using L<Log::Any::App>
-can log to files, directories, syslog, and other outputs.
+L<Log::Any::Adapter::Screen>. PC::Classic, using L<Log::Any::App> can log to
+files, directories, syslog, and other outputs.
 
 =item * I18N
 

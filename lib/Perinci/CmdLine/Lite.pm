@@ -169,7 +169,7 @@ sub hook_after_parse_argv {
     if ($self->log) {
         require Log::Any::Adapter;
         Log::Any::Adapter->set(
-            'ScreenColoredLevel',
+            'Screen',
             min_level => $r->{log_level} // $self->log_level,
             formatter => sub { $self->program_name . ": $_[1]" },
         );

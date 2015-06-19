@@ -130,9 +130,8 @@ TODO
 
 Logging is done with L<Log::Any::IfLOG> (for producing). For displaying logs,
 PC::Classic uses L<Log::Any::App> currently which supports multiple outputs
-(screen, file, etc) while PC::Lite currently uses
-L<Log::Any::Adapter::ScreenColoredLevel> which only supports displaying to
-screen.
+(screen, file, etc) while PC::Lite currently uses L<Log::Any::Adapter::Screen>
+which only supports displaying to screen.
 
 Loading Log::Any adapters adds to startup overhead time, so the framework tries
 to be smart when determining whether or not to do logging output. Here are the
