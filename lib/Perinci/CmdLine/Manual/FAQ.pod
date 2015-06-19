@@ -145,6 +145,39 @@ This framework is currently function-centric. There are already several OO-based
 command-line frameworks on CPAN.
 
 
+=head1 DEBUGGING
+
+=head2 How do I enable/view log messages?
+
+The framework produces log messages using L<Log::Any>. You can display them on
+the screen, e.g. using L<Log::Any::Adapter::Screen> like:
+
+ % perl -MLog::Any::Adapter=Screen,min_level,trace /path/to/yourscript.pl
+
+or:
+
+ % TRACE=1 PERL5OPT=-MLog::Any::Adapter::Screen yourscript.pl
+
+Log::Any::Adapter::Screen has a few other options and observes a few other
+environment variables (e.g. for prefixing with timestamp, etc). See its
+documentation for more details.
+
+For sending logs to files, there are other Log::Any adapters you can look at.
+Also take a look at L<Log::Any::App>.
+
+=head2 How do I debug my CLI script?
+
+To see stack trace on error, you can use L<Devel::Confess>.
+Perinci::CmdLine::Base detects if Devel::Confess is loaded and will return the
+stack trace for you:
+
+ % perl -d:Confess /path/to/yourscript.pl
+
+or:
+
+ % PERL5OPT='-d:Confess' yourscript.pl
+
+
 =head1 SEE ALSO
 
 L<Perinci::CmdLine::Manual>
