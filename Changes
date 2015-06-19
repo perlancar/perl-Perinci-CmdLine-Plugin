@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.16    2015-06-19 (PERLANCAR)
+
+	- No functional changes.
+
+	- Update prereq name
+	  Log::Any::Adapter::{ScreenColoredLevel,Screen}.
+
+
 1.15    2015-06-19 (PERLANCAR)
 
 	- Add FAQ items about debugging (show log messages, show stack
