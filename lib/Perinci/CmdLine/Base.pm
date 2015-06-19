@@ -1192,8 +1192,8 @@ sub run {
     if ($err || !$r->{res}) {
         if ($err) {
             $err = [500, "Died: $err"] unless ref($err) eq 'ARRAY';
-            require Scalar::Util;
             if (%Devel::Confess::) {
+                require Scalar::Util;
                 my $id = Scalar::Util::refaddr($err);
                 my $stack_trace = $Devel::Confess::MESSAGES{$id};
                 $err->[1] .= "\n$stack_trace" if $stack_trace;
