@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.17    2015-06-30 (PERLANCAR)
+
+	- Add extra_urls_for_version attribute.
+
+
 1.16    2015-06-19 (PERLANCAR)
 
 	- No functional changes.
