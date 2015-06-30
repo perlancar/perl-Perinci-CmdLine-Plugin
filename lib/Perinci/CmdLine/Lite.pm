@@ -471,19 +471,29 @@ sub action_subcommands {
 sub action_version {
     my ($self, $r) = @_;
 
-    my $meta = $r->{meta} = $self->get_meta($r, $self->url);
+    my @text;
 
-    [200, "OK",
-     join("",
-          $self->get_program_and_subcommand_name($r),
-          " version ", ($meta->{entity_v} // "?"),
-          ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
-          "\n",
-          "  ", __PACKAGE__,
-          " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
-          ($Perinci::CmdLine::Lite::DATE ?
-               " ($Perinci::CmdLine::Lite::DATE)":''),
-      )];
+    {
+        my $meta = $r->{meta} = $self->get_meta($r, $self->url);
+        push @text, $self->get_program_and_subcommand_name($r),
+            " version ", ($meta->{entity_v} // "?"),
+            ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
+            "\n";
+    }
+
+    for my $url (@{ $self->extra_urls_for_version // [] }) {
+        my $meta = $self->get_meta($r, $url);
+        push @text, "  $url version ", ($meta->{entity_v} // "?"),
+            ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
+            "\n";
+    }
+
+    push @text, "  ", __PACKAGE__,
+        " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
+        ($Perinci::CmdLine::Lite::DATE ?
+         " ($Perinci::CmdLine::Lite::DATE)":'');
+
+    [200, "OK", join("", @text), {"x.perinci.cmdline._skip_format"=>1}];
 }
 
 sub action_help {

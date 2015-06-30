@@ -76,6 +76,8 @@ has cleanser => (
     },
 );
 
+has extra_urls_for_version => (is=>'rw');
+
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_format_row'
 # role: requires 'default_prompt_template'
