@@ -493,7 +493,7 @@ sub action_version {
         ($Perinci::CmdLine::Lite::DATE ?
          " ($Perinci::CmdLine::Lite::DATE)":'');
 
-    [200, "OK", join("", @text), {"x.perinci.cmdline._skip_format"=>1}];
+    [200, "OK", join("", @text), {"cmdline.skip_format"=>1}];
 }
 
 sub action_help {
