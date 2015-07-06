@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.18    2015-07-06 (PERLANCAR)
+
+	- Observe Rinci function metadata attribute cmdline.skip_format (in
+	  addition to result metadata attribute).
+
+	- Update Rinci result metadata attributes interpreted by this
+	  module: x.perinci.cmdline._skip_format -> cmdline.skip_format.
+
+
 1.17    2015-06-30 (PERLANCAR)
 
 	- Add extra_urls_for_version attribute.
