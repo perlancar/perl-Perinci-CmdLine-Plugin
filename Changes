@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.19    2015-07-06 (PERLANCAR)
+
+	- Fix newlines in -v output.
+
+
 1.18    2015-07-06 (PERLANCAR)
 
 	- Observe Rinci function metadata attribute cmdline.skip_format (in
