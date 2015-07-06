@@ -1224,7 +1224,8 @@ sub run {
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
   FORMAT:
-    if ($r->{res}[3]{'cmdline.skip_format'}) {
+    if ($r->{meta}{'cmdline.skip_format'} ||
+            $r->{res}[3]{'cmdline.skip_format'}) {
         $r->{fres} = $r->{res}[2];
     } elsif ($r->{res}[3]{stream} // $r->{meta}{result}{stream}) {
         # stream will be formatted as displayed by display_result()
@@ -1364,8 +1365,9 @@ C<hook_after_action> is then called e.g. to preformat result.
 
 Hook must set C<< $r->{fres} >> (formatted result).
 
-If result has C<cmdline.skip_format> result metadata property, then this step is
-skipped and C<< $r->{fres} >> is simply taken from C<< $r->{res}[2] >>.
+If function metadata has C<cmdline.skip_format> or result has
+C<cmdline.skip_format> result metadata property, then this step is skipped and
+C<< $r->{fres} >> is simply taken from C<< $r->{res}[2] >>.
 
 =item * Run hook_display_result
 
@@ -2068,6 +2070,12 @@ This module observes the following Rinci metadata property attributes:
 
 Set default output format (if user does not specify via --format command-line
 option).
+
+=head2 cmdline.skip_format => bool
+
+If you set it to 1, you specify that function's result never needs formatting
+(i.e. the function outputs raw text to be outputted directly), so no formatting
+will be done. See also: C<cmdline.skip_format> result metadata.
 
 
 =head1 RESULT METADATA
