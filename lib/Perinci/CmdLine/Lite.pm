@@ -491,9 +491,10 @@ sub action_version {
     push @text, "  ", __PACKAGE__,
         " version ", ($Perinci::CmdLine::Lite::VERSION // "?"),
         ($Perinci::CmdLine::Lite::DATE ?
-         " ($Perinci::CmdLine::Lite::DATE)":'');
+         " ($Perinci::CmdLine::Lite::DATE)":''),
+        "\n";
 
-    [200, "OK", join("", @text), {"cmdline.skip_format"=>1}];
+    [200, "OK", join("", @text)];
 }
 
 sub action_help {
