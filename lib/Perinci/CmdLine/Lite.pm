@@ -506,14 +506,15 @@ sub action_help {
     my $scn    = $r->{subcommand_name};
     my $scd    = $r->{subcommand_data};
 
+    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
+
     # XXX use 'delete local' when we bump minimal perl to 5.12
     my $common_opts = { %{$self->common_opts} };
+
     # hide usage '--subcommands' if we have subcommands but user has specified a
     # subcommand to use
     my $has_sc_no_sc = $self->subcommands && !length($r->{subcommand_name});
     delete $common_opts->{subcommands} if $self->subcommands && !$has_sc_no_sc;
-
-    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
 
     my $res = Perinci::CmdLine::Help::gen_help(
         program_name => $self->get_program_and_subcommand_name($r),
