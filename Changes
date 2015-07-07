@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.20    2015-07-07 (PERLANCAR)
+
+	- [Bugfix] In help, get meta first so if function has dry_run
+	  feature, we can show the option.
+
+
 1.19    2015-07-06 (PERLANCAR)
 
 	- Fix newlines in -v output.
