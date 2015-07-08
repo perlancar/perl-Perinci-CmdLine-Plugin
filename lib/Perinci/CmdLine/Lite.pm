@@ -92,12 +92,15 @@ sub BUILD {
 
         $copts->{version}   = { $_t->('version'), };
         $copts->{help}      = { $_t->('help'), };
-        $copts->{format}    = {
-            $_t->('format'),
-            schema => ['str*' => in => $formats],
-        };
-        $copts->{json}      = { $_t->('json'), };
-        $copts->{naked_res} = { $_t->('naked_res'), };
+
+        unless ($self->skip_format) {
+            $copts->{format}    = {
+                $_t->('format'),
+                schema => ['str*' => in => $formats],
+            };
+            $copts->{json}      = { $_t->('json'), };
+            $copts->{naked_res} = { $_t->('naked_res'), };
+        }
         if ($self->subcommands) {
             $copts->{subcommands} = { $_t->('subcommands'), };
         }

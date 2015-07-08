@@ -78,6 +78,8 @@ has cleanser => (
 
 has extra_urls_for_version => (is=>'rw');
 
+has skip_format => (is=>'rw');
+
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_format_row'
 # role: requires 'default_prompt_template'
@@ -1224,7 +1226,8 @@ sub run {
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
   FORMAT:
-    if ($r->{meta}{'cmdline.skip_format'} ||
+    if ($self->skip_format ||
+            $r->{meta}{'cmdline.skip_format'} ||
             $r->{res}[3]{'cmdline.skip_format'}) {
         $r->{fres} = $r->{res}[2];
     } elsif ($r->{res}[3]{stream} // $r->{meta}{result}{stream}) {
@@ -1365,9 +1368,10 @@ C<hook_after_action> is then called e.g. to preformat result.
 
 Hook must set C<< $r->{fres} >> (formatted result).
 
-If function metadata has C<cmdline.skip_format> or result has
-C<cmdline.skip_format> result metadata property, then this step is skipped and
-C<< $r->{fres} >> is simply taken from C<< $r->{res}[2] >>.
+If C<skip_format> attribute is true, or function metadata has
+C<cmdline.skip_format> set to true, or result has C<cmdline.skip_format>
+metadata property set to true, then this step is skipped and C<< $r->{fres} >>
+is simply taken from C<< $r->{res}[2] >>.
 
 =item * Run hook_display_result
 
@@ -1932,6 +1936,17 @@ Configuration filename. The default is C<< program_name . ".conf" >>. For
 example, if your program is named C<foo-bar>, config_filename will be
 C<foo-bar.conf>.
 
+=head2 skip_format => bool
+
+If set to 1, assume that function returns raw text that need not be translated,
+and so will not offer common command-line options C<--format>, C<--json>, as
+well as C<--naked-res>.
+
+As an alternative to this, can also be done on a per-function level by setting
+function metadata property C<cmdline.skip_format> to true. Or, can also be done
+on a per-function result basis by returning result metadata
+C<cmdline.skip_format> set to true.
+
 
 =head1 METHODS
 
@@ -2075,7 +2090,8 @@ option).
 
 If you set it to 1, you specify that function's result never needs formatting
 (i.e. the function outputs raw text to be outputted directly), so no formatting
-will be done. See also: C<cmdline.skip_format> result metadata.
+will be done. See also: C<skip_format> attribute, C<cmdline.skip_format> result
+metadata attribute.
 
 
 =head1 RESULT METADATA
@@ -2128,7 +2144,8 @@ or C<more>.
 =head2 attribute: cmdline.skip_format => bool (default: 0)
 
 When we want the command-line framework to just print the result without any
-formatting.
+formatting. See also: C<skip_format> attribute, C<cmdline.skip_format> function
+metadata attribute.
 
 =head2 attribute: x.perinci.cmdline.base.exit_code => int
 
