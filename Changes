@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.21    2015-07-08 (PERLANCAR)
+
+	- Add attribute: skip_format.
+
+
 1.20    2015-07-07 (PERLANCAR)
 
 	- [Bugfix] In help, get meta first so if function has dry_run
