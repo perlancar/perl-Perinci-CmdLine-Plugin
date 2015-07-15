@@ -472,6 +472,8 @@ sub action_subcommands {
 }
 
 sub action_version {
+    no strict 'refs';
+
     my ($self, $r) = @_;
 
     my @text;
@@ -482,6 +484,11 @@ sub action_version {
             " version ", ($meta->{entity_v} // "?"),
             ($meta->{entity_date} ? " ($meta->{entity_date})" : ''),
             "\n";
+        for my $mod (@{ $meta->{'x.dynamic_generator_modules'} // [] }) {
+            push @text, "  $mod version ", ${"$mod\::VERSION"},
+                (${"$mod\::DATE"} ? " (".${"$mod\::DATE"}.")" : ""),
+                    "\n";
+        }
     }
 
     for my $url (@{ $self->extra_urls_for_version // [] }) {
