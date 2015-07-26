@@ -1652,8 +1652,8 @@ Required, for Getopt::Long specification.
 
 =item * handler (code)
 
-Required, for Getopt::Long specification. Note that the handler will receive
-C<<($geopt, $val, $r)>> (an extra C<$r>).
+Required, for Getopt::Long specification. Note that the handler will receive C<<
+($geopt, $val, $r) >> (an extra C<$r>).
 
 =item * usage (str)
 
