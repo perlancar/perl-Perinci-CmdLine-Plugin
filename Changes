@@ -3,17 +3,18 @@ Revision history for Perinci-CmdLine-Lite
 1.23    2015-07-28 (PERLANCAR)
 
 	- [ux] Give suggestion for similar subcommand/option names in error
-	  message when user types unknown subcommand name or common option
-	      
-	      Note that we have not done this when user types unknown
-	  function option, because
-	      Perinci::Sub::GetArgs::Argv (Getopt::Long under the hood)
-	  does not return enough
-	      detailed information, it only warns to STDERR "Unknown opt:
-	  foo" without
-	      returning this information. The future planned
-	  Perinci::Sub::Getopt that will
-	      replace Perinci::Sub::GetArgs will remedy this.
+	  message when user types unknown subcommand name or common option.
+
+          Inspired by Dave Jacoby's blog post
+          <http://varlogrant.blogspot.com/2015/07/what-i-learned-from-perlbrew.html>.
+          Code borrowed with some adjustments.
+
+          Note that we have not done this when user types unknown function
+	  option, because Perinci::Sub::GetArgs::Argv (Getopt::Long under the
+	  hood) does not return enough detailed information, it only warns to
+	  STDERR "Unknown opt: foo" without returning this information. The
+	  future planned Perinci::Sub::Getopt that will replace
+	  Perinci::Sub::GetArgs will remedy this.
 
 	- [pod] Fix formatting (need whitespace after C<< >>).
 
