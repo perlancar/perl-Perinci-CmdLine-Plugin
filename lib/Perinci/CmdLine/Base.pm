@@ -602,10 +602,108 @@ sub _read_config {
                  $r->{'read_config_files'});
 }
 
+sub __min(@) {
+    my $m = $_[0];
+    for (@_) {
+        $m = $_ if $_ < $m;
+    }
+    $m;
+}
+
+# straight copy of Wikipedia's "Levenshtein Distance"
+sub __editdist {
+    my @a = split //, shift;
+    my @b = split //, shift;
+
+    # There is an extra row and column in the matrix. This is the distance from
+    # the empty string to a substring of the target.
+    my @d;
+    $d[$_][0] = $_ for 0 .. @a;
+    $d[0][$_] = $_ for 0 .. @b;
+
+    for my $i (1 .. @a) {
+        for my $j (1 .. @b) {
+            $d[$i][$j] = (
+                $a[$i-1] eq $b[$j-1]
+                    ? $d[$i-1][$j-1]
+                    : 1 + __min(
+                        $d[$i-1][$j],
+                        $d[$i][$j-1],
+                        $d[$i-1][$j-1]
+                    )
+                );
+        }
+    }
+
+    $d[@a][@b];
+}
+
+sub __uniq {
+    my %seen = ();
+    my $k;
+    my $seen_undef;
+    grep { defined $_ ? not $seen{ $k = $_ }++ : not $seen_undef++ } @_;
+}
+
+# $cut is whether we should only compare each element of haystack up to the
+# length of needle, so if needle is "foo" and haystack is ["bar", "baroque",
+# "fizzle", "food"], it will be as if haystack is ["bar", "bar", "fiz", "foo"].
+sub __find_similar_strings {
+    my ($needle, $haystack, $cut) = @_;
+
+    my $factor   = 1.5;
+    my $max_dist = 4;
+
+    my @res =
+        map { $_->[0] }
+        sort { $a->[1] <=> $b->[1] }
+        grep { defined }
+        map {
+            my $el = $_;
+            if ($cut && length($_) > length($needle)) {
+                $el = substr($el, 0, length($needle));
+            }
+            my $d = __editdist($el, $needle);
+            my $max_distance = __min(
+                __min(length($el), length($needle))/$factor,
+                $max_dist,
+            );
+            ($d <= $max_distance) ? [$_, $d] : undef
+        } @$haystack;
+
+    $cut ? __uniq(@res) : @res;
+}
+
+sub __find_similar_go_opts {
+    my ($opt, $go_spec) = @_;
+
+    $opt =~ s/^--?//;
+
+    my @ospecs0 = ref($go_spec) eq 'ARRAY' ?
+        keys(%{ { @$go_spec } }) : keys(%$go_spec);
+    my @ospecs;
+    for my $o (@ospecs0) {
+        $o =~ s/^--?//;
+        my $is_neg = $o =~ /\!$/;
+        $o =~ s/[=:].+|[?+!]$//;
+        for (split /\|/, $o) {
+            if ($is_neg && length($_) > 1) {
+                push @ospecs, $_, "no$_", "no-$_";
+            } else {
+                push @ospecs, $_;
+            }
+        }
+    }
+
+    map { length($_) > 1 ? "--$_" : "-$_" }
+        __find_similar_strings($opt, \@ospecs, "cut");
+}
+
 sub _parse_argv1 {
     my ($self, $r) = @_;
 
     # parse common_opts which potentially sets subcommand
+    my @go_spec;
     {
         # one small downside for this is that we cannot do autoabbrev here,
         # because we're not yet specifying all options here.
@@ -613,7 +711,6 @@ sub _parse_argv1 {
         require Getopt::Long;
         my $old_go_conf = Getopt::Long::Configure(
             'pass_through', 'no_ignore_case', 'bundling', 'no_auto_abbrev');
-        my @go_spec;
         my $co = $self->common_opts // {};
         for my $k (keys %$co) {
             push @go_spec, $co->{$k}{getopt} => sub {
@@ -648,7 +745,11 @@ sub _parse_argv1 {
                     $scn = shift @ARGV;
                     $scn_from = 'arg';
                 } else {
-                    die [400, "Unknown option: $ARGV[0]"];
+                    my $suggestion = '';
+                    my @similar = __find_similar_go_opts($ARGV[0], \@go_spec);
+                    $suggestion = " (perhaps you meant ".
+                        join("/", @similar)."?)" if @similar;
+                    die [400, "Unknown option: $ARGV[0]".$suggestion];
                 }
             } else {
                 $scn = shift @ARGV;
@@ -660,7 +761,17 @@ sub _parse_argv1 {
         if (defined $scn) {
             $scd = $self->get_subcommand_data($scn);
             unless ($r->{in_completion}) {
-                die [500, "Unknown subcommand: $scn"] unless $scd;
+                unless ($scd) {
+                    my $suggestion = '';
+                    my $scs = $self->subcommands;
+                    if (ref($scs) eq 'HASH') {
+                        my @similar =
+                            __find_similar_strings($scn, [keys %$scs]);
+                        $suggestion = " (perhaps you meant ".
+                            join("/", @similar)."?)" if @similar;
+                    }
+                    die [500, "Unknown subcommand: $scn".$suggestion];
+                }
             }
         } elsif (!$r->{action} && $self->{subcommands}) {
             # program has subcommands but user doesn't specify any subcommand,
