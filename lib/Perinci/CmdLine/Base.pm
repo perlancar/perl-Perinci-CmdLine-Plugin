@@ -344,6 +344,25 @@ _
 
 );
 
+sub BUILD {
+    my $self = shift;
+
+    # try to set default url
+    if (!$self->{url} && !$self->{subcommands}) {
+        if (eval { require Mooish::Caller::Util; 1 }) {
+            my $caller = Mooish::Caller::Util::get_constructor_caller();
+            use DD; dd $caller;
+            my $spec = \%{"$caller->[0]\::SPEC"};
+            my @funcs = grep { /\A\w+\z/ } keys %$spec;
+            if (@funcs == 1) {
+                my $url = "/$caller->[0]/$funcs[0]";
+                $url =~ s!::!/!g;
+                $self->url($url);
+            }
+        }
+    }
+}
+
 sub __default_env_name {
     my ($prog) = @_;
 
