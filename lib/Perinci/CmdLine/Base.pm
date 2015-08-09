@@ -1347,7 +1347,8 @@ sub run {
             # [ux] if there is an error and no result, we still show the error
             # message from res[0] & res[1]. otherwise, user might be confused
             # because there is no error message
-            $r->{fres} = "ERROR $r->{res}[0]: $r->{res}[1]";
+            $r->{fres} = "ERROR $r->{res}[0]: $r->{res}[1]" .
+                ($r->{res}[1] =~ /\R\z/ ? "" : "\n");
         } else {
             $r->{fres} = $r->{res}[2] // '';
         }
