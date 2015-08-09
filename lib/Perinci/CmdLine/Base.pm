@@ -1340,7 +1340,17 @@ sub run {
     if ($self->skip_format ||
             $r->{meta}{'cmdline.skip_format'} ||
             $r->{res}[3]{'cmdline.skip_format'}) {
-        $r->{fres} = $r->{res}[2];
+        # skip formatting, just print whatever is in res[2] (with a bit of
+        # exception)
+        if (!($r->{res}[0] =~ /\A2/ || $r->{res}[0] == 304) &&
+                !defined($r->{res}[2])) {
+            # [ux] if there is an error and no result, we still show the error
+            # message from res[0] & res[1]. otherwise, user might be confused
+            # because there is no error message
+            $r->{fres} = "ERROR $r->{res}[0]: $r->{res}[1]";
+        } else {
+            $r->{fres} = $r->{res}[2] // '';
+        }
     } elsif ($r->{res}[3]{stream} // $r->{meta}{result}{stream}) {
         # stream will be formatted as displayed by display_result()
     } else {
