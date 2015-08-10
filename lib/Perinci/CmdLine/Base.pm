@@ -438,9 +438,7 @@ sub _detect_completion {
         return 1;
     }
 
-    # assume default is bash
     $r->{shell} //= 'bash';
-
     0;
 }
 
