@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.27    2015-08-17 (PERLANCAR)
+
+	- [ux] Since we are moving to Log::Any::IfLOG for most, add note
+	  about having to enable logging using env LOG=1 etc.
+
+
 1.26    2015-08-09 (PERLANCAR)
 
 	- [Bugfix] Add missing newline in error message.
