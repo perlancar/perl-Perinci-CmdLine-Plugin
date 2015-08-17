@@ -293,7 +293,7 @@ _
     # currently work around this via setting env.
     log_level => {
         getopt  => 'log-level=s',
-        summary => 'Set log level',
+        summary => 'Set log level (note: you also need to set LOG=1 to enable logging)',
         schema  => ['str*' => in => [
             qw/trace debug info warn warning error fatal/]],
         handler => sub {
@@ -306,7 +306,7 @@ _
     },
     trace => {
         getopt  => "trace",
-        summary => "Set log level to trace",
+        summary => "Set log level to trace (note: you also need to set LOG=1 to enable logging, or use TRACE=1)",
         handler => sub {
             my ($go, $val, $r) = @_;
             $ENV{TRACE} = 1;
@@ -315,7 +315,7 @@ _
     },
     debug => {
         getopt  => "debug",
-        summary => "Set log level to debug",
+        summary => "Set log level to debug (note: you also need to set LOG=1 to enable logging, or use DEBUG=1)",
         handler => sub {
             my ($go, $val, $r) = @_;
             $ENV{DEBUG} = 1;
@@ -324,7 +324,7 @@ _
     },
     verbose => {
         getopt  => "verbose",
-        summary => "Set log level to info",
+        summary => "Set log level to info (note: you also need to set LOG=1 to enable logging, or use VERBOSE=1)",
         handler => sub {
             my ($go, $val, $r) = @_;
             $ENV{VERBOSE} = 1;
@@ -334,7 +334,7 @@ _
     },
     quiet => {
         getopt  => "quiet",
-        summary => "Set log level to quiet",
+        summary => "Set log level to quiet (note: you also need to set LOG=1 to enable logging, or use QUIET=1)",
         handler => sub {
             my ($go, $val, $r) = @_;
             $ENV{QUIET} = 1;
