@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.29    2015-09-11 (PERLANCAR)
+
+	- Extract result formatting functionality to
+	  Perinci-Result-Format-Lite.
+
+
 1.28    2015-09-06 (PERLANCAR)
 
 	- No functional changes.
