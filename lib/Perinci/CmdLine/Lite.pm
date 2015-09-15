@@ -252,8 +252,17 @@ sub hook_format_result {
     require Perinci::Result::Format::Lite;
     my ($self, $r) = @_;
 
-    Perinci::Result::Format::Lite::format(
-        $r->{res}, $r->{format} // 'text', $r->{naked_res});
+    my $fmt = $r->{format} // 'text';
+
+    my $fres = Perinci::Result::Format::Lite::format(
+        $r->{res}, $fmt, $r->{naked_res});
+
+    # ux: prefix error message with program name
+    if ($fmt =~ /text/ && $r->{res}[0] =~ /\A[45]/ && defined($r->{res}[1])) {
+        $fres = "$self->{program_name}: $fres";
+    }
+
+    $fres;
 }
 
 sub hook_format_row {
