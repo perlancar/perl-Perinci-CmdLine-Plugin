@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.30    2015-09-15 (PERLANCAR)
+
+	- [ux] Prefix error message with program name.
+
+
 1.29    2015-09-11 (PERLANCAR)
 
 	- Extract result formatting functionality to
