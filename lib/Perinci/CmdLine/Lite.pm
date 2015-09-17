@@ -259,7 +259,7 @@ sub hook_format_result {
 
     # ux: prefix error message with program name
     if ($fmt =~ /text/ && $r->{res}[0] =~ /\A[45]/ && defined($r->{res}[1])) {
-        $fres = "$self->{program_name}: $fres";
+        $fres = $self->program_name . ": $fres";
     }
 
     $fres;
