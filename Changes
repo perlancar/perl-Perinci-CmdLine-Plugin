@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.31    2015-09-17 (PERLANCAR)
+
+	- No functional changes.
+
+	- [Bugfix] Avoid undef warning (weird, shouldn't the default be
+	  computed during object construction?).
+
+
 1.30    2015-09-15 (PERLANCAR)
 
 	- [ux] Prefix error message with program name.
