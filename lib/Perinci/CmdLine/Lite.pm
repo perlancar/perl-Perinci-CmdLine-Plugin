@@ -536,6 +536,10 @@ any newline to keep the data being printed unmodified.
 
 =head1 SEE ALSO
 
-L<Perinci::CmdLine::Any>, L<Perinci::CmdLine::Classic>
+L<Perinci::CmdLine::Any>
+
+L<Perinci::CmdLine::Classic>
+
+L<Perinci::CmdLine::Inline>
 
 =cut

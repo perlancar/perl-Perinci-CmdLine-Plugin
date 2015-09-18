@@ -98,9 +98,9 @@ Automatic tab completion support:
  % complete -C gen-random-num gen-random-num
  % gen-random-num --mi<tab>
 
-See the manual for details on other available features (subcommands, automatic
-formatting of data structures, automatic schema validation, dry-run mode,
-automatic POD generation, remote function support, automatic CLI generation,
-automatic --version, automatic HTTP API, undo/transactions, configurable output
-format, logging, progress bar, colors/Unicode, and more).
-
+See L<Perinci::CmdLine::Manual> for details on other available features
+(subcommands, automatic formatting of data structures, automatic schema
+validation, dry-run mode, automatic POD generation, remote function support,
+automatic CLI generation, automatic --version, automatic HTTP API,
+undo/transactions, configurable output format, logging, progress bar,
+colors/Unicode, and more).
