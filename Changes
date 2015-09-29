@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.34    2015-09-29 (PERLANCAR)
+
+	- No functional changes.
+
+        - Adjust to Test::Perinci::CmdLine 1.25.
+
+
 1.33    2015-09-29 (PERLANCAR)
 
 	- Workaround for Perinci::CmdLine::Classic.
