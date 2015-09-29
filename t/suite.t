@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use Test::More 0.98;
-use Test::Perinci::CmdLine qw(pericmd_ok);
+use Test::Perinci::CmdLine;
 
 pericmd_ok(
     class => 'Perinci::CmdLine::Lite',
