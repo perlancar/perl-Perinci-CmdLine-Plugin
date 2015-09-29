@@ -51,6 +51,7 @@ has url => (is=>'rw');
 has read_env => (is=>'rw', default=>1);
 has env_name => (
     is => 'rw',
+    lazy => 1,
     default => sub {
         my $self = shift;
         __default_env_name($self->program_name);
