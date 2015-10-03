@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.35    2015-10-03 (PERLANCAR)
+
+	- No functional changes.
+
+	- Update mentioned module App::fatten (has been renamed to
+	  App::depak).
+
+
 1.34    2015-09-29 (PERLANCAR)
 
 	- No functional changes.
