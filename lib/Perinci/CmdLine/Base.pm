@@ -1594,7 +1594,7 @@ But this checking can be turned off with this setting. This is sometimes used
 when e.g. a subclass wants to pick a config profile automatically by setting C<<
 $r->{config_profile} >> somewhere before reading config file, but do not want to
 fail execution when config profile is not found. An example of code that does
-this is L<Perinci::CmdLine::fatten>.
+this is L<Perinci::CmdLine::depak>.
 
 =item * subcommand_name => str
 
