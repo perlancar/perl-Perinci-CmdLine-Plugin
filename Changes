@@ -1,5 +1,16 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.36    2015-10-20 (PERLANCAR)
+
+	- No functional changes.
+
+	- [dist] Downgrade prereq Term::ReadKey from requires to recommends
+	  (it's only required when reading password argument from stdin),
+	  this means that as of this release, the dependency chain of
+	  Perinci::CmdLine::Lite (and ::Base) is now all PP/core (this
+	  module is more convenient when used in fatpacking/datapacking).
+
+
 1.35    2015-10-03 (PERLANCAR)
 
 	- No functional changes.
