@@ -1063,15 +1063,15 @@ sub parse_cmdline_src {
                 my $is_ary = $type eq 'array';
                 if ($src eq 'stdin_line' && !exists($r->{args}{$an})) {
                     require Perinci::Object;
-                    require Term::ReadKey;
+                    my $term_readkey_available = eval { require Term::ReadKey; 1 };
                     my $prompt = Perinci::Object::rimeta($as)->langprop('cmdline_prompt') //
                         sprintf($self->default_prompt_template, $an);
                     print $prompt;
                     my $iactive = (-t STDOUT);
                     Term::ReadKey::ReadMode('noecho')
-                          if $iactive && $as->{is_password};
+                          if $term_readkey_available && $iactive && $as->{is_password};
                     chomp($r->{args}{$an} = <STDIN>);
-                    do { print "\n"; Term::ReadKey::ReadMode(0) }
+                    do { print "\n"; Term::ReadKey::ReadMode(0) if $term_readkey_available }
                         if $iactive && $as->{is_password};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin_line';
                 } elsif ($src eq 'stdin' || $src eq 'file' &&
