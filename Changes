@@ -1,5 +1,15 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.37    2015-11-11 (PERLANCAR)
+
+	- No functional changes.
+
+	- [dist] Add YAML::Old to TestRequires prereq [CT].
+
+	- [doc] Remove duplicate documentation (configuration is documented
+	  in Perinci::CmdLine::Manual).
+
+
 1.36    2015-10-20 (PERLANCAR)
 
 	- No functional changes.
