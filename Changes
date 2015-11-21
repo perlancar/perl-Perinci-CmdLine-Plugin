@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.39    2015-11-21 (PERLANCAR)
+
+	- Adjust to Perinci::Result::Format::Lite 0.07 (CSV support).
+
+
 1.38    2015-11-17 (PERLANCAR)
 
 	- No functional changes.
