@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.40    2015-11-27 (PERLANCAR)
+
+	- On error, don't display result as stream but show format &
+	  display error message instead.
+
+
 1.39    2015-11-21 (PERLANCAR)
 
 	- Adjust to Perinci::Result::Format::Lite 0.07 (CSV support).
