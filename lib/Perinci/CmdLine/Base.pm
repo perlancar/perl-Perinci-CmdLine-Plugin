@@ -1216,7 +1216,7 @@ sub display_result {
                 }
             }
         } else {
-            die [500, "Invalid stream in result (not a coderef)"];
+            die "Invalid stream in result (not a coderef)";
         }
     } else {
         print $handle $fres;
@@ -1336,25 +1336,18 @@ sub run {
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
   FORMAT:
-    if ($self->skip_format ||
-            $r->{meta}{'cmdline.skip_format'} ||
-            $r->{res}[3]{'cmdline.skip_format'}) {
-        # skip formatting, just print whatever is in res[2] (with a bit of
-        # exception)
-        if (!($r->{res}[0] =~ /\A2/ || $r->{res}[0] == 304) &&
-                !defined($r->{res}[2])) {
-            # [ux] if there is an error and no result, we still show the error
-            # message from res[0] & res[1]. otherwise, user might be confused
-            # because there is no error message
-            $r->{fres} = "ERROR $r->{res}[0]: $r->{res}[1]" .
-                ($r->{res}[1] =~ /\R\z/ ? "" : "\n");
-        } else {
-            $r->{fres} = $r->{res}[2] // '';
-        }
-    } elsif ($r->{res}[3]{stream} // $r->{meta}{result}{stream}) {
+    my $is_success = $r->{res}[0] =~ /\A2/ || $r->{res}[0] == 304;
+    if ($is_success &&
+            ($self->skip_format ||
+             $r->{meta}{'cmdline.skip_format'} ||
+             $r->{res}[3]{'cmdline.skip_format'})) {
+        $r->{fres} = $r->{res}[2] // '';
+    } elsif ($is_success &&
+                 ($r->{res}[3]{stream} // $r->{meta}{result}{stream})) {
         # stream will be formatted as displayed by display_result()
-    } else {
+    }else {
         $log->tracef("[pericmd] Running hook_format_result ...");
+        $r->{res}[3]{stream} = 0;
         $r->{fres} = $self->hook_format_result($r) // '';
     }
     $self->select_output_handle($r);
