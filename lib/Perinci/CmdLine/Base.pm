@@ -1216,7 +1216,7 @@ sub display_result {
                 }
             }
         } else {
-            die "Invalid stream in result (not a coderef)";
+            die "Result is a stream but no coderef provided";
         }
     } else {
         print $handle $fres;
