@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.41    2015-11-29 (PERLANCAR)
+
+	- [Experimental] Detect 'td' (see App::td) at the right side of
+	  pipeline and set default output format to json.
+
+
 1.40    2015-11-27 (PERLANCAR)
 
 	- On error, don't display result as stream but show format &
