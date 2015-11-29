@@ -1244,6 +1244,18 @@ sub run {
     $r->{naked_res} = $co->{naked_res}{default} if $co->{naked_res};
     $r->{format}    = $co->{format}{default} if $co->{format};
 
+    # EXPERIMENTAL, set default format to json if we are running in a pipeline
+    # and the right side of the pipe is the 'td' program
+    {
+        last if (-t STDOUT) || $r->{format};
+        last unless eval { require Pipe::Find; 1 };
+        my $pipeinfo = Pipe::Find::get_stdout_pipe_process();
+        last unless $pipeinfo;
+        last unless $pipeinfo->{exe} =~ m![/\\]td\z! ||
+            $pipeinfo->{cmdline} =~ m!\A([^\0]*[/\\])?perl\0([^\0]*[/\\])?td\0!;
+        $r->{format} = 'json';
+    }
+
     if ($self->read_config) {
         # note that we will be reading config file
         $r->{read_config} = 1;
