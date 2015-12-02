@@ -1,5 +1,21 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.42    2015-12-02 (PERLANCAR)
+
+        - Adopt a new syntax for specifying configuration for subcommand.
+          Previously to specify configuration for a subcommand, you use
+          '[SCNAME]' section (or when you want to assign a profile: '[SCNAME
+          profile=PNAME]', now you use '[subcommand=SCNAME]' (or when you want
+          to assign a profile: '[subcommand=SCNAME profile=PNAME]' or
+          '[profile=PNAME subcommand=SCNAME]'). Basically, we now regard IOD
+          section as a whitespace-separated list of key=value pairs. This new
+          syntax is clearer and more generic, it allows application to add its
+          own key=value pair as needed.
+
+          The old syntax is now not documented. Although it will still be
+          supported for sometime, it will be removed in the future.
+
+
 1.41    2015-11-29 (PERLANCAR)
 
 	- [Experimental] Detect 'td' (see App::td) at the right side of
