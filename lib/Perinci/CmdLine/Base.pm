@@ -274,18 +274,25 @@ _
             return [] unless $r->{config};
 
             my @profiles;
-            for (keys %{$r->{config}}) {
-                if (length $r->{subcommand_name}) {
-                    push @profiles, $1
-                        if /\A\Q$r->{subcommand_name}\E \s+ profile=(.+)/x;
-                } else {
-                    push @profiles, $1 if /\Aprofile=(.+)/;
+            for my $section (keys %{$r->{config}}) {
+                my %keyvals;
+                $section = '' if $section eq 'GLOBAL';
+                for my $word (split /\s+/, $section) {
+                    if ($word =~ /(.+)=(.*)/) {
+                        $keyvals{$1} = $2;
+                    } else {
+                        # old syntax, will be removed sometime in the future
+                        $keyvals{subcommand} = $word;
+                    }
+                }
+                if (defined(my $p = $keyvals{profile})) {
+                    push @profiles, $p unless grep {$_ eq $p} @profiles;
                 }
             }
 
             require Complete::Util;
             Complete::Util::complete_array_elem(
-                array=>[sort @profiles], word=>$word, ci=>1);
+                array=>\@profiles, word=>$word, ci=>1);
         },
         tags => ['category:configuration'],
     },

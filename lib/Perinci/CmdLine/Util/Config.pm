@@ -110,29 +110,28 @@ sub get_args_from_config {
 
     my %seen_profiles; # for debugging message
     for my $section (@sections) {
-        my ($sect_scn, $sect_profile);
-        if ($section =~ /\Aprofile=(.*)\z/) {
-            $sect_scn = 'GLOBAL';
-            $sect_profile = $1;
-        } elsif ($section =~ /\A\S+\z/) {
-            $sect_scn = $section;
-        } elsif ($section =~ /\A(\S+)\s+profile=(.*)\z/) {
-            $sect_scn = $1;
-            $sect_profile = $2;
-        } else {
-            die [412, "Error in config file: invalid section name ".
-                     "'$section', please use subcommand name + optional ".
-                         "' profile=PROFILE' only"];
+        my %keyvals;
+        for my $word (split /\s+/, ($section eq 'GLOBAL' ? '' : $section)) {
+            if ($word =~ /(.+)=(.*)/) {
+                $keyvals{$1} = $2;
+            } else {
+                # old syntax, will be removed sometime in the future
+                $keyvals{subcommand} = $word;
+            }
         }
-        $seen_profiles{$sect_profile}++ if defined $sect_profile;
+        $seen_profiles{$keyvals{profile}}++ if defined $keyvals{profile};
+
+        my $sect_scn     = $keyvals{subcommand} // '';
+        my $sect_profile = $keyvals{profile};
+
         if (length $scn) {
-            next if $sect_scn ne 'GLOBAL' && $sect_scn ne $scn;
+            next if length($sect_scn) && $sect_scn ne $scn;
         } else {
-            next if $sect_scn ne 'GLOBAL';
+            next if length $sect_scn;
         }
         if (defined $profile) {
             next if defined($sect_profile) && $sect_profile ne $profile;
-            $found++ if defined($sect_profile) && $sect_profile eq $profile;
+            $found = 1 if defined($sect_profile) && $sect_profile eq $profile;
         } else {
             next if defined($sect_profile);
         }
