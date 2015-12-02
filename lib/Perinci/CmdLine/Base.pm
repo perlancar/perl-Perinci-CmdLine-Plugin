@@ -276,7 +276,7 @@ _
             my @profiles;
             for my $section (keys %{$r->{config}}) {
                 my %keyvals;
-                for my $word (split /\s+/, ($section eq 'GLOBAL' ? '' : $section) {
+                for my $word (split /\s+/, ($section eq 'GLOBAL' ? '' : $section)) {
                     if ($word =~ /(.+)=(.*)/) {
                         $keyvals{$1} = $2;
                     } else {
