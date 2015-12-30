@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.43    2015-12-30 (PERLANCAR)
+
+	- Use Complete::Bash 0.23's new option truncate_current_word, like
+	  in Getopt::Long::Complete and Getopt::Long::Subcommand.
+
+	- Bump prereq version Log::Any::IfLOG to 0.07.
+
+
 1.42    2015-12-02 (PERLANCAR)
 
         - Adopt a new syntax for specifying configuration for subcommand.
