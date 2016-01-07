@@ -31,10 +31,10 @@ sub get_default_config_dirs {
 $SPEC{read_config} = {
     v => 1.1,
     args => {
-        config_paths => {},
-        config_filenames => {},
-        config_dirs => {},
-        program_name => {},
+        config_paths    => {},
+        config_filename => {},
+        config_dirs     => {},
+        program_name    => {},
     },
 };
 sub read_config {
@@ -48,11 +48,13 @@ sub read_config {
     if ($args{config_paths}) {
         $paths = $args{config_paths};
     } else {
-        my $name = $args{config_filename} //
+        my $names = $args{config_filename} //
             $args{program_name} . ".conf";
         for my $dir (@$config_dirs) {
-            my $path = "$dir/" . $name;
-            push @$paths, $path if -e $path;
+            for my $name (ref($names) eq 'ARRAY' ? @$names : ($names)) {
+                my $path = "$dir/" . $name;
+                push @$paths, $path if -e $path;
+            }
         }
     }
 

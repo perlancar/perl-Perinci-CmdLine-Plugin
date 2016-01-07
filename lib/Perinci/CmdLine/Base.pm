@@ -595,10 +595,10 @@ sub _read_config {
 
     $log->tracef("[pericmd] Finding config files ...");
     my $res = Perinci::CmdLine::Util::Config::read_config(
-        config_paths    => $r->{config_paths},
-        config_filename => $self->config_filename,
-        config_dirs     => $self->config_dirs,
-        program_name    => $self->program_name,
+        config_paths     => $r->{config_paths},
+        config_filename  => $self->config_filename,
+        config_dirs      => $self->config_dirs,
+        program_name     => $self->program_name,
     );
     die $res unless $res->[0] == 200;
     $r->{config} = $res->[2];
@@ -1970,9 +1970,9 @@ user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
 $ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
 directory entry.
 
-=head2 config_filename => str
+=head2 config_filename => str|array[str]
 
-Configuration filename. The default is C<< program_name . ".conf" >>. For
+Configuration filename(s). The default is C<< program_name . ".conf" >>. For
 example, if your program is named C<foo-bar>, config_filename will be
 C<foo-bar.conf>.
 
