@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.47    2016-01-22 (PERLANCAR)
+
+        - Chomp streaming input record, unless type is 'buf'. Adjust to
+          Test::Perinci::CmdLine 1.36.
+
+
 1.46    2016-01-21 (PERLANCAR)
 
 	- Update to Test::Perinci::CmdLine 1.33.
