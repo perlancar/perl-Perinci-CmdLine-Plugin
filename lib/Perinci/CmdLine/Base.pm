@@ -843,6 +843,7 @@ sub _parse_argv2 {
                 r                  => $r,
                 config             => $r->{config},
                 args               => \%args,
+                program_name       => $self->program_name,
                 subcommand_name    => $r->{subcommand_name},
                 config_profile     => $r->{config_profile},
                 common_opts        => $self->common_opts,

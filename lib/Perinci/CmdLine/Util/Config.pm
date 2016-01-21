@@ -92,6 +92,7 @@ sub get_args_from_config {
 
     my $r       = $fargs{r};
     my $conf    = $fargs{config};
+    my $progn   = $fargs{program_name};
     my $scn     = $fargs{subcommand_name} // '';
     my $profile = $fargs{config_profile};
     my $args    = $fargs{args} // {};
@@ -126,16 +127,26 @@ sub get_args_from_config {
         my $sect_scn     = $keyvals{subcommand} // '';
         my $sect_profile = $keyvals{profile};
 
+        # if there is a subcommand name, use section with no subcommand=... or
+        # the matching subcommand
         if (length $scn) {
             next if length($sect_scn) && $sect_scn ne $scn;
         } else {
             next if length $sect_scn;
         }
+
+        # if user chooses a profile, only use section with no profile=... or the
+        # matching profile
         if (defined $profile) {
             next if defined($sect_profile) && $sect_profile ne $profile;
             $found = 1 if defined($sect_profile) && $sect_profile eq $profile;
         } else {
             next if defined($sect_profile);
+        }
+
+        # only use section marked with program=... if the program name matches
+        if (defined($progn) && defined($keyvals{program})) {
+            next unless $progn eq $keyvals{program};
         }
 
         my $as = $meta->{args} // {};
