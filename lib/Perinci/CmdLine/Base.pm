@@ -986,6 +986,7 @@ sub __gen_iter {
             unless (defined $l) {
                 $eof++; return undef;
             }
+            chomp($l) unless $type eq 'buf';
             $l;
         };
     } else {
