@@ -13,6 +13,9 @@ pericmd_ok(
     class => 'Perinci::CmdLine::Lite',
     exclude_tags => [
         'tx',
+        'validate-streaming-input',
+        'validate-result',
+        'validate-streaming-result',
     ],
 );
 done_testing;
