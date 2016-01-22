@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.48    2016-01-22 (PERLANCAR)
+
+	- Bump prereq version Test::Perinci::CmdLine to 1.37.
+
+	- Observe cmdline.chomp (allow turning-off autochomping of
+	  streaming input record).
+
+
 1.47    2016-01-22 (PERLANCAR)
 
         - Chomp streaming input record, unless type is 'buf'. Adjust to
