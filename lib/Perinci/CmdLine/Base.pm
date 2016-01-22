@@ -971,10 +971,13 @@ sub parse_argv {
 sub __gen_iter {
     require Data::Sah::Util::Type;
 
-    my ($fh, $sch, $argname) = @_;
-    my $type = Data::Sah::Util::Type::get_type($sch);
+    my ($fh, $argspec, $argname) = @_;
+    my $schema = $argspec->{schema};
+    my $type = Data::Sah::Util::Type::get_type($schema);
 
-    if (Data::Sah::Util::Type::is_simple($sch)) {
+    if (Data::Sah::Util::Type::is_simple($schema)) {
+        my $chomp = $type eq 'buf' ? 0 :
+            $argspec->{'cmdline.chomp'} // 1;
         return sub {
             # XXX this will be configurable later. currently by default reading
             # binary is per-64k while reading string is line-by-line.
@@ -986,7 +989,7 @@ sub __gen_iter {
             unless (defined $l) {
                 $eof++; return undef;
             }
-            chomp($l) unless $type eq 'buf';
+            chomp($l) if $chomp;
             $l;
         };
     } else {
@@ -1090,7 +1093,7 @@ sub parse_cmdline_src {
                             $r->{args}{$an} ne '-';
                     #$log->trace("Getting argument '$an' value from stdin ...");
                     $r->{args}{$an} = $do_stream ?
-                        __gen_iter(\*STDIN, $as->{schema}, $an) :
+                        __gen_iter(\*STDIN, $as, $an) :
                             $is_ary ? [<STDIN>] :
                                 do {local $/; ~~<STDIN>};
                     $r->{args}{"-cmdline_src_$an"} = 'stdin';
@@ -1116,7 +1119,7 @@ sub parse_cmdline_src {
 
                     $r->{args}{"-cmdline_srcfilenames_$an"} = [@ARGV];
                     $r->{args}{$an} = $do_stream ?
-                        __gen_iter(\*ARGV, $as->{schema}, $an) :
+                        __gen_iter(\*ARGV, $as, $an) :
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
@@ -1140,7 +1143,7 @@ sub parse_cmdline_src {
                                  ": $!"];
                     }
                     $r->{args}{$an} = $do_stream ?
-                        __gen_iter($fh, $as->{schema}, $an) :
+                        __gen_iter($fh, $as, $an) :
                             $is_ary ? [<$fh>] :
                                 do { local $/; ~~<$fh> };
                     $r->{args}{"-cmdline_src_$an"} = 'file';
