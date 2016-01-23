@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.49    2016-01-23 (PERLANCAR)
+
+	- Allow filtering config section with env=...
+
+	- [Bugfix] Config sections should be read according to the order
+	  they are seen in the files.
+
+
 1.48    2016-01-22 (PERLANCAR)
 
 	- Bump prereq version Test::Perinci::CmdLine to 1.37.
