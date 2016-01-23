@@ -147,24 +147,97 @@ sub get_args_from_config {
         # if there is a subcommand name, use section with no subcommand=... or
         # the matching subcommand
         if (length $scn) {
-            next if length($sect_scn) && $sect_scn ne $scn;
+            if (length($sect_scn) && $sect_scn ne $scn) {
+                $log->tracef(
+                    "[pericmd] Skipped config section '%s' (%s)",
+                    $section, "subcommand does not match '$scn'",
+                );
+                next;
+            }
         } else {
-            next if length $sect_scn;
+            if (length $sect_scn) {
+                $log->tracef(
+                    "[pericmd] Skipped config section '%s' (%s)",
+                    $section, "only for a certain subcommand",
+                );
+                next;
+            }
         }
 
         # if user chooses a profile, only use section with no profile=... or the
         # matching profile
         if (defined $profile) {
-            next if defined($sect_profile) && $sect_profile ne $profile;
+            if (defined($sect_profile) && $sect_profile ne $profile) {
+                $log->tracef(
+                    "[pericmd] Skipped config section '%s' (%s)",
+                    $section, "profile does not match '$profile'",
+                );
+                next;
+            }
             $found = 1 if defined($sect_profile) && $sect_profile eq $profile;
         } else {
-            next if defined($sect_profile);
+            if (defined($sect_profile)) {
+                $log->tracef(
+                    "[pericmd] Skipped config section '%s' (%s)",
+                    $section, "only for a certain profile",
+                );
+                next;
+            }
         }
 
         # only use section marked with program=... if the program name matches
         if (defined($progn) && defined($keyvals{program})) {
-            next unless $progn eq $keyvals{program};
+            if ($progn ne $keyvals{program}) {
+                $log->tracef(
+                    "[pericmd] Skipped config section '%s' (%s)",
+                    $section, "program does not match '$progn'",
+                );
+                next;
+            }
         }
+
+        # if user specifies env=... then apply filtering by ENV variable
+        if (defined(my $env = $keyvals{env})) {
+            my ($var, $val);
+            if (($var, $val) = $env =~ /\A(\w+)=(.*)\z/) {
+                if (($ENV{$var} // '') ne $val) {
+                    $log->tracef(
+                        "[pericmd] Skipped config section '%s' (%s)",
+                        $section, "env $var has non-matching value '".
+                            ($ENV{$var} // '')."'",
+                    );
+                    next;
+                }
+            } elsif (($var, $val) = $env =~ /\A(\w+)!=(.*)\z/) {
+                if (($ENV{$var} // '') eq $val) {
+                    $log->tracef(
+                        "[pericmd] Skipped config section '%s' (%s)",
+                        $section, "env $var has that value",
+                    );
+                    next;
+                }
+            } elsif (($var, $val) = $env =~ /\A(\w+)\*=(.*)\z/) {
+                if (index(($ENV{$var} // ''), $val) < 0) {
+                    $log->tracef(
+                        "[pericmd] Skipped config section '%s' (%s)",
+                        $section, "env $var has value '".
+                            ($ENV{$var} // '')."' which does not contain the ".
+                                "requested string"
+                    );
+                    next;
+                }
+            } else {
+                if (!$ENV{$env}) {
+                    $log->tracef(
+                        "[pericmd] Skipped config section '%s' (%s)",
+                        $section, "env $env is not set/true",
+                    );
+                    next;
+                }
+            }
+        }
+
+        $log->tracef("[pericmd] Reading config section '%s'", $section);
 
         my $as = $meta->{args} // {};
         for my $k (keys %{ $conf->{$section} }) {
