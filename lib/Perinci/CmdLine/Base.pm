@@ -593,7 +593,7 @@ sub _read_config {
 
     my ($self, $r) = @_;
 
-    $log->tracef("[pericmd] Finding config files ...");
+    #$log->tracef("[pericmd] Finding config files ...");
     my $res = Perinci::CmdLine::Util::Config::read_config(
         config_paths     => $r->{config_paths},
         config_filename  => $self->config_filename,
@@ -603,8 +603,9 @@ sub _read_config {
     die $res unless $res->[0] == 200;
     $r->{config} = $res->[2];
     $r->{read_config_files} = $res->[3]{'func.read_files'};
-    $log->tracef("[pericmd] Read config files: %s",
-                 $r->{'read_config_files'});
+    $r->{_config_section_read_order} = $res->[3]{'func.section_read_order'}; # we currently don't want to publish this request key
+    #$log->tracef("[pericmd] Read config files: %s",
+    #             $r->{'read_config_files'});
 }
 
 sub __min(@) {

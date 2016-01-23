@@ -61,8 +61,19 @@ sub read_config {
     my $reader = Config::IOD::Reader->new;
     my %res;
     my @read;
+    my %section_read_order;
     for my $path (@$paths) {
-        my $hoh = $reader->read_file($path);
+        $log->tracef("[pericmd] Reading config file '%s' ...", $path);
+        my $hoh = $reader->read_file(
+            $path,
+            sub {
+                my %args = @_;
+                return unless $args{event} eq 'section';
+                my $section = $args{section};
+                return if $section_read_order{$section};
+                $section_read_order{$section} = 1 + keys %section_read_order;
+            },
+        );
         push @read, $path;
         for my $section (keys %$hoh) {
             my $hash = $hoh->{$section};
@@ -71,7 +82,10 @@ sub read_config {
             }
         }
     }
-    [200, "OK", \%res, {'func.read_files' => \@read}];
+    [200, "OK", \%res, {
+        'func.read_files' => \@read,
+        'func.section_read_order' => \%section_read_order,
+    }];
 }
 
 $SPEC{get_args_from_config} = {
@@ -105,17 +119,20 @@ sub get_args_from_config {
         $meta = Perinci::Sub::Normalize::normalize_function_metadata($meta);
     }
 
-    # put GLOBAL before all other sections
+    my $csro = $r->{_config_section_read_order} // {};
     my @sections = sort {
+        # put GLOBAL before all other sections
         ($a eq 'GLOBAL' ? 0:1) <=> ($b eq 'GLOBAL' ? 0:1) ||
-            $a cmp $b
+            # sort according to the order the section is seen in the file
+            ($csro->{$a} // 0) <=> ($csro->{$b} // 0) ||
+                $a cmp $b
         } keys %$conf;
 
     my %seen_profiles; # for debugging message
     for my $section (@sections) {
         my %keyvals;
         for my $word (split /\s+/, ($section eq 'GLOBAL' ? '' : $section)) {
-            if ($word =~ /(.+)=(.*)/) {
+            if ($word =~ /(.+?)=(.*)/) {
                 $keyvals{$1} = $2;
             } else {
                 # old syntax, will be removed sometime in the future
@@ -183,8 +200,8 @@ sub get_args_from_config {
             }
         }
     }
-    $log->tracef("[pericmd] Seen config profiles: %s",
-                 [sort keys %seen_profiles]);
+    #$log->tracef("[pericmd] Seen config profiles: %s",
+    #             [sort keys %seen_profiles]);
 
     [200, "OK", $args, {'func.found'=>$found}];
 }
