@@ -261,13 +261,21 @@ _
             return undef unless $cmdline;
 
             # since this is common option, at this point we haven't parsed
-            # argument or even read config file. so we need to do that first.
+            # argument or even read config file. let's parse argv first (argv
+            # might set --config-path). then read the config files.
             {
                 # this is not activated yet
                 $r->{read_config} = 1;
 
                 my $res = $cmdline->parse_argv($r);
                 #return undef unless $res->[0] == 200;
+
+                # parse_argv() might decide that it doesn't need to read config
+                # files (e.g. in the case of program having a subcommand and
+                # user does not specify any subcommand name, then it will
+                # shortcut to --help and set skip_parse_subcommand_argv=1). we
+                # don't want that here, we want to force reading config files:
+                $cmdline->_read_config($r) unless $r->{config};
             }
 
             # we are not reading any config file, return empty list
