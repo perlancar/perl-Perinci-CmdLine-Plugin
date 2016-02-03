@@ -498,6 +498,7 @@ sub do_completion {
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
         ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, {truncate_current_word=>1}) };
+        ($words, $cword) = @{ Complete::Bash::join_wordbreak_words($words, $cword) };
     } elsif ($r->{shell} eq 'fish') {
         require Complete::Fish;
         ($words, $cword) = @{ Complete::Fish::parse_cmdline() };
