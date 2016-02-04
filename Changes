@@ -1,5 +1,17 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.50    2016-02-04 (PERLANCAR)
+
+	- [Bugfix] When streaming input (argument) has schema=array, use
+	  its 'of' clause subschema.
+
+	- Adjust to Complete::Bash 0.27.
+
+	- In completing --config-profile, force reading of config files
+	  (previously if program has subcommands and no subcommand name is
+	  specified in ARGV, parse_argv() will skip directly to --help.
+
+
 1.49    2016-01-23 (PERLANCAR)
 
 	- Allow filtering config section with env=...
