@@ -983,6 +983,7 @@ sub __gen_iter {
 
     my ($fh, $argspec, $argname) = @_;
     my $schema = $argspec->{schema};
+    $schema = $schema->[1]{of} if $schema->[0] eq 'array';
     my $type = Data::Sah::Util::Type::get_type($schema);
 
     if (Data::Sah::Util::Type::is_simple($schema)) {
