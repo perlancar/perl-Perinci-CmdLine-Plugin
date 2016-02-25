@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.51    2016-02-26 (PERLANCAR)
+
+	- Implement cmdline_src=stdin_or_args (Rinci 1.1.79).
+
+
 1.50    2016-02-04 (PERLANCAR)
 
 	- [Bugfix] When streaming input (argument) has schema=array, use
