@@ -901,9 +901,9 @@ sub _parse_argv2 {
             if ($av->{stream}) {
                 unless ($av->{cmdline_src} &&
                             $av->{cmdline_src} =~
-                                /\A(stdin|file|stdin_or_files?)\z/) {
+                                /\A(stdin|file|stdin_or_files?|stdin_or_args)\z/) {
                     die "BUG: stream argument '$ak' needs to have cmdline_src ".
-                        "set to stdin, file, stdin_or_file, or stdin_or_files";
+                        "set to stdin, file, stdin_or_file, stdin_or_files, or stdin_or_args";
                 }
             }
         }
@@ -1050,8 +1050,8 @@ sub parse_cmdline_src {
             (
                 !$csa || !$csb ? 0 :
                     $csa eq 'stdin_line' && $csb eq 'stdin_line' ? 0 :
-                    $csa eq 'stdin_line' && $csb =~ /^(stdin|stdin_or_files?)/ ? -1 :
-                    $csb eq 'stdin_line' && $csa =~ /^(stdin|stdin_or_files?)/ ? 1 : 0
+                    $csa eq 'stdin_line' && $csb =~ /^(stdin|stdin_or_files?|stdin_or_args)/ ? -1 :
+                    $csb eq 'stdin_line' && $csa =~ /^(stdin|stdin_or_files?|stdin_or_args)/ ? 1 : 0
             )
             ||
 
@@ -1072,14 +1072,15 @@ sub parse_cmdline_src {
             if ($src) {
                 die [531,
                      "Invalid 'cmdline_src' value for argument '$an': $src"]
-                    unless $src =~ /\A(stdin|file|stdin_or_files?|stdin_line)\z/;
+                    unless $src =~ /\A(stdin|file|stdin_or_files?|stdin_or_args|stdin_line)\z/;
                 die [531,
                      "Sorry, argument '$an' is set cmdline_src=$src, but type ".
                          "is not str/buf/array, only those are supported now"]
-                    unless $do_stream || $type =~ /\A(str|buf|array)\z/;
-                if ($src =~ /\A(stdin|stdin_or_files?)\z/) {
+                    unless $do_stream || $type =~ /\A(str|buf|array)\z/; # XXX stdin_or_args needs array only, not str/buf
+
+                if ($src =~ /\A(stdin|stdin_or_files?|stdin_or_args)\z/) {
                     die [531, "Only one argument can be specified ".
-                             "cmdline_src stdin/stdin_or_file/stdin_or_files"]
+                             "cmdline_src stdin/stdin_or_file/stdin_or_files/stdin_or_args"]
                         if $stdin_seen++;
                 }
                 my $is_ary = $type eq 'array';
@@ -1134,6 +1135,13 @@ sub parse_cmdline_src {
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
+                } elsif ($src eq 'stdin_or_args') {
+                    unless (defined($r->{args}{$an})) {
+                        $r->{args}{$an} = $do_stream ?
+                            __gen_iter(\*STDIN, $as, $an) :
+                            $is_ary ? [map {chomp;$_} <STDIN>] :
+                                do {local $/; ~~<STDIN>};
+                    }
                 } elsif ($src eq 'file') {
                     unless (exists $r->{args}{$an}) {
                         if ($as->{req}) {
@@ -1341,6 +1349,7 @@ sub run {
         if ($err) {
             $err = [500, "Died: $err"] unless ref($err) eq 'ARRAY';
             if (%Devel::Confess::) {
+                no warnings 'once';
                 require Scalar::Util;
                 my $id = Scalar::Util::refaddr($err);
                 my $stack_trace = $Devel::Confess::MESSAGES{$id};
