@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.52    2016-03-16 (PERLANCAR)
+
+	- No functional changes.
+
+	- Replace JSON with JSON::MaybeXS.
+
+
 1.51    2016-02-26 (PERLANCAR)
 
 	- Implement cmdline_src=stdin_or_args (Rinci 1.1.79).
