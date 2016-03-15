@@ -1005,8 +1005,8 @@ sub __gen_iter {
         };
     } else {
         # expect JSON stream for non-simple types
-        require JSON;
-        state $json = JSON->new->allow_nonref;
+        require JSON::MaybeXS;
+        state $json = JSON::MaybeXS->new->allow_nonref;
         my $i = -1;
         return sub {
             state $eof;
@@ -1239,8 +1239,8 @@ sub display_result {
                     print "\n" unless $type eq 'buf';
                 }
             } else {
-                require JSON;
-                state $json = JSON->new->allow_nonref;
+                require JSON::MaybeXS;
+                state $json = JSON::MaybeXS->new->allow_nonref;
                 while (defined(my $rec = $x->())) {
                     print $json->encode($rec), "\n";
                 }
