@@ -923,7 +923,11 @@ sub _parse_argv2 {
                 my %a = @_;
 
                 my ($an, $aa, $as) = ($a{arg}, $a{args}, $a{spec});
-                my $src = $as->{cmdline_src};
+                my $src = $as->{cmdline_src} // '';
+
+                # we only get from stdin if stdin is piped
+                $src = '' if $src eq 'stdin_or_args' && -t STDIN;
+
                 if ($src && $as->{req}) {
                     # don't complain, we will fill argument from other source
                     return 1;
@@ -1135,7 +1139,7 @@ sub parse_cmdline_src {
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
-                } elsif ($src eq 'stdin_or_args') {
+                } elsif ($src eq 'stdin_or_args' && !(-t STDIN)) {
                     unless (defined($r->{args}{$an})) {
                         $r->{args}{$an} = $do_stream ?
                             __gen_iter(\*STDIN, $as, $an) :
