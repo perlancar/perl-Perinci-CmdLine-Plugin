@@ -504,8 +504,10 @@ sub do_completion {
     my ($words, $cword);
     if ($r->{shell} eq 'bash') {
         require Complete::Bash;
+        require Encode;
         ($words, $cword) = @{ Complete::Bash::parse_cmdline(undef, undef, {truncate_current_word=>1}) };
         ($words, $cword) = @{ Complete::Bash::join_wordbreak_words($words, $cword) };
+        $words = [map {Encode::decode('UTF-8', $_)} @$words];
     } elsif ($r->{shell} eq 'fish') {
         require Complete::Fish;
         ($words, $cword) = @{ Complete::Fish::parse_cmdline() };
