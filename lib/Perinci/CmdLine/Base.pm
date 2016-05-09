@@ -81,6 +81,13 @@ has extra_urls_for_version => (is=>'rw');
 
 has skip_format => (is=>'rw');
 
+has use_utf8 => (
+    is=>'rw',
+    default => sub {
+        $ENV{UTF8} // 0;
+    },
+);
+
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_format_row'
 # role: requires 'default_prompt_template'
@@ -587,6 +594,9 @@ sub do_completion {
     } elsif ($r->{shell} eq 'zsh') {
         $formatted = Complete::Zsh::format_completion($compres);
     }
+
+    # to properly display unicode filenames
+    $self->use_utf8(1);
 
     [200, "OK", $formatted,
      # these extra result are for debugging
@@ -2016,6 +2026,11 @@ function metadata property C<cmdline.skip_format> to true. Or, can also be done
 on a per-function result basis by returning result metadata
 C<cmdline.skip_format> set to true.
 
+=head2 use_utf8 => bool (default: from env UTF8, or 0)
+
+Whether or not to set utf8 flag on output. If undef, will default to UTF8
+environment. If that is also undef, will default to 0.
+
 
 =head1 METHODS
 
@@ -2235,5 +2250,9 @@ is active.
 =item * PERINCI_CMDLINE_PROGRAM_NAME => STR
 
 Can be used to set CLI program name.
+
+=head2 UTF8 => bool
+
+To set default for C<use_utf8> attribute.
 
 =back
