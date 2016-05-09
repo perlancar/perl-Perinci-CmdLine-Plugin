@@ -2240,21 +2240,17 @@ This is added by this module, so exit code can be tested.
 
 =head1 ENVIRONMENT
 
-=over
-
-=item * PAGER => str
+=head2 PAGER => str
 
 Like in other programs, can be set to select the pager program (when
 C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=item * PERINCI_CMDLINE_PROGRAM_NAME => STR
+=head2 PERINCI_CMDLINE_PROGRAM_NAME => STR
 
 Can be used to set CLI program name.
 
 =head2 UTF8 => bool
 
 To set default for C<use_utf8> attribute.
-
-=back

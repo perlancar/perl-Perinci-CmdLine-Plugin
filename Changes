@@ -1,5 +1,16 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.54    2016-05-09 (PERLANCAR)
+
+        - Properly complete Unicode filenames. This include converting
+          command-line arguments from octets into Unicode strings (though this
+          should probably be enabled only when LANG =~ /UTF-8/ or something),
+          and converting completion filename answer entries from octets to
+          Unicode strings (done by Complete-File).
+
+        - [Internal] Move up attribute 'use_utf8' from PC:Lite to PC:Base.
+
+
 1.53    2016-04-04 (PERLANCAR)
 
 	- [ux] For argument with cmdline_src=stdin_or_args, only get from
