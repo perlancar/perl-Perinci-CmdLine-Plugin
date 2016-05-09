@@ -56,12 +56,6 @@ has validate_args => (
     is=>'rw',
     default => 1,
 );
-has use_utf8 => (
-    is=>'rw',
-    default => sub {
-        $ENV{UTF8} // 0;
-    },
-);
 
 my $formats = [qw/text text-simple text-pretty json json-pretty csv/];
 
@@ -510,11 +504,6 @@ LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
 
 =head2 validate_args => bool (default: 1)
 
-=head2 use_utf8 => bool (default: from env UTF8, or 0)
-
-Whether or not to set utf8 flag on output. If undef, will default to UTF8
-environment. If that is also undef, will default to 0.
-
 
 =head1 METHODS
 
@@ -554,10 +543,6 @@ Explicitly turn the progress bar on/off.
 Set the default of C<table_column_orders> in C<format_options> in result
 metadata, similar to what's implemented in L<Perinci::Result::Format> and
 L<Data::Format::Pretty::Console>.
-
-=head2 UTF8 => bool
-
-To set default for C<use_utf8> attribute.
 
 
 =head1 RESULT METADATA
