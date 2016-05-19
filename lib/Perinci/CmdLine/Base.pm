@@ -952,15 +952,6 @@ sub _parse_argv2 {
 
         return $ga_res unless $ga_res->[0] == 200;
 
-        require Perinci::Sub::CoerceArgs;
-        my $coerce_res = Perinci::Sub::CoerceArgs::coerce_args(
-            meta                => $meta,
-            meta_is_normalized  => 1,
-            args                => $ga_res->[2],
-        );
-
-        return $coerce_res unless $coerce_res->[0] == 200;
-
         # restore
         for (keys %$copts) {
             $copts->{$_}{handler} = $old_handlers{$_};

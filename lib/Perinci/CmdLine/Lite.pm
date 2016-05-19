@@ -215,15 +215,16 @@ sub hook_before_action {
             next unless $schema;
             unless ($validators{"$schema"}) {
                 my $v = Data::Sah::gen_validator($schema, {
-                    return_type => 'str',
+                    return_type => 'str+val',
                     schema_is_normalized => 1,
                 });
                 $validators{"$schema"} = $v;
             }
             my $res = $validators{"$schema"}->($r->{args}{$arg});
-            if ($res) {
-                die [400, "Argument '$arg' fails validation: $res"];
+            if ($res->[0]) {
+                die [400, "Argument '$arg' fails validation: $res->[0]"];
             }
+            $r->{args}{$arg} = $res->[1];
         }
 
         if ($meta->{args_rels}) {
