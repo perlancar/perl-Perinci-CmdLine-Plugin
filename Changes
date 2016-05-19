@@ -1,5 +1,10 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.55    2016-05-20 (PERLANCAR)
+
+	- Replace Perinci::Sub::CoerceArgs with Data::Sah 0.76+ coercion.
+
+
 1.54    2016-05-09 (PERLANCAR)
 
         - Properly complete Unicode filenames. This include converting
