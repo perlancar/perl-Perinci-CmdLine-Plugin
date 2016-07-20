@@ -1,5 +1,14 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.56    2016-07-20 (PERLANCAR)
+
+        - No functional changes.
+
+        - [dist] Bump prereq versions to force upgrades (support for schemas
+          based on other schemas): Data::Sah to 0.84,
+          Perinci::Sub::GetArgs::Argv to 0.72.
+
+
 1.55    2016-05-20 (PERLANCAR)
 
 	- Replace Perinci::Sub::CoerceArgs with Data::Sah 0.76+ coercion.
