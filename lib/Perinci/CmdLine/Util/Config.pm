@@ -45,13 +45,29 @@ sub read_config {
     my $config_dirs = $args{config_dirs} // get_default_config_dirs();
 
     my $paths;
+
+    my @filenames;
+    my %section_config_filename_map;
+    if (my $names = $args{config_filename}) {
+        for my $name (ref($names) eq 'ARRAY' ? @$names : ($names)) {
+            if (ref($name) eq 'HASH') {
+                $section_config_filename_map{$name->{filename}} = $name->{section};
+                push @filenames, $name->{filename};
+            } else {
+                $section_config_filename_map{$name} = 'GLOBAL';
+                push @filenames, $name;
+            }
+        }
+    }
+    unless (@filenames) {
+        @filenames = (($args{program_name} // "prog") . ".conf");
+    }
+
     if ($args{config_paths}) {
         $paths = $args{config_paths};
     } else {
-        my $names = $args{config_filename} //
-            $args{program_name} . ".conf";
         for my $dir (@$config_dirs) {
-            for my $name (ref($names) eq 'ARRAY' ? @$names : ($names)) {
+            for my $name (@filenames) {
                 my $path = "$dir/" . $name;
                 push @$paths, $path if -e $path;
             }
@@ -62,21 +78,31 @@ sub read_config {
     my %res;
     my @read;
     my %section_read_order;
-    for my $path (@$paths) {
+    for my $i (0..$#{$paths}) {
+        my $path           = $paths->[$i];
+        my $filename = $path; $filename =~ s!.*[/\\]!!;
+        my $wanted_section = $section_config_filename_map{$filename}
+            // 'GLOBAL';
         $log->tracef("[pericmd] Reading config file '%s' ...", $path);
+        my $j = 0;
+        $section_read_order{GLOBAL} = [$i, $j++];
         my $hoh = $reader->read_file(
             $path,
             sub {
                 my %args = @_;
                 return unless $args{event} eq 'section';
                 my $section = $args{section};
-                return if $section_read_order{$section};
-                $section_read_order{$section} = 1 + keys %section_read_order;
+                $section_read_order{$section} = [$i, $j++];
             },
         );
         push @read, $path;
         for my $section (keys %$hoh) {
             my $hash = $hoh->{$section};
+
+            my $s = $section; $s =~ s/\s*\S*=.*\z//; # strip key=value pairs
+            $s = 'GLOBAL' if $s eq '';
+            next unless $s eq $wanted_section;
+
             for (keys %$hash) {
                 $res{$section}{$_} = $hash->{$_};
             }
@@ -121,22 +147,23 @@ sub get_args_from_config {
 
     my $csro = $r->{_config_section_read_order} // {};
     my @sections = sort {
-        # put GLOBAL before all other sections
-        ($a eq 'GLOBAL' ? 0:1) <=> ($b eq 'GLOBAL' ? 0:1) ||
-            # sort according to the order the section is seen in the file
-            ($csro->{$a} // 0) <=> ($csro->{$b} // 0) ||
-                $a cmp $b
+        # sort according to the order the section is seen in the file
+        my $csro_a = $csro->{$a} // [0,0];
+        my $csro_b = $csro->{$b} // [0,0];
+        $csro_a->[0] <=> $csro_b->[0] ||
+            $csro_a->[1] <=> $csro_b->[1] ||
+            $a cmp $b
         } keys %$conf;
 
     my %seen_profiles; # for debugging message
-    for my $section (@sections) {
+    for my $section0 (@sections) {
         my %keyvals;
-        for my $word (split /\s+/, ($section eq 'GLOBAL' ? '' : $section)) {
-            if ($word =~ /(.+?)=(.*)/) {
+        my $sect_name;
+        for my $word (split /\s+/, $section0) {
+            if ($word =~ /(.*?)=(.*)/) {
                 $keyvals{$1} = $2;
             } else {
-                # old syntax, will be removed sometime in the future
-                $keyvals{subcommand} = $word;
+                $sect_name //= $word;
             }
         }
         $seen_profiles{$keyvals{profile}}++ if defined $keyvals{profile};
@@ -150,7 +177,7 @@ sub get_args_from_config {
             if (length($sect_scn) && $sect_scn ne $scn) {
                 $log->tracef(
                     "[pericmd] Skipped config section '%s' (%s)",
-                    $section, "subcommand does not match '$scn'",
+                    $section0, "subcommand does not match '$scn'",
                 );
                 next;
             }
@@ -158,7 +185,7 @@ sub get_args_from_config {
             if (length $sect_scn) {
                 $log->tracef(
                     "[pericmd] Skipped config section '%s' (%s)",
-                    $section, "only for a certain subcommand",
+                    $section0, "only for a certain subcommand",
                 );
                 next;
             }
@@ -170,7 +197,7 @@ sub get_args_from_config {
             if (defined($sect_profile) && $sect_profile ne $profile) {
                 $log->tracef(
                     "[pericmd] Skipped config section '%s' (%s)",
-                    $section, "profile does not match '$profile'",
+                    $section0, "profile does not match '$profile'",
                 );
                 next;
             }
@@ -179,7 +206,7 @@ sub get_args_from_config {
             if (defined($sect_profile)) {
                 $log->tracef(
                     "[pericmd] Skipped config section '%s' (%s)",
-                    $section, "only for a certain profile",
+                    $section0, "only for a certain profile",
                 );
                 next;
             }
@@ -190,7 +217,7 @@ sub get_args_from_config {
             if ($progn ne $keyvals{program}) {
                 $log->tracef(
                     "[pericmd] Skipped config section '%s' (%s)",
-                    $section, "program does not match '$progn'",
+                    $section0, "program does not match '$progn'",
                 );
                 next;
             }
@@ -203,7 +230,7 @@ sub get_args_from_config {
                 if (($ENV{$var} // '') ne $val) {
                     $log->tracef(
                         "[pericmd] Skipped config section '%s' (%s)",
-                        $section, "env $var has non-matching value '".
+                        $section0, "env $var has non-matching value '".
                             ($ENV{$var} // '')."'",
                     );
                     next;
@@ -212,7 +239,7 @@ sub get_args_from_config {
                 if (($ENV{$var} // '') eq $val) {
                     $log->tracef(
                         "[pericmd] Skipped config section '%s' (%s)",
-                        $section, "env $var has that value",
+                        $section0, "env $var has that value",
                     );
                     next;
                 }
@@ -220,7 +247,7 @@ sub get_args_from_config {
                 if (index(($ENV{$var} // ''), $val) < 0) {
                     $log->tracef(
                         "[pericmd] Skipped config section '%s' (%s)",
-                        $section, "env $var has value '".
+                        $section0, "env $var has value '".
                             ($ENV{$var} // '')."' which does not contain the ".
                                 "requested string"
                     );
@@ -230,18 +257,18 @@ sub get_args_from_config {
                 if (!$ENV{$env}) {
                     $log->tracef(
                         "[pericmd] Skipped config section '%s' (%s)",
-                        $section, "env $env is not set/true",
+                        $section0, "env $env is not set/true",
                     );
                     next;
                 }
             }
         }
 
-        $log->tracef("[pericmd] Reading config section '%s'", $section);
+        $log->tracef("[pericmd] Reading config section '%s'", $section0);
 
         my $as = $meta->{args} // {};
-        for my $k (keys %{ $conf->{$section} }) {
-            my $v = $conf->{$section}{$k};
+        for my $k (keys %{ $conf->{$section0} }) {
+            my $v = $conf->{$section0}{$k};
             if ($copts->{$k} && $copts->{$k}{is_settable_via_config}) {
                 my $sch = $copts->{$k}{schema};
                 if ($sch) {

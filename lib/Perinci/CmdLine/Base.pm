@@ -2002,11 +2002,25 @@ user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
 $ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
 directory entry.
 
-=head2 config_filename => str|array[str]
+=head2 config_filename => str|array[str]|array[hash]
 
 Configuration filename(s). The default is C<< program_name . ".conf" >>. For
 example, if your program is named C<foo-bar>, config_filename will be
 C<foo-bar.conf>.
+
+You can specify an array of filename strings, which will be checked in order,
+e.g.: C<< ["myapp.conf", "myapp.ini"] >>.
+
+You can also specify an array of hashrefs, for more complex scenario. Each hash
+can contain these keys: C<filename>, C<section>. For example:
+
+ [
+     {filename => 'mysuite.conf', section=>'myapp1'},
+     {filename => 'myapp1.conf'}, # section = GLOBAL (default)
+ ]
+
+This means, configuration will be searched in C<mysuite.conf> under the section
+C<myapp1>, and then in C<myapp1.conf> in the default/global section.
 
 =head2 skip_format => bool
 
