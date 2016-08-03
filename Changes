@@ -1,5 +1,27 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.57    2016-08-03 (PERLANCAR)
+
+        - The 'config_filename' attribute can now be an array of hash instead of
+          just array of strings. Each hash can contain these keys: 'filename',
+          as well as 'section' to specify which section should be read from the
+          file (instead the default 'GLOBAL' section).
+
+          This allows a scenario of main/general and more specific config files.
+          For example, suppose you have a suite of applications called 'mysuite'
+          and programs 'app1' and 'app2' that belong to the suite. The program
+          'app1' can be set to read from 'mysuite.conf' as well as the more
+          specific 'app1.conf'. But in 'mysuite.conf', the configuration is read
+          from the [app1] (or say [app.app1]) section. This allows
+          'mysuite.conf' to contain configuration for a hierarchy of
+          programs/subsystems without being mixed up.
+
+        - [Removed] Remove support for old section syntax in config: [SUBCOMMAND
+          profile=P1 ...] now has to be written as [subcommand=SUBCOMMAND
+          profile=P1 ...]. Otherwise, the name before the first key=value pair
+          will be assumed to be a section name.
+
+
 1.56    2016-07-20 (PERLANCAR)
 
         - No functional changes.
