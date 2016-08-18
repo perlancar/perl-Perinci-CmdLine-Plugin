@@ -81,8 +81,7 @@ sub read_config {
     for my $i (0..$#{$paths}) {
         my $path           = $paths->[$i];
         my $filename = $path; $filename =~ s!.*[/\\]!!;
-        my $wanted_section = $section_config_filename_map{$filename}
-            // 'GLOBAL';
+        my $wanted_section = $section_config_filename_map{$filename};
         $log->tracef("[pericmd] Reading config file '%s' ...", $path);
         my $j = 0;
         $section_read_order{GLOBAL} = [$i, $j++];
@@ -101,7 +100,7 @@ sub read_config {
 
             my $s = $section; $s =~ s/\s*\S*=.*\z//; # strip key=value pairs
             $s = 'GLOBAL' if $s eq '';
-            next unless $s eq $wanted_section;
+            next unless !defined($wanted_section) || $s eq $wanted_section;
 
             for (keys %$hash) {
                 $res{$section}{$_} = $hash->{$_};
