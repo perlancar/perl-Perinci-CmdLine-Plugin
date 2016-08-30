@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.59    2016-08-30 (PERLANCAR)
+
+        - [Bugfix] Forgot to add no_getopt_compat Getopt::Long option (we don't
+          want to use + to start option e.g. for +h, +help).
+
+
 1.58    2016-08-18 (PERLANCAR)
 
 	- [Bugfix][Regression] When section is not specified in
