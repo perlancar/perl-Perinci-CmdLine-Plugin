@@ -1,5 +1,17 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.60    2016-09-25 (PERLANCAR)
+
+	- Revert from JSON::MaybeXS to JSON because JSON::MaybeXS is not
+	  depakable ATM (hard dependency to Cpanel::JSON::XS).
+
+	- [doc] Document undocumented attributes: per_arg_json,
+	  per_arg_yaml, extra_urls_for_version, riap_client, cleanser.
+
+	- [Experimental] Provide original (pre-coerced) argument values in
+	  -orig_ARGNAME special arguments.
+
+
 1.59    2016-08-30 (PERLANCAR)
 
         - [Bugfix] Forgot to add no_getopt_compat Getopt::Long option (we don't
