@@ -1856,21 +1856,31 @@ C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
 Passing the cmdline object can be useful, e.g. to call action_help(), to get the
 settings of the Perinci::CmdLine, etc.
 
+=head2 per_arg_json => bool
+
+This will be passed to L<Perinci::Sub::GetArgs::Argv>, which has this value
+default to 1.
+
+=head2 per_arg_yaml => bool (default: 1)
+
+This will be passed to L<Perinci::Sub::GetArgs::Argv>, which has this value
+default to 1.
+
 =head2 program_name => str
 
 Default is from PERINCI_CMDLINE_PROGRAM_NAME environment or from $0.
-
-=head2 riap_client => obj
-
-Set to Riap client instance, should you want to create one yourself. Otherwise
-will be set L<Perinci::Access> (in PC:Classic), or L<Perinci::Access::Lite> (in
-PC:Lite).
 
 =head2 riap_version => float (default: 1.1)
 
 Specify L<Riap> protocol version to use. Will be passed to Riap client
 constructor (unless you already provide a Riap client object, see
 C<riap_client>).
+
+=head2 riap_client => obj
+
+Set to Riap client instance, should you want to create one yourself. Otherwise
+will be set L<Perinci::Access> (in PC:Classic), or L<Perinci::Access::Lite> (in
+PC:Lite).
 
 =head2 riap_client_args => hash
 
@@ -1996,13 +2006,6 @@ default environment name is C<CPANDB_CPANMETA_OPT>.
 
 Whether to read configuration files.
 
-=head2 config_dirs => array of str
-
-Which directories to look for configuration file. The default is to look at the
-user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
-$ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
-directory entry.
-
 =head2 config_filename => str|array[str]|array[hash]
 
 Configuration filename(s). The default is C<< program_name . ".conf" >>. For
@@ -2022,6 +2025,20 @@ can contain these keys: C<filename>, C<section>. For example:
 
 This means, configuration will be searched in C<mysuite.conf> under the section
 C<myapp1>, and then in C<myapp1.conf> in the default/global section.
+
+=head2 config_dirs => array of str
+
+Which directories to look for configuration file. The default is to look at the
+user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
+$ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
+directory entry.
+
+=head2 cleanser => obj
+
+Object to cleanse result for JSON output. By default this is an instance of
+L<Data::Clean::JSON> and should not be set to other value in most cases.
+
+=head2 extra_urls_for_version => array of str
 
 =head2 skip_format => bool
 
