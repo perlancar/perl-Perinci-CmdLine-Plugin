@@ -1250,7 +1250,8 @@ sub display_result {
                 require JSON;
                 state $json = JSON->new->allow_nonref;
                 while (defined(my $rec = $x->())) {
-                    print $json->encode($rec), "\n";
+                    print $json->encode(
+                        $self->cleanser->clone_and_clean($rec)), "\n";
                 }
             }
         } else {
