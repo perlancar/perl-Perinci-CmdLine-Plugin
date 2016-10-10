@@ -440,7 +440,8 @@ sub action_help {
 
     # hide usage '--subcommands' if we have subcommands but user has specified a
     # subcommand to use
-    my $has_sc_no_sc = $self->subcommands && !length($r->{subcommand_name});
+    my $has_sc_no_sc = $self->subcommands &&
+        !length($r->{subcommand_name} // '');
     delete $common_opts->{subcommands} if $self->subcommands && !$has_sc_no_sc;
 
     my $res = Perinci::CmdLine::Help::gen_help(
