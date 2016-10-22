@@ -481,14 +481,13 @@ sub _read_env {
         require Complete::Bash;
         ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0) };
     } elsif ($r->{shell} eq 'fish') {
-        require Complete::Fish;
-        ($words, undef) = @{ Complete::Fish::parse_cmdline($env) };
+        ($words, undef) = @{ Complete::Base::parse_cmdline($env) };
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
         ($words, undef) = @{ Complete::Tcsh::parse_cmdline($env) };
     } elsif ($r->{shell} eq 'zsh') {
-        require Complete::Zsh;
-        ($words, undef) = @{ Complete::Zsh::parse_cmdline($env) };
+        require Complete::Bash;
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env) };
     } else {
         die "Unsupported shell '$r->{shell}'";
     }
@@ -509,14 +508,14 @@ sub do_completion {
         ($words, $cword) = @{ Complete::Bash::join_wordbreak_words($words, $cword) };
         $words = [map {Encode::decode('UTF-8', $_)} @$words];
     } elsif ($r->{shell} eq 'fish') {
-        require Complete::Fish;
-        ($words, $cword) = @{ Complete::Fish::parse_cmdline() };
+        require Complete::Bash;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
     } elsif ($r->{shell} eq 'tcsh') {
         require Complete::Tcsh;
         ($words, $cword) = @{ Complete::Tcsh::parse_cmdline() };
     } elsif ($r->{shell} eq 'zsh') {
-        require Complete::Zsh;
-        ($words, $cword) = @{ Complete::Zsh::parse_cmdline() };
+        require Complete::Bash;
+        ($words, $cword) = @{ Complete::Bash::parse_cmdline() };
     } else {
         die "Unsupported shell '$r->{shell}'";
     }
@@ -587,13 +586,17 @@ sub do_completion {
 
     my $formatted;
     if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
         $formatted = Complete::Bash::format_completion(
             $compres, {word=>$words->[$cword]});
     } elsif ($r->{shell} eq 'fish') {
+        require Complete::Fish;
         $formatted = Complete::Fish::format_completion($compres);
     } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
         $formatted = Complete::Tcsh::format_completion($compres);
     } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Zsh;
         $formatted = Complete::Zsh::format_completion($compres);
     }
 
