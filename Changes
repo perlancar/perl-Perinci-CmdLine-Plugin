@@ -1,5 +1,13 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.62    2016-10-26 (PERLANCAR)
+
+        - Adjust with new version of Complete::{Fish,Zsh} which have their
+          parse_cmdline() routine removed.
+
+        - Avoid perl undef warning (for older perl, e.g. 5.10).
+
+
 1.61    2016-09-28 (PERLANCAR)
 
 	- Also clean stream record before encoding to JSON.
