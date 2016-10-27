@@ -28,6 +28,7 @@ has get_subcommand_from_arg => (is=>'rw', default=>1);
 has description => (is=>'rw');
 has exit => (is=>'rw', default=>1);
 has formats => (is=>'rw');
+has default_format => (is=>'rw');
 has pass_cmdline_object => (is=>'rw', default=>0);
 has per_arg_json => (is=>'rw');
 has per_arg_yaml => (is=>'rw');
@@ -1298,6 +1299,8 @@ sub run {
         $r->{format} = 'json';
     }
 
+    $r->{format} //= $self->default_format;
+
     if ($self->read_config) {
         # note that we will be reading config file
         $r->{read_config} = 1;
@@ -1847,6 +1850,10 @@ command-line argument even though there is C<default_subcommand> defined).
 =head2 formats => array
 
 Available output formats.
+
+=head2 default_format => str
+
+Default format.
 
 =head2 pass_cmdline_object => bool (default: 0)
 
