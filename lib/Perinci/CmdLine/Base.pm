@@ -89,6 +89,11 @@ has use_utf8 => (
     },
 );
 
+has default_dry_run => (
+    is=>'rw',
+    default => 0,
+);
+
 # role: requires 'hook_after_get_meta'
 # role: requires 'hook_format_row'
 # role: requires 'default_prompt_template'
@@ -826,7 +831,8 @@ sub _parse_argv1 {
     }
 
     # also set dry-run on environment
-    $r->{dry_run} = 1 if $ENV{DRY_RUN};
+    $r->{dry_run} = defined($ENV{DRY_RUN}) ? ($ENV{DRY_RUN} ? 1:0) :
+        $self->default_dry_run;
 
     $r->{_parse_argv1_done} = 1;
 }
@@ -2066,6 +2072,11 @@ C<cmdline.skip_format> set to true.
 
 Whether or not to set utf8 flag on output. If undef, will default to UTF8
 environment. If that is also undef, will default to 0.
+
+=head2 default_dry_run => bool (default: 0)
+
+If set to 1, then dry-mode will be turned on by default unless user uses
+DRY_RUN=0 or C<--no-dry-run>.
 
 
 =head1 METHODS
