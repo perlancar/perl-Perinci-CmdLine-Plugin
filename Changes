@@ -1,5 +1,11 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.66    2016-12-15 (PERLANCAR)
+
+        - Observe default=>1 in 'dry_run' feature property in Rinci function
+          metadata (Rinci 1.1.83).
+
+
 1.65    2016-12-15 (PERLANCAR)
 
 	- [Enhancement] Add default_dry_run attribute to allow a script to be in
