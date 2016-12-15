@@ -1,5 +1,18 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.65    2016-12-15 (PERLANCAR)
+
+	- [Enhancement] Add default_dry_run attribute to allow a script to be in
+          dry-run mode by default.
+
+        - [Bugfix] Workaround issue in Getopt::Long where gnu_compat disables
+          bundling as a side effect, so we enable bundling after gnu_compat
+          (ref: [RT#119165]).
+
+        - Bump prereq version Perinci::Sub::GetArgs::Argv (support hash option:
+          --arg k1=v1 --arg k2=v2 ...).
+
+
 1.64    2016-12-02 (PERLANCAR)
 
 	- Set Getopt::Long configuration gnu_compat.
