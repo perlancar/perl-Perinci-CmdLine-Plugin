@@ -145,6 +145,7 @@ sub _unsetup_progress_output {
     my $self = shift;
 
     return unless $setup_progress;
+    no warnings 'once';
     my $out = $Progress::Any::outputs{''}[0];
     $out->cleanup if $out->can("cleanup");
     $setup_progress = 0;
@@ -344,10 +345,14 @@ sub hook_after_get_meta {
     my ($self, $r) = @_;
 
     require Perinci::Object;
-    if (Perinci::Object::risub($r->{meta})->can_dry_run) {
+    my $metao = Perinci::Object::risub($r->{meta});
+    if ($metao->can_dry_run) {
+        my $default_dry_run = $metao->default_dry_run // $self->default_dry_run;
+        $r->{dry_run} = 1 if $default_dry_run;
+        $r->{dry_run} = ($ENV{DRY_RUN} ? 1:0) if defined $ENV{DRY_RUN};
         $self->common_opts->{dry_run} = {
-            getopt  => $self->default_dry_run ? 'dry-run!' : 'dry-run',
-            summary => $self->default_dry_run ?
+            getopt  => $default_dry_run ? 'dry-run!' : 'dry-run',
+            summary => $default_dry_run ?
                 "Disable simulation mode (also via DRY_RUN=0)" :
                 "Run in simulation mode (also via DRY_RUN=1)",
             handler => sub {

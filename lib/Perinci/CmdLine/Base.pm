@@ -830,10 +830,6 @@ sub _parse_argv1 {
         $r->{subcommand_data} = $scd;
     }
 
-    # also set dry-run on environment
-    $r->{dry_run} = defined($ENV{DRY_RUN}) ? ($ENV{DRY_RUN} ? 1:0) :
-        $self->default_dry_run;
-
     $r->{_parse_argv1_done} = 1;
 }
 
