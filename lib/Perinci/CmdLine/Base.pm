@@ -25,6 +25,7 @@ has common_opts => (is=>'rw');
 has completion => (is=>'rw');
 has default_subcommand => (is=>'rw');
 has get_subcommand_from_arg => (is=>'rw', default=>1);
+has auto_abbrev_subcommand => (is=>'rw', default=>1);
 has description => (is=>'rw');
 has exit => (is=>'rw', default=>1);
 has formats => (is=>'rw');
@@ -799,14 +800,31 @@ sub _parse_argv1 {
             $scd = $self->get_subcommand_data($scn);
             unless ($r->{in_completion}) {
                 unless ($scd) {
-                    my $suggestion = '';
-                    my $scs = $self->subcommands;
-                    if (ref($scs) eq 'HASH') {
-                        my @similar =
-                            __find_similar_strings($scn, [keys %$scs]);
-                        $suggestion = " (perhaps you meant ".
-                            join("/", @similar)."?)" if @similar;
+                    my $scs = $self->list_subcommands;
+                    if ($self->auto_abbrev_subcommand) {
+                        # check that subcommand is an unambiguous abbreviation
+                        # of an existing subcommand
+                        my $num_matches = 0;
+                        my $complete_scn;
+                        for (keys %$scs) {
+                            if (index($_, $scn) == 0) {
+                                $num_matches++;
+                                $complete_scn = $_;
+                                last if $num_matches > 1;
+                            }
+                        }
+                        if ($num_matches == 1) {
+                            $scn = $complete_scn;
+                            $scd = $self->get_subcommand_data($scn);
+                            goto L1;
+                        }
                     }
+                    # provide suggestion of probably mistyped subcommand to user
+                    my @similar =
+                        __find_similar_strings($scn, [keys %$scs]);
+                    my $suggestion = '';
+                    $suggestion = " (perhaps you meant ".
+                        join("/", @similar)."?)" if @similar;
                     die [500, "Unknown subcommand: $scn".$suggestion];
                 }
             }
@@ -825,6 +843,7 @@ sub _parse_argv1 {
                 tags => $self->tags,
             };
         }
+      L1:
         $r->{subcommand_name} = $scn;
         $r->{subcommand_name_from} = $scn_from;
         $r->{subcommand_data} = $scd;
@@ -1837,6 +1856,26 @@ documentation for more details.
 
 Set subcommand to this if user does not specify which to use (either via first
 command-line argument or C<--cmd> option). See also: C<get_subcommand_from_arg>.
+
+=head2 auto_abbrev_subcommand => bool (default: 1)
+
+If set to yes, then if a partial subcommand name is given on the command-line
+and unambiguously completes to an existing subcommand name, it will be assumed
+to be the complete subcommand name. This is like the C<auto_abbrev> behavior of
+L<Getopt::Long>. For example:
+
+ % myapp c
+
+If there are subcommands C<create>, C<modify>, C<move>, C<delete>, then C<c> is
+assumed to be C<create>. But if:
+
+ % myapp mo
+
+then it results in an unknown subcommand error because mo is ambiguous between
+C<modify> and C<move>.
+
+Note that subcommand name in config section must be specified in full. This
+option is about convenience at the command-line only.
 
 =head2 get_subcommand_from_arg => int (default: 1)
 
