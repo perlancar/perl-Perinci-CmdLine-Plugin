@@ -1,5 +1,12 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.67    2016-12-17 (PERLANCAR)
+
+	- [ux] Add attribute: auto_abbrev_subcommand (default true) to
+	  automatically complete subcommand name if given an unambiguous
+	  abbreviation, like auto_abbrev behavior in Getopt::Long.
+
+
 1.66    2016-12-15 (PERLANCAR)
 
         - Observe default=>1 in 'dry_run' feature property in Rinci function
