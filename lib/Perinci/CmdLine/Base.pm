@@ -1219,32 +1219,71 @@ sub parse_cmdline_src {
     #$log->tracef("args after cmdline_src is processed: %s", $r->{args});
 }
 
+# BEGIN COPY PASTED FROM ShellQuote::Any::Tiny
+sub __shell_quote {
+    my $arg = shift;
+
+    if ($^O eq 'MSWin32') {
+        if ($arg =~ /\A\w+\z/) {
+            return $arg;
+        }
+        $arg =~ s/([\\"])/\\$1/g;
+        return qq("$arg");
+    } else {
+        if ($arg =~ /\A\w+\z/) {
+            return $arg;
+        }
+        $arg =~ s/\\/\\\\/g;
+        $arg =~ s/'/'"'"'/g;
+        return "'$arg'";
+    }
+}
+# END COPY PASTED FROM ShellQuote::Any::Tiny
+
 # determine filehandle to output to (normally STDOUT, but we can also send to a
-# pager
+# pager, or a temporary file when sending to viewer (the difference between
+# pager and viewer: when we page we use pipe, when we view we write to temporary
+# file then open the viewer. viewer settings override pager settings.
 sub select_output_handle {
     my ($self, $r) = @_;
 
     my $resmeta = $r->{res}[3] // {};
 
     my $handle;
-    if ($ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
-        require File::Which;
-        my $pager = $resmeta->{"cmdline.pager"} //
-            $ENV{PAGER};
-        unless (defined $pager) {
-            $pager = "less -FRSX" if File::Which::which("less");
+  SELECT_HANDLE:
+    {
+        # view result using external program
+        if ($ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
+            my $viewer = $resmeta->{"cmdline.viewer"} // $ENV{VIEWER} //
+                $ENV{BROWSER};
+            last if defined $viewer && !$viewer; # ENV{VIEWER} can be set 0/'' to disable viewing result using external program
+            die [500, "No VIEWER program set"] unless defined $viewer;
+            $r->{viewer} = $viewer;
+            require File::Temp;
+            my $filename;
+            ($handle, $filename) = File::Temp::tempfile();
+            $r->{viewer_temp_path} = $filename;
         }
-        unless (defined $pager) {
-            $pager = "more" if File::Which::which("more");
+
+        if ($ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
+            require File::Which;
+            my $pager = $resmeta->{"cmdline.pager"} //
+                $ENV{PAGER};
+            unless (defined $pager) {
+                $pager = "less -FRSX" if File::Which::which("less");
+            }
+            unless (defined $pager) {
+                $pager = "more" if File::Which::which("more");
+            }
+            unless (defined $pager) {
+                die [500, "Can't determine PAGER"];
+            }
+            last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
+            #$log->tracef("Paging output using %s", $pager);
+            open $handle, "| $pager";
         }
-        unless (defined $pager) {
-            die [500, "Can't determine PAGER"];
-        }
-        last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
-        #$log->tracef("Paging output using %s", $pager);
-        open $handle, "| $pager";
+        $handle //= \*STDOUT;
     }
-    $handle //= \*STDOUT;
     $r->{output_handle} = $handle;
 }
 
@@ -1284,6 +1323,10 @@ sub display_result {
         }
     } else {
         print $handle $fres;
+        if ($r->{viewer}) {
+            my $cmd = $r->{viewer} ." ". __shell_quote($r->{viewer_temp_path});
+            system $cmd;
+        }
     }
 }
 
@@ -1723,6 +1766,15 @@ can also be pipe to pager (if paging is turned on).
 =item * naked_res => bool
 
 Set to true if user specifies C<--naked-res>.
+
+=item * viewer => str
+
+Program to use as external viewer.
+
+=item * viewer_temp_path => str
+
+Set to temporary filename created to store the result to view to external viewer
+program.
 
 =back
 
@@ -2307,6 +2359,21 @@ For example:
 Instruct to use specified pager instead of C<$ENV{PAGER}> or the default C<less>
 or C<more>.
 
+=head2 attribute: cmdline.view_result => bool
+
+Aside from using a pager, you can also use a viewer. The difference is, when we
+use a pager we pipe the output directly to the pager, but when we use a viewer
+we write to a temporary file then call the viewer with that temporary filename
+as argument. Viewer settings override pager settings.
+
+If this attribute is set to true, will view result using external viewer
+(external viewer program is set either from C<cmdline.viewer> or C<VIEWER> or
+C<BROWSER>. An error is raised when there is no viewer set.)
+
+=head2 attribute: cmdline.viewer => STR
+
+Instruct to use specified viewer instead of C<$ENV{VIEWER}> or C<$ENV{BROWSER}>.
+
 =head2 attribute: cmdline.skip_format => bool (default: 0)
 
 When we want the command-line framework to just print the result without any
@@ -2320,10 +2387,22 @@ This is added by this module, so exit code can be tested.
 
 =head1 ENVIRONMENT
 
+=head2 VIEW_RESULT => bool
+
+Can be set to 1 to force using viewer to view result. Can be set to 0 to
+explicitly disable using viewer to view result even though
+C<cmdline.view_result> result metadata attribute is active.
+
+=head2 VIEWER => str
+
+Can be set to select the viewer program to override C<cmdline.viewer>. Can also
+be set to C<''> or C<0> to explicitly disable using viewer to view result even
+though C<cmdline.view_result> result metadata attribute is active.
+
 =head2 PAGE_RESULT => bool
 
 Can be set to 1 to force paging of result. Can be set to 0 to explicitly disable
-paging even though C<cmd.page_result> result metadata property is active.
+paging even though C<cmd.page_result> result metadata attribute is active.
 
 =head2 PAGER => str
 
@@ -2331,6 +2410,11 @@ Like in other programs, can be set to select the pager program (when
 C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
+
+=head2 BROWSER => str
+
+When VIEWER is not set, then this environment variable will be used to select
+external viewer program.
 
 =head2 PERINCI_CMDLINE_PROGRAM_NAME => STR
 
