@@ -1227,7 +1227,7 @@ sub select_output_handle {
     my $resmeta = $r->{res}[3] // {};
 
     my $handle;
-    if ($resmeta->{"cmdline.page_result"}) {
+    if ($ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
         require File::Which;
         my $pager = $resmeta->{"cmdline.pager"} //
             $ENV{PAGER};
@@ -2319,6 +2319,11 @@ This is added by this module, so exit code can be tested.
 
 
 =head1 ENVIRONMENT
+
+=head2 PAGE_RESULT => bool
+
+Can be set to 1 to force paging of result. Can be set to 0 to explicitly disable
+paging even though C<cmd.page_result> result metadata property is active.
 
 =head2 PAGER => str
 
