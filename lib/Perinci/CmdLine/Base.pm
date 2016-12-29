@@ -1303,7 +1303,8 @@ sub display_result {
     } else {
         print $handle $fres;
         if ($r->{viewer}) {
-            my $cmd = $r->{viewer} ." ". __shell_quote($r->{viewer_temp_path});
+            require ShellQuote::Any::Tiny;
+            my $cmd = $r->{viewer} ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
             system $cmd;
         }
     }
