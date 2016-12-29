@@ -503,7 +503,7 @@ sub action_call {
 }
 
 1;
-# ABSTRACT: A lightweight Rinci/Riap-based command-line application framework
+# ABSTRACT: A Rinci/Riap-based command-line application framework
 
 =for Pod::Coverage ^(BUILD|get_meta|hook_.+|action_.+)$
 
@@ -516,9 +516,12 @@ sub action_call {
 
 #RENDER_TEMPLATE: file=>"share/templates/description.txt"
 
-Perinci::CmdLine::Lite is the default backend implementation. You normally
-should use L<Perinci::CmdLine::Any> instead to be able to switch backend on the
-fly.
+Perinci::CmdLine::Lite is the default backend implementation. Another
+implementation is the heavier L<Perinci::CmdLine::Classic> which has a couple of
+more features not yet incorporated into ::Lite, e.g. transactions.
+
+You normally should use L<Perinci::CmdLine::Any> instead to be able to switch
+backend on the fly.
 
 
 =head1 REQUEST KEYS
