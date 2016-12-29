@@ -1219,27 +1219,6 @@ sub parse_cmdline_src {
     #$log->tracef("args after cmdline_src is processed: %s", $r->{args});
 }
 
-# BEGIN COPY PASTED FROM ShellQuote::Any::Tiny
-sub __shell_quote {
-    my $arg = shift;
-
-    if ($^O eq 'MSWin32') {
-        if ($arg =~ /\A\w+\z/) {
-            return $arg;
-        }
-        $arg =~ s/([\\"])/\\$1/g;
-        return qq("$arg");
-    } else {
-        if ($arg =~ /\A\w+\z/) {
-            return $arg;
-        }
-        $arg =~ s/\\/\\\\/g;
-        $arg =~ s/'/'"'"'/g;
-        return "'$arg'";
-    }
-}
-# END COPY PASTED FROM ShellQuote::Any::Tiny
-
 # determine filehandle to output to (normally STDOUT, but we can also send to a
 # pager, or a temporary file when sending to viewer (the difference between
 # pager and viewer: when we page we use pipe, when we view we write to temporary
@@ -1498,6 +1477,54 @@ sub run {
         return $r->{res};
     }
 }
+
+# BEGIN FATPACK CODE: ShellQuote/Any/Tiny.pm
+{
+    no strict 'refs';
+    $main::fatpacked{"ShellQuote/Any/Tiny.pm"} = '##line '.(1+__LINE__).' "'.__FILE__."\"\n".<<'SHELLQUOTE_ANY_TINY';
+#package ShellQuote::Any::Tiny;
+#
+#our $DATE = '2016-12-27';
+#our $VERSION = '0.003';
+#
+#use strict;
+#use warnings;
+#
+#use Exporter qw(import);
+#our @EXPORT_OK = qw(shell_quote);
+#
+#sub shell_quote {
+#    my $arg = shift;
+#
+#    if ($^O eq 'MSWin32') {
+#        if ($arg =~ /\A\w+\z/) {
+#            return $arg;
+#        }
+#        $arg =~ s/([\\"])/\\$1/g;
+#        return qq("$arg");
+#    } else {
+#        if ($arg =~ /\A\w+\z/) {
+#            return $arg;
+#        }
+#        $arg =~ s/'/'"'"'/g;
+#        return "'$arg'";
+#    }
+#}
+#
+#1;
+#
+#__END__
+#
+SHELLQUOTE_ANY_TINY
+
+    $main::fatpacked{$_} =~ s/^\#//mg for ('ShellQuote/Any/Tiny.pm');
+    my $class = 'FatPacked::'.(0+\%main::fatpacked);
+    unless (defined &{"${class}::INC"}) { if ($] < 5.008) { *{"${class}::INC"} = sub { if (my $fat = $_[0]{$_[1]}) { return sub { return 0 unless length $fat; $fat =~ s/^([^\n]*\n?)//; $_ = $1; return 1; }; } return; }; } else { *{"${class}::INC"} = sub { if (my $fat = $_[0]{$_[1]}) { open my $fh, '<', \$fat or die "FatPacker error loading $_[1] (could be a perl installation issue?)"; return $fh; } return; }; } }
+    my $hook = bless(\%main::fatpacked, $class);
+    push @INC, $hook unless grep {ref($_) && "$_" eq "$hook"} @INC;
+}
+# END OF FATPACK CODE
+
 
 1;
 # ABSTRACT: Base class for Perinci::CmdLine{::Classic,::Lite}
