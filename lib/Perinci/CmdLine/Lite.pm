@@ -291,8 +291,8 @@ sub hook_format_result {
 
     if ($fmt eq 'html+datatables') {
         $fmt = 'text-pretty';
-        $ENV{VIEW_RESULT} = 1;
-        $ENV{FORMAT_PRETTY_TABLE_BACKEND} = 'Text::Table::HTML::DataTables';
+        $ENV{VIEW_RESULT} //= 1;
+        $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Text::Table::HTML::DataTables';
     }
 
     my $fres = Perinci::Result::Format::Lite::format(
