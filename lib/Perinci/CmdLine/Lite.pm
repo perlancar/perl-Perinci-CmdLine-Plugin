@@ -57,7 +57,7 @@ has validate_args => (
     default => 1,
 );
 
-my $formats = [qw/text text-simple text-pretty json json-pretty csv html/];
+my $formats = [qw/text text-simple text-pretty json json-pretty csv html html+datatables/];
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -288,6 +288,12 @@ sub hook_format_result {
     my ($self, $r) = @_;
 
     my $fmt = $r->{format} // 'text';
+
+    if ($fmt eq 'html+datatables') {
+        $fmt = 'text';
+        $ENV{VIEW_RESULT} = 1;
+        $ENV{FORMAT_PRETTY_TABLE_BACKEND} = 'Text::Table::HTML::DataTables';
+    }
 
     my $fres = Perinci::Result::Format::Lite::format(
         $r->{res}, $fmt, $r->{naked_res});
