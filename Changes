@@ -1,5 +1,24 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.68    2016-12-29 (PERLANCAR)
+
+	[ENHANCEMENTS]
+
+	- Support viewing result with an external viewer program
+	  (cmdline.view_result, cmdline.viewer, VIEW_RESULT, VIEWER, BROWSER).
+
+        - Add output format html+datatables. This will open a browser (BROWSER
+          must be set, VIEWER must be unset or set to a browser) and when the
+          data can be shown as a table, will show HTML table which you can
+          search and sort using jQuery and DataTables jQuery plugin. Currently
+          implemented by setting VIEW_RESULT to 1 and
+          FORMAT_PRETTY_TABLE_BACKEND to Text::Table::HTML::DataTables. The said
+          module is currently not listed as prereq so you have to install it
+          manually.
+
+	- Observe PAGE_RESULT to force paging or explicitly disable paging.
+
+
 1.67    2016-12-17 (PERLANCAR)
 
 	- [ux] Add attribute: auto_abbrev_subcommand (default true) to

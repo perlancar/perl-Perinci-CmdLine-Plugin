@@ -290,7 +290,7 @@ sub hook_format_result {
     my $fmt = $r->{format} // 'text';
 
     if ($fmt eq 'html+datatables') {
-        $fmt = 'text';
+        $fmt = 'text-pretty';
         $ENV{VIEW_RESULT} = 1;
         $ENV{FORMAT_PRETTY_TABLE_BACKEND} = 'Text::Table::HTML::DataTables';
     }
