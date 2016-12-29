@@ -57,7 +57,7 @@ has validate_args => (
     default => 1,
 );
 
-my $formats = [qw/text text-simple text-pretty json json-pretty csv/];
+my $formats = [qw/text text-simple text-pretty json json-pretty csv html/];
 
 sub BUILD {
     my ($self, $args) = @_;
