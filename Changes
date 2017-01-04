@@ -1,5 +1,17 @@
 Revision history for Perinci-CmdLine-Lite
 
+1.69    2017-01-04 (PERLANCAR)
+
+	- [dist] Split Perinci::CmdLine::Util::Config to its own dist so it
+	  can be depended by Perinci::CmdLine::Inline-generated scripts
+	  without dragging us along with it.
+
+	- [dist] Add x_alt_for prereq to Perinci::CmdLine::Classic.
+
+	- Format html+datatables: use // instead of = to allow user to
+	  override VIEW_RESULT & FORMAT_PRETTY_TABLE_BACKEND.
+
+
 1.68    2016-12-29 (PERLANCAR)
 
 	[ENHANCEMENTS]
