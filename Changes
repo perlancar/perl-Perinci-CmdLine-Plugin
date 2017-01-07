@@ -1,5 +1,3 @@
-Revision history for Perinci-CmdLine-Lite
-
 1.69    2017-01-04 (PERLANCAR)
 
 	- [dist] Split Perinci::CmdLine::Util::Config to its own dist so it
