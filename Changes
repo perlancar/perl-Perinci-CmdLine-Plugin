@@ -1,3 +1,12 @@
+1.70    2017-01-10 (PERLANCAR)
+
+	- No functional changes.
+
+	- Remove embedding of ShellQuote::Any::Tiny (I don't feel embedding
+	  is elegant or worth the hassle, we should fatpack/datapack only
+	  scripts).
+
+
 1.69    2017-01-04 (PERLANCAR)
 
 	- [dist] Split Perinci::CmdLine::Util::Config to its own dist so it
