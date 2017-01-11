@@ -380,6 +380,7 @@ sub __default_env_name {
         $_ //= "PROG"; # shouldn't happen
         $_ = uc($_);
         s/[^A-Z0-9]+/_/g;
+        $_ = "_$_" if /\A\d/;
     }
     "${prog}_OPT";
 }
