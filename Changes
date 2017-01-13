@@ -1,3 +1,13 @@
+1.71    2017-01-13 (PERLANCAR)
+
+	- [dist] Bump prereq versions Test::Perinci::CmdLine=1.47 &
+	  Perinci::CmdLine::Util::Config=1.71 (to force upgrade of
+	  Config::IOD::Reader to 0.31, to get implicit path encoding).
+
+	- [Bugfix] Add _ prefix to default env name if program starts with
+	  digit (so: 2plural -> _2PLURAL_OPT).
+
+
 1.70    2017-01-10 (PERLANCAR)
 
 	- No functional changes.
