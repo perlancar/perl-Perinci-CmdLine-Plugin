@@ -1,3 +1,8 @@
+1.72    2017-01-16 (PERLANCAR)
+
+        - Add attribute: use_cleanser to allow skipping data cleansing.
+
+
 1.71    2017-01-13 (PERLANCAR)
 
 	- [dist] Bump prereq versions Test::Perinci::CmdLine=1.47 &
