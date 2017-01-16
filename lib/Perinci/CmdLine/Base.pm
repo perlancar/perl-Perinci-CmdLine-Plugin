@@ -78,6 +78,7 @@ has cleanser => (
         Data::Clean::JSON->get_cleanser;
     },
 );
+has use_cleanser => (is=>'rw', default=>1);
 
 has extra_urls_for_version => (is=>'rw');
 
@@ -1293,9 +1294,15 @@ sub display_result {
             } else {
                 require JSON;
                 state $json = JSON->new->allow_nonref;
-                while (defined(my $rec = $x->())) {
-                    print $json->encode(
-                        $self->cleanser->clone_and_clean($rec)), "\n";
+                if ($self->use_cleanser) {
+                    while (defined(my $rec = $x->())) {
+                        print $json->encode(
+                            $self->cleanser->clone_and_clean($rec)), "\n";
+                    }
+                } else {
+                    while (defined(my $rec = $x->())) {
+                        print $json->encode($rec), "\n";
+                    }
                 }
             }
         } else {
@@ -2122,6 +2129,15 @@ directory entry.
 
 Object to cleanse result for JSON output. By default this is an instance of
 L<Data::Clean::JSON> and should not be set to other value in most cases.
+
+=head2 use_cleanser => bool (default: 1)
+
+When a function returns result, and the user wants to display the result as
+JSON, the result might need to be cleansed first (using L<Data::Clean::JSON> by
+default) before it can be encoded to JSON, for example it might contain Perl
+objects or scalar references or other stuffs. If you are sure that your function
+does not produce those kinds of data, you can set this to false to produce a
+more lightweight script.
 
 =head2 extra_urls_for_version => array of str
 

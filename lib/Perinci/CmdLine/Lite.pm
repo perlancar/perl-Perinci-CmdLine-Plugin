@@ -296,7 +296,7 @@ sub hook_format_result {
     }
 
     my $fres = Perinci::Result::Format::Lite::format(
-        $r->{res}, $fmt, $r->{naked_res});
+        $r->{res}, $fmt, $r->{naked_res}, $self->{use_cleanser});
 
     # ux: prefix error message with program name
     if ($fmt =~ /text/ && $r->{res}[0] =~ /\A[45]/ && defined($r->{res}[1])) {
