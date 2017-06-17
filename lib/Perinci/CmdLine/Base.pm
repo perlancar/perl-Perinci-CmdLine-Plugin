@@ -504,6 +504,38 @@ sub _read_env {
     $words;
 }
 
+sub do_dump {
+    require Data::Dump;
+
+    my ($self, $r) = @_;
+
+    # check whether subcommand is defined. try to search from --cmd, first
+    # command-line argument, or default_subcommand.
+    $self->_parse_argv1($r);
+
+    if ($r->{read_env}) {
+        my $env_words = $self->_read_env($r);
+        unshift @ARGV, @$env_words;
+    }
+
+    my $scd = $r->{subcommand_data};
+    # we do get_meta() currently because some common option like dry_run is
+    # added in hook_after_get_meta().
+    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
+
+    my $dump = join(
+        "",
+        "# BEGIN DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+        Data::Dump::dump($self), "\n",
+        "# END DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+    );
+
+    [200, "OK", $dump,
+     {
+         "cmdline.skip_format" => 1,
+     }];
+}
+
 sub do_completion {
     my ($self, $r) = @_;
 
@@ -1328,6 +1360,12 @@ sub run {
         orig_argv   => [@ARGV],
         common_opts => $co,
     };
+
+    # dump is special case, we delegate to do_dump()
+    if ($ENV{PERINCI_CMDLINE_DUMP}) {
+        $r->{res} = $self->do_dump($r);
+        goto FORMAT;
+    }
 
     # completion is special case, we delegate to do_completion()
     if ($self->_detect_completion($r)) {
@@ -2170,6 +2208,10 @@ DRY_RUN=0 or C<--no-dry-run>.
 The main method to run your application. See L</"PROGRAM FLOW"> for more details
 on what this method does.
 
+=head2 $cmd->do_dump() => ENVRES
+
+Called by run().
+
 =head2 $cmd->do_completion() => ENVRES
 
 Called by run().
@@ -2180,7 +2222,8 @@ Called by run().
 
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
-Called by parse_argv() or do_completion(). Subclass has to implement this.
+Called by parse_argv() or do_dump() or do_completion(). Subclass has to
+implement this.
 
 
 =head1 HOOKS
