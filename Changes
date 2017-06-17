@@ -1,3 +1,8 @@
+1.74    2017-06-17 (PERLANCAR)
+
+	- [Bugfix] Don't check deps when in completion/dump mode.
+
+
 1.73    2017-06-17 (PERLANCAR)
 
         - Support cooperative dump mode to help Perinci::CmdLine::Dump create a
