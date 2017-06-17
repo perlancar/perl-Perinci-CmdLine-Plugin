@@ -1,3 +1,9 @@
+1.73    2017-06-17 (PERLANCAR)
+
+        - Support cooperative dump mode to help Perinci::CmdLine::Dump create a
+          more proper dump.
+
+
 1.72    2017-01-16 (PERLANCAR)
 
         - Add attribute: use_cleanser to allow skipping data cleansing.
