@@ -509,6 +509,8 @@ sub do_dump {
 
     my ($self, $r) = @_;
 
+    local $r->{in_dump} = 1;
+
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
     $self->_parse_argv1($r);
