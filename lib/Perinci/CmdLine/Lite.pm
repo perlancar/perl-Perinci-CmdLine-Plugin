@@ -549,9 +549,8 @@ Whether to enable logging. This currently means setting up L<Log::Any::Adapter>
 to display logging (set in C<hook_after_parse_argv>, so tab completion skips
 this step). To produce log, you use L<Log::Any> in your code.
 
-The default is off. If you set LOG=1 or LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET,
-then the default will be on. It defaults to off if you set LOG=0 or
-LOG_LEVEL=off.
+The default is off. If you set LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET, then the
+default will be on. It defaults to off if you set LOG_LEVEL=off.
 
 =head2 log_level => str (default: from env, or 'warning')
 

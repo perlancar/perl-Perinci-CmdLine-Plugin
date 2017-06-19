@@ -323,51 +323,50 @@ _
     # currently work around this via setting env.
     log_level => {
         getopt  => 'log-level=s',
-        summary => 'Set log level (note: you also need to set LOG=1 to enable logging)',
+        summary => 'Set log level',
         schema  => ['str*' => in => [
             qw/trace debug info warn warning error fatal/]],
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{log_level} = $val;
-            $ENV{LOG_LEVEL} = $val;
         },
         is_settable_via_config => 1,
         tags => ['category:logging'],
     },
     trace => {
         getopt  => "trace",
-        summary => "Set log level to trace (note: you also need to set LOG=1 to enable logging, or use TRACE=1)",
+        summary => "Shortcut for --log-level=trace",
         handler => sub {
             my ($go, $val, $r) = @_;
-            $ENV{TRACE} = 1;
+            $r->{log_level} = 'trace';
         },
         tags => ['category:logging'],
     },
     debug => {
         getopt  => "debug",
-        summary => "Set log level to debug (note: you also need to set LOG=1 to enable logging, or use DEBUG=1)",
+        summary => "Shortcut for --log-level=debug",
         handler => sub {
             my ($go, $val, $r) = @_;
-            $ENV{DEBUG} = 1;
+            $r->{log_level} = 'debug';
         },
         tags => ['category:logging'],
     },
     verbose => {
         getopt  => "verbose",
-        summary => "Set log level to info (note: you also need to set LOG=1 to enable logging, or use VERBOSE=1)",
+        summary => "Shortcut for --log-level=info",
         handler => sub {
             my ($go, $val, $r) = @_;
-            $ENV{VERBOSE} = 1;
+            $r->{log_level} = 'info';
             $r->{_help_verbose} = 1;
         },
         tags => ['category:logging'],
     },
     quiet => {
         getopt  => "quiet",
-        summary => "Set log level to quiet (note: you also need to set LOG=1 to enable logging, or use QUIET=1)",
+        summary => "Shortcut for --log-level=error",
         handler => sub {
             my ($go, $val, $r) = @_;
-            $ENV{QUIET} = 1;
+            $r->{log_level} = 'error';
         },
         tags => ['category:logging'],
     },
