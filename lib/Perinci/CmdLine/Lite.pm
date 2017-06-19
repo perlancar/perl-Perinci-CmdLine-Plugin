@@ -6,7 +6,8 @@ package Perinci::CmdLine::Lite;
 use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
-use Log::Any::IfLOG '$log';
+use Log::ger;
+use Log::ger::LevelFromEnv;
 
 use List::Util qw(first);
 use Mo qw(build default);
@@ -171,12 +172,23 @@ sub hook_after_parse_argv {
 
     # set up log adapter
     if ($self->log) {
-        require Log::Any::Adapter;
-        Log::Any::Adapter->set(
-            'Screen',
-            min_level => $r->{log_level} // $self->log_level,
-            formatter => sub { $self->program_name . ": $_[1]" },
-        );
+        if ($ENV{LOG_ANY}) {
+            require Log::Any::Adapter;
+            Log::Any::Adapter->set(
+                'Screen',
+                min_level => $r->{log_level} // $self->log_level,
+                formatter => sub { $self->program_name . ": $_[1]" },
+            );
+        } else {
+            require Log::ger::Output;
+            my $str_level = $r->{log_level} // $self->log_level;
+            $str_level = 'warn' if $str_level eq 'warning';
+            $Log::ger::Current_Level = $Log::ger::Levels{$str_level} // 3;
+            Log::ger::Output->set(
+                'Screen',
+                formatter => sub { $self->program_name . ": $_[0]" },
+            );
+        }
     }
 }
 
@@ -364,11 +376,11 @@ sub hook_after_get_meta {
             handler => sub {
                 my ($go, $val, $r) = @_;
                 if ($val) {
-                    $log->debugf("[pericmd] Dry-run mode is activated");
+                    log_debug("[pericmd] Dry-run mode is activated");
                     $r->{dry_run} = 1;
                     #$ENV{VERBOSE} = 1;
                 } else {
-                    $log->debugf("[pericmd] Dry-run mode is deactivated");
+                    log_debug("[pericmd] Dry-run mode is deactivated");
                     $r->{dry_run} = 0;
                 }
             },
@@ -482,7 +494,7 @@ sub action_call {
 
     my %extra;
     if ($r->{send_argv}) {
-        $log->tracef("[pericmd] Sending argv to server: %s", $extra{argv});
+        log_trace("[pericmd] Sending argv to server: %s", $extra{argv});
         $extra{argv} = $r->{orig_argv};
     } else {
         my %extra_args;
@@ -495,9 +507,9 @@ sub action_call {
     my $url = $r->{subcommand_data}{url};
 
     # currently we don't log args because it's potentially large
-    $log->tracef("[pericmd] Riap request: action=call, url=%s", $url);
+    log_trace("[pericmd] Riap request: action=call, url=%s", $url);
 
-    #$log->tracef("TMP: extra=%s", \%extra);
+    #log_trace("TMP: extra=%s", \%extra);
 
     # setup output progress indicator
     if ($r->{meta}{features}{progress}) {
@@ -545,9 +557,9 @@ All the attributes of L<Perinci::CmdLine::Base>, plus:
 
 =head2 log => bool (default: from env or 0)
 
-Whether to enable logging. This currently means setting up L<Log::Any::Adapter>
-to display logging (set in C<hook_after_parse_argv>, so tab completion skips
-this step). To produce log, you use L<Log::Any> in your code.
+Whether to enable logging. This currently means calling L<Log::ger::Output> to
+set logging output to C<Screen> (set in C<hook_after_parse_argv>, so tab
+completion skips this step). To produce log, you use L<Log::ger> in your code.
 
 The default is off. If you set LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET, then the
 default will be on. It defaults to off if you set LOG_LEVEL=off.
