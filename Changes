@@ -1,3 +1,11 @@
+1.74_002 2017-06-19 (PERLANCAR)
+
+        - No functional changes.
+
+        - Forgot to update the summaries for --log-level, --debug, et al about
+          not having to use LOG=1 etc crap.
+
+
 1.74_001 2017-06-19 (PERLANCAR)
 
 	- [Experimental] Switch from Log::Any to Log::ger. Log::ger provides
