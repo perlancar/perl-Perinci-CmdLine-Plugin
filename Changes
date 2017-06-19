@@ -1,9 +1,17 @@
+1.74_003 2017-06-19 (PERLANCAR)
+
+        - Really replace Log::Any with Log::ger, previous couple of commits were
+          screwed up.
+
+
 1.74_002 2017-06-19 (PERLANCAR)
 
         - No functional changes.
 
         - Forgot to update the summaries for --log-level, --debug, et al about
           not having to use LOG=1 etc crap.
+
+        - UPDATE: this release was broken.
 
 
 1.74_001 2017-06-19 (PERLANCAR)
@@ -13,6 +21,8 @@
           program run. The effect of this switch is that logs produced by
           modules that use Log::Any won't show by default; to show Log::Any logs
           run your CLI scripts with LOG_ANY=1.
+
+        - UPDATE: this release was broken.
 
 
 1.74    2017-06-17 (PERLANCAR)
