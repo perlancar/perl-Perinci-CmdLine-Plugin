@@ -1,3 +1,12 @@
+1.74_001 2017-06-19 (PERLANCAR)
+
+	- [Experimental] Switch from Log::Any to Log::ger. Log::ger provides
+          smaller startup overhead and will allow us to change levels during
+          program run. The effect of this switch is that logs produced by
+          modules that use Log::Any won't show by default; to show Log::Any logs
+          run your CLI scripts with LOG_ANY=1.
+
+
 1.74    2017-06-17 (PERLANCAR)
 
 	- [Bugfix] Don't check deps when in completion/dump mode.
