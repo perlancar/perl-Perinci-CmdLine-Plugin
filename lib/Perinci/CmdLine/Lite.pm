@@ -182,8 +182,8 @@ sub hook_after_parse_argv {
         } else {
             require Log::ger::Output;
             my $str_level = $r->{log_level} // $self->log_level;
-            $str_level = 'warn' if $str_level eq 'warning';
-            $Log::ger::Current_Level = $Log::ger::Levels{$str_level} // 3;
+            $Log::ger::Current_Level =
+                Log::ger::Util::numeric_level($str_level) // 3;
             Log::ger::Output->set(
                 'Screen',
                 formatter => sub { $self->program_name . ": $_[0]" },
