@@ -1,3 +1,10 @@
+1.74_004 2017-06-21 (PERLANCAR)
+
+        - Remove Log::Any support. To show logs from Log::Any, install
+          Log::Any::Adapter::LogGer and run CLI scripts with
+          PERL5OPT=-MLog::Any::Adapter=LogGer.
+
+
 1.74_003 2017-06-19 (PERLANCAR)
 
         - Really replace Log::Any with Log::ger, previous couple of commits were

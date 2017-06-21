@@ -172,23 +172,15 @@ sub hook_after_parse_argv {
 
     # set up log adapter
     if ($self->log) {
-        if ($ENV{LOG_ANY}) {
-            require Log::Any::Adapter;
-            Log::Any::Adapter->set(
-                'Screen',
-                min_level => $r->{log_level} // $self->log_level,
-                formatter => sub { $self->program_name . ": $_[1]" },
-            );
-        } else {
-            require Log::ger::Output;
-            my $str_level = $r->{log_level} // $self->log_level;
-            $Log::ger::Current_Level =
-                Log::ger::Util::numeric_level($str_level) // 3;
-            Log::ger::Output->set(
-                'Screen',
-                formatter => sub { $self->program_name . ": $_[0]" },
-            );
-        }
+        require Log::ger::Output;
+        require Log::ger::Util;
+        my $str_level = $r->{log_level} // $self->log_level;
+        $Log::ger::Current_Level =
+            Log::ger::Util::numeric_level($str_level) // 3;
+        Log::ger::Output->set(
+            'Screen',
+            formatter => sub { $self->program_name . ": $_[0]" },
+        );
     }
 }
 
