@@ -1,3 +1,8 @@
+1.75     2017-06-28 (PERLANCAR)
+
+         - No functional changes since last dev release.
+
+
 1.74_004 2017-06-21 (PERLANCAR)
 
         - Remove Log::Any support. To show logs from Log::Any, install
