@@ -2212,6 +2212,15 @@ environment. If that is also undef, will default to 0.
 If set to 1, then dry-mode will be turned on by default unless user uses
 DRY_RUN=0 or C<--no-dry-run>.
 
+=head2 log => bool
+
+Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
+
+=head2 log_level => str
+
+Set default log level. Will be overriden by C<< $r->{log_level} >> which is set
+from command-line options like C<--log-level>, C<--trace>, etc.
+
 
 =head1 METHODS
 

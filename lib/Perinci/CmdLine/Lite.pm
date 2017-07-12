@@ -502,20 +502,6 @@ All those supported by L<Perinci::CmdLine::Base>, plus:
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=head2 log => bool (default: from env or 0)
-
-Whether to enable logging. This currently means calling L<Log::ger::Output> to
-set logging output to C<Screen> (set in C<hook_after_parse_argv>, so tab
-completion skips this step). To produce log, you use L<Log::ger> in your code.
-
-The default is off. If you set LOG_LEVEL or TRACE/DEBUG/VERBOSE/QUIET, then the
-default will be on. It defaults to off if you set LOG_LEVEL=off.
-
-=head2 log_level => str (default: from env, or 'warning')
-
-Set default log level. The default can also be set via
-LOG_LEVEL/TRACE/DEBUG/VERBOSE/QUIET.
-
 =head2 validate_args => bool (default: 1)
 
 
