@@ -7,7 +7,6 @@ use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
 use Log::ger;
-use Log::ger::LevelFromEnv;
 
 use List::Util qw(first);
 use Mo qw(build default);
@@ -21,37 +20,6 @@ extends 'Perinci::CmdLine::Base';
 has default_prompt_template => (
     is=>'rw',
     default => 'Enter %s: ',
-);
-has log => (
-    is=>'rw',
-    default => sub {
-        if (defined $ENV{LOG}) {
-            return $ENV{LOG};
-        } elsif ($ENV{LOG_LEVEL} && $ENV{LOG_LEVEL} =~ /^(off|none)$/) {
-            return 0;
-        } elsif ($ENV{LOG_LEVEL} || $ENV{TRACE} || $ENV{DEBUG} ||
-                     $ENV{VERBOSE} || $ENV{QUIET}) {
-            return 0;
-        }
-        0;
-    },
-);
-has log_level => (
-    is=>'rw',
-    default => sub {
-        if ($ENV{LOG_LEVEL}) {
-            return $ENV{LOG_LEVEL};
-        } elsif ($ENV{TRACE}) {
-            return 'trace';
-        } elsif ($ENV{DEBUG}) {
-            return 'debug';
-        } elsif ($ENV{VERBOSE}) {
-            return 'info';
-        } elsif ($ENV{QUIET}) {
-            return 'error';
-        }
-        'warning';
-    },
 );
 has validate_args => (
     is=>'rw',
@@ -168,19 +136,6 @@ sub hook_after_parse_argv {
         } elsif ($as->{schema} && exists $as->{schema}[1]{default}) {
             $args->{$_} = $as->{schema}[1]{default};
         }
-    }
-
-    # set up log adapter
-    if ($self->log) {
-        require Log::ger::Output;
-        require Log::ger::Util;
-        my $str_level = $r->{log_level} // $self->log_level;
-        $Log::ger::Current_Level =
-            Log::ger::Util::numeric_level($str_level) // 3;
-        Log::ger::Output->set(
-            'Screen',
-            formatter => sub { $self->program_name . ": $_[0]" },
-        );
     }
 }
 

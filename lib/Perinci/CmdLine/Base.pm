@@ -49,6 +49,8 @@ has subcommands => (is=>'rw');
 has summary => (is=>'rw');
 has tags => (is=>'rw');
 has url => (is=>'rw');
+has log => (is=>'rw', default => 0);
+has log_level => (is=>'rw');
 
 has read_env => (is=>'rw', default=>1);
 has env_name => (
@@ -1420,6 +1422,15 @@ sub run {
 
         # set defaults
         $r->{action} //= 'call';
+
+        # activate logging
+        if ($self->log) {
+            require Log::ger::App;
+            Log::ger::App->import(
+                level => $r->{log_level} // $self->log_level,
+                name  => $self->program_name,
+            );
+        }
 
         log_trace("[pericmd] Running hook_after_parse_argv ...");
         $self->hook_after_parse_argv($r);
