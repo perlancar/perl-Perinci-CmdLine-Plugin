@@ -1998,15 +1998,13 @@ C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
 Passing the cmdline object can be useful, e.g. to call action_help(), to get the
 settings of the Perinci::CmdLine, etc.
 
-=head2 per_arg_json => bool
+=head2 per_arg_json => bool (default: 1 in ::Lite)
 
-This will be passed to L<Perinci::Sub::GetArgs::Argv>, which has this value
-default to 1.
+This will be passed to L<Perinci::Sub::GetArgs::Argv>.
 
-=head2 per_arg_yaml => bool (default: 1)
+=head2 per_arg_yaml => bool (default: 0 in ::Lite)
 
-This will be passed to L<Perinci::Sub::GetArgs::Argv>, which has this value
-default to 1.
+This will be passed to L<Perinci::Sub::GetArgs::Argv>.
 
 =head2 program_name => str
 
