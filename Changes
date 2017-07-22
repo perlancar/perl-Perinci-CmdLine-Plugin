@@ -1,3 +1,15 @@
+1.77    2017-07-22 (PERLANCAR)
+
+	- [ux] Add -n as a shortcut for common option --dry-run when there
+	  is no conflict.
+
+	- [ux] When in dry-run mode, default to log level 'info' instead of
+	  'warn' because my convention is to use 'info' level to log
+	  dry-run messages.
+
+	- [doc] Update: per_arg_yaml actually defaults to off for Lite.
+
+
 1.76    2017-07-14 (PERLANCAR)
 
          - No functional changes since last dev release.
