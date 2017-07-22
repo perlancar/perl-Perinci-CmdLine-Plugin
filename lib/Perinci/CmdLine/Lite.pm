@@ -325,7 +325,6 @@ sub hook_after_get_meta {
                 if ($val) {
                     log_debug("[pericmd] Dry-run mode is activated");
                     $r->{dry_run} = 1;
-                    #$ENV{VERBOSE} = 1;
                 } else {
                     log_debug("[pericmd] Dry-run mode is deactivated");
                     $r->{dry_run} = 0;

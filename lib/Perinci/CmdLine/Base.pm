@@ -1423,11 +1423,15 @@ sub run {
         # set defaults
         $r->{action} //= 'call';
 
-        # activate logging
+        # init logging
         if ($self->log) {
             require Log::ger::App;
+            my $default_level = do {
+                my $dry_run = $r->{dry_run} // $self->default_dry_run;
+                $dry_run ? 'info' : 'warn';
+            };
             Log::ger::App->import(
-                level => $r->{log_level} // $self->log_level,
+                level => $r->{log_level} // $self->log_level // $default_level,
                 name  => $self->program_name,
             );
         }
