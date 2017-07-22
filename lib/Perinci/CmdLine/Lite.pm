@@ -316,7 +316,9 @@ sub hook_after_get_meta {
         $r->{dry_run} = 1 if $default_dry_run;
         $r->{dry_run} = ($ENV{DRY_RUN} ? 1:0) if defined $ENV{DRY_RUN};
         require Perinci::Sub::GetArgs::Argv;
-        $r->{_ggls_res} = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
+        # note: we cannot cache this to $r->{_ggls_res} because we produce this
+        # without dry-run
+        my $ggls_res = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
             meta               => $r->{meta},
             meta_is_normalized => 1,
             args               => $r->{args},
@@ -326,10 +328,10 @@ sub hook_after_get_meta {
         );
         my $meta_uses_opt_n = 0;
         {
-            last unless $r->{_ggls_res}[0] == 200;
-            my $opts = $r->{_ggls_res}[3]{'func.opts'};
+            last unless $ggls_res->[0] == 200;
+            my $opts = $ggls_res->[3]{'func.opts'};
             if (grep { $_ eq '-n' } @$opts) { $meta_uses_opt_n = 1 }
-        };
+        }
         my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
         $self->common_opts->{dry_run} = {
             getopt  => $default_dry_run ? "$optname!" : $optname,
