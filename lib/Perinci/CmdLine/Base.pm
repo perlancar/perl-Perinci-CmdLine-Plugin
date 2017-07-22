@@ -994,6 +994,7 @@ sub _parse_argv2 {
             per_arg_yaml        => $self->{per_arg_yaml},
             common_opts         => $copts,
             strict              => $r->{in_completion} ? 0:1,
+            (ggls_res            => $r->{_ggls_res}) x defined($r->{_ggls_res}),
             on_missing_required_args => sub {
                 my %a = @_;
 

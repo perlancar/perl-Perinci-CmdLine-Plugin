@@ -315,8 +315,24 @@ sub hook_after_get_meta {
         my $default_dry_run = $metao->default_dry_run // $self->default_dry_run;
         $r->{dry_run} = 1 if $default_dry_run;
         $r->{dry_run} = ($ENV{DRY_RUN} ? 1:0) if defined $ENV{DRY_RUN};
+        require Perinci::Sub::GetArgs::Argv;
+        $r->{_ggls_res} = Perinci::Sub::GetArgs::Argv::gen_getopt_long_spec_from_meta(
+            meta               => $r->{meta},
+            meta_is_normalized => 1,
+            args               => $r->{args},
+            common_opts        => $self->common_opts,
+            per_arg_json       => $self->{per_arg_json},
+            per_arg_yaml       => $self->{per_arg_yaml},
+        );
+        my $meta_uses_opt_n = 0;
+        {
+            last unless $r->{_ggls_res}[0] == 200;
+            my $opts = $r->{_ggls_res}[3]{'func.opts'};
+            if (grep { $_ eq '-n' } @$opts) { $meta_uses_opt_n = 1 }
+        };
+        my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
         $self->common_opts->{dry_run} = {
-            getopt  => $default_dry_run ? 'dry-run!' : 'dry-run',
+            getopt  => $default_dry_run ? "$optname!" : $optname,
             summary => $default_dry_run ?
                 "Disable simulation mode (also via DRY_RUN=0)" :
                 "Run in simulation mode (also via DRY_RUN=1)",
