@@ -1236,6 +1236,7 @@ sub parse_cmdline_src {
                         __gen_iter($fh, $as, $an) :
                             $is_ary ? [<$fh>] :
                                 do { local $/; ~~<$fh> };
+                    close $fh;
                     $r->{args}{"-cmdline_src_$an"} = 'file';
                     $r->{args}{"-cmdline_srcfilenames_$an"} = [$fname];
                 }
@@ -1297,6 +1298,7 @@ sub select_output_handle {
             }
             last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
             #log_trace("Paging output using %s", $pager);
+            ## no critic (InputOutput::RequireBriefOpen)
             open $handle, "| $pager";
         }
         $handle //= \*STDOUT;

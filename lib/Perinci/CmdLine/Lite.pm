@@ -296,7 +296,7 @@ sub hook_display_result {
         }
         $utf8 = $self->use_utf8;
     }
-    binmode($handle, ":utf8") if $utf8;
+    binmode($handle, ":encoding(utf8)") if $utf8;
 
     $self->display_result($r);
 }
