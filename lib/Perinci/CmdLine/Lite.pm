@@ -26,7 +26,7 @@ has validate_args => (
     default => 1,
 );
 
-my $formats = [qw/text text-simple text-pretty json json-pretty csv html html+datatables/];
+my $formats = [qw/text text-simple text-pretty json json-pretty csv html html+datatables perl/];
 
 sub BUILD {
     my ($self, $args) = @_;
