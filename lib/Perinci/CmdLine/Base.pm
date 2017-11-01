@@ -1027,6 +1027,7 @@ sub _parse_argv2 {
         # wrap stream arguments with iterator
         my $args_p = $meta->{args} // {};
         for my $arg (keys %{$ga_res->[2]}) {
+            next unless $args_p->{$arg};
             next unless $args_p->{$arg}{stream};
             for ($ga_res->[2]{$arg}) {
                 $_ = ref $_ eq 'ARRAY' ? __array_iter($_) : __list_iter($_);
