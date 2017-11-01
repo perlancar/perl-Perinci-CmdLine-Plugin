@@ -535,6 +535,7 @@ sub do_dump {
 
     [200, "OK", $dump,
      {
+         stream => 0,
          "cmdline.skip_format" => 1,
      }];
 }
