@@ -20,6 +20,24 @@ BEGIN {
     }
 }
 
+# BEGIN taken from Array::Iter
+sub __array_iter {
+    my $ary = shift;
+    my $i = 0;
+    sub {
+        if ($i < @$ary) {
+            return $ary->[$i++];
+        } else {
+            return undef;
+        }
+    };
+}
+
+sub __list_iter {
+    __array_iter([@_]);
+}
+# END from Array::Iter
+
 has actions => (is=>'rw');
 has common_opts => (is=>'rw');
 has completion => (is=>'rw');
@@ -971,17 +989,6 @@ sub _parse_argv2 {
                 $has_cmdline_src = 1;
                 last;
             }
-            # this will probably be eventually checked by the rinci function's
-            # schema: stream arguments need to have cmdline_src set to
-            # stdin_or_file, stdin_or_files, stdin, or file.
-            if ($av->{stream}) {
-                unless ($av->{cmdline_src} &&
-                            $av->{cmdline_src} =~
-                                /\A(stdin|file|stdin_or_files?|stdin_or_args)\z/) {
-                    die "BUG: stream argument '$ak' needs to have cmdline_src ".
-                        "set to stdin, file, stdin_or_file, stdin_or_files, or stdin_or_args";
-                }
-            }
         }
 
         require Perinci::Sub::GetArgs::Argv;
@@ -1016,6 +1023,15 @@ sub _parse_argv2 {
         );
 
         return $ga_res unless $ga_res->[0] == 200;
+
+        # wrap stream arguments with iterator
+        my $args_p = $meta->{args} // {};
+        for my $arg (keys %{$ga_res->[2]}) {
+            next unless $args_p->{$arg}{stream};
+            for ($ga_res->[2]{$arg}) {
+                $_ = ref $_ eq 'ARRAY' ? __array_iter($_) : __list_iter($_);
+            }
+        }
 
         # restore
         for (keys %$copts) {
