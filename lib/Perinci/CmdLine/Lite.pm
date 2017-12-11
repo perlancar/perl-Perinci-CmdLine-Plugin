@@ -551,7 +551,7 @@ Set log level to 'trace'.
 
 Set log level.
 
-=head2 PROGRESS => BOOL
+=head2 PROGRESS => bool
 
 Explicitly turn the progress bar on/off.
 
