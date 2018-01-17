@@ -2163,12 +2163,6 @@ Shown in verbose help message, if description from function metadata is unset.
 For grouping or categorizing subcommands, e.g. when displaying list of
 subcommands.
 
-=item * C<log_any_app> (bool, optional)
-
-Whether to load Log::Any::App, default is true. For subcommands that need fast
-startup you can try turning this off for said subcommands. See L</"LOGGING"> for
-more details.
-
 =item * C<use_utf8> (bool, optional)
 
 Whether to issue L<< binmode(STDOUT, ":utf8") >>. See L</"LOGGING"> for more
