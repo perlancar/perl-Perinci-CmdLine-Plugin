@@ -122,6 +122,7 @@ has default_dry_run => (
 
 # role: requires 'hook_before_run'
 # role: requires 'hook_before_read_config_file'
+# role: requires 'hook_config_file_section'
 # role: requires 'hook_after_read_config_file'
 # role: requires 'hook_after_parse_argv'
 # role: requires 'hook_before_action'
@@ -680,19 +681,26 @@ sub _read_config {
 
     my ($self, $r) = @_;
 
-    #log_trace("[pericmd] Finding config files ...");
+    my $hook_section;
+    if ($self->can("hook_config_file_section")) {
+        $hook_section = sub {
+            my ($section_name, $section_content) = @_;
+            $self->hook_config_file_section(
+                $r, $section_name, $section_content);
+        };
+    }
+
     my $res = Perinci::CmdLine::Util::Config::read_config(
         config_paths     => $r->{config_paths},
         config_filename  => $self->config_filename,
         config_dirs      => $self->config_dirs,
         program_name     => $self->program_name,
+        hook_section     => $hook_section,
     );
     die $res unless $res->[0] == 200;
     $r->{config} = $res->[2];
     $r->{read_config_files} = $res->[3]{'func.read_files'};
     $r->{_config_section_read_order} = $res->[3]{'func.section_read_order'}; # we currently don't want to publish this request key
-    #log_trace("[pericmd] Read config files: %s",
-    #             $r->{'read_config_files'});
 }
 
 sub __min(@) {
@@ -1719,9 +1727,14 @@ being done, e.g. an argument called C<foo_bar> will become command-line option
 C<--foo-bar>. Command-line aliases from metadata are also added to the
 C<Getopt::Long> spec.
 
-It is also at this step that we read config file (if C<read_config> attribute is
-true). We run C<hook_before_read_config_file> first. Some ideas to do in this
-hook: setting default config profile.
+Config file: It is also at this step that we read config file (if C<read_config>
+attribute is true). We run C<hook_before_read_config_file> first. Some ideas to
+do in this hook: setting default config profile. For each found config section,
+we also run C<hook_config_file_section> first. The hook will be fed C<< ($r,
+$section_name, $section_content) >> and should return 200 status or 204 (no
+content) to skip this config section or 4xx/5xx to terminate config reading with
+an error message. After config files are read, we run
+C<hook_after_read_config_file>.
 
 We then pass the spec to C<Getopt::Long::GetOptions>, we get function arguments.
 
