@@ -701,6 +701,11 @@ sub _read_config {
     $r->{config} = $res->[2];
     $r->{read_config_files} = $res->[3]{'func.read_files'};
     $r->{_config_section_read_order} = $res->[3]{'func.section_read_order'}; # we currently don't want to publish this request key
+
+    if ($ENV{LOG_DUMP_CONFIG}) {
+        log_trace "config: %s", $r->{config};
+        log_trace "read_config_files: %s", $r->{read_config_files};
+    }
 }
 
 sub __min(@) {
@@ -2564,6 +2569,10 @@ This is added by this module, so exit code can be tested.
 
 String. When L</"VIEWER"> is not set, then this environment variable will be
 used to select external viewer program.
+
+=head2 LOG_DUMP_CONFIG
+
+Boolean. If set to true, will dump parsed configuration at the trace level.
 
 =head2 PAGE_RESULT
 
