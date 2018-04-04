@@ -2560,38 +2560,29 @@ This is added by this module, so exit code can be tested.
 
 =head1 ENVIRONMENT
 
-=head2 VIEW_RESULT => bool
+=head2 BROWSER
 
-Can be set to 1 to force using viewer to view result. Can be set to 0 to
-explicitly disable using viewer to view result even though
-C<cmdline.view_result> result metadata attribute is active.
+String. When L</"VIEWER"> is not set, then this environment variable will be
+used to select external viewer program.
 
-=head2 VIEWER => str
+=head2 PAGE_RESULT
 
-Can be set to select the viewer program to override C<cmdline.viewer>. Can also
-be set to C<''> or C<0> to explicitly disable using viewer to view result even
-though C<cmdline.view_result> result metadata attribute is active.
+Boolean. Can be set to 1 to force paging of result. Can be set to 0 to
+explicitly disable paging even though C<cmd.page_result> result metadata
+attribute is active.
 
-=head2 PAGE_RESULT => bool
+See also: L</"PAGER">.
 
-Can be set to 1 to force paging of result. Can be set to 0 to explicitly disable
-paging even though C<cmd.page_result> result metadata attribute is active.
+=head2 PAGER
 
-=head2 PAGER => str
-
-Like in other programs, can be set to select the pager program (when
+String. Like in other programs, can be set to select the pager program (when
 C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=head2 BROWSER => str
+=head2 PERINCI_CMDLINE_DUMP
 
-When VIEWER is not set, then this environment variable will be used to select
-external viewer program.
-
-=head2 PERINCI_CMDLINE_DUMP => str
-
-Boolean. Default undef. If set to a true value, will dump Perinci::CmdLine
+String. Default undef. If set to a true value, will dump Perinci::CmdLine
 object at the start of run() and exit. Useful to get object's attributes and
 reconstruct the object later. Used in, e.g. L<App::shcompgen> to generate an
 appropriate completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to
@@ -2604,12 +2595,11 @@ The value of the this variable will be used as the label in the dump delimiter,
  ...
  # END DUMP foo
 
-=head2 PERINCI_CMDLINE_OUTPUT_DIR => dirname
+=head2 PERINCI_CMDLINE_OUTPUT_DIR
 
-(Experimental) If set, then aside from displaying output as usual, the
-unformatted result (enveloped result) will also be saved as JSON to an output
-directory. The filename will be I<UTC timestamp in ISO8601 format>C<.out>,
-e.g.:
+String. If set, then aside from displaying output as usual, the unformatted
+result (enveloped result) will also be saved as JSON to an output directory. The
+filename will be I<UTC timestamp in ISO8601 format>C<.out>, e.g.:
 
  2017-12-11T123456.000000000Z.out
  2017-12-11T123456.000000000Z.out.1 (if the same filename already exists)
@@ -2627,12 +2617,24 @@ Streaming output will not be saved appropriately, because streaming output
 contains coderef that will be called repeatedly during the normal displaying of
 result.
 
-=head2 PERINCI_CMDLINE_PROGRAM_NAME => str
+=head2 PERINCI_CMDLINE_PROGRAM_NAME
 
-Can be used to set CLI program name.
+String. Can be used to set CLI program name.
 
-=head2 UTF8 => bool
+=head2 UTF8
 
-To set default for C<use_utf8> attribute.
+Boolean. To set default for C<use_utf8> attribute.
 
-=
+=head2 VIEW_RESULT
+
+Boolean. Can be set to 1 to force using viewer to view result. Can be set to 0
+to explicitly disable using viewer to view result even though
+C<cmdline.view_result> result metadata attribute is active.
+
+=head2 VIEWER
+
+String. Can be set to select the viewer program to override C<cmdline.viewer>.
+Can also be set to C<''> or C<0> to explicitly disable using viewer to view
+result even though C<cmdline.view_result> result metadata attribute is active.
+
+See also L</"BROWSER">.
