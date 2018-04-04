@@ -2589,6 +2589,21 @@ is active.
 When VIEWER is not set, then this environment variable will be used to select
 external viewer program.
 
+=head2 PERINCI_CMDLINE_DUMP => str
+
+Boolean. Default undef. If set to a true value, will dump Perinci::CmdLine
+object at the start of run() and exit. Useful to get object's attributes and
+reconstruct the object later. Used in, e.g. L<App::shcompgen> to generate an
+appropriate completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to
+generate POD documentation about the script. See also L<Perinci::CmdLine::Dump>.
+
+The value of the this variable will be used as the label in the dump delimiter,
+.e.g:
+
+ # BEGIN DUMP foo
+ ...
+ # END DUMP foo
+
 =head2 PERINCI_CMDLINE_OUTPUT_DIR => dirname
 
 (Experimental) If set, then aside from displaying output as usual, the
