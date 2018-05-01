@@ -116,16 +116,17 @@ has default_dry_run => (
     default => 0,
 );
 
-# role: requires 'hook_after_get_meta'
-# role: requires 'hook_format_row'
 # role: requires 'default_prompt_template'
 
 # role: requires 'hook_before_run'
+# role: requires 'hook_before_parse_argv'
 # role: requires 'hook_before_read_config_file'
 # role: requires 'hook_config_file_section'
 # role: requires 'hook_after_read_config_file'
+# role: requires 'hook_after_get_meta'
 # role: requires 'hook_after_parse_argv'
 # role: requires 'hook_before_action'
+# role: requires 'hook_format_row' (for action=call)
 # role: requires 'hook_after_action'
 # role: requires 'hook_format_result'
 # role: requires 'hook_display_result'
@@ -1518,6 +1519,9 @@ sub run {
     eval {
         log_trace("[pericmd] Running hook_before_run ...");
         $self->hook_before_run($r);
+
+        log_trace("[pericmd] Running hook_before_parse_argv ...");
+        $self->hook_before_parse_argv($r);
 
         my $parse_res = $self->parse_argv($r);
         if ($parse_res->[0] == 501) {
