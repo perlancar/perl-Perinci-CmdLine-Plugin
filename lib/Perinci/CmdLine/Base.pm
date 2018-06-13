@@ -1603,11 +1603,13 @@ sub run {
     } elsif (ref($r->{res}) ne 'ARRAY') {
         log_trace("[pericmd] res=%s", $r->{res}); #2
         $r->{res} = [500, "Bug in program: result not an array"];
-    } elsif (!$r->{res}[0] || $r->{res}[0] < 200 || $r->{res}[0] > 555) {
-        log_trace("[pericmd] res=%s", $r->{res}); #3
-        $r->{res} = [500, "Bug in program: invalid result status, ".
-                         "must be 200 <= x <= 555"];
     }
+
+    if (!$r->{res}[0] || $r->{res}[0] < 200 || $r->{res}[0] > 555) {
+        $r->{res}[3]{'x.orig_status'} = $r->{res}[0];
+        $r->{res}[0] = 555;
+    }
+
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
     my $restore_orig_result;
