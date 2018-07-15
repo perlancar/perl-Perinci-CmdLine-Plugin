@@ -1,3 +1,10 @@
+1.815   2018-07-16 (PERLANCAR)
+
+	- Invoke hook_before_parse_argv() in do_completion() and do_dump()
+	  so command-line options that might be introduced in this hook are
+	  also recognized.
+
+
 1.814   2018-06-14 (PERLANCAR)
 
 	- [ux] When response status is not between 200 and 555 (e.g. when
