@@ -534,6 +534,7 @@ sub do_dump {
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
+    $self->hook_before_parse_argv($r);
     $self->_parse_argv1($r);
 
     if ($r->{read_env}) {
@@ -593,6 +594,7 @@ sub do_completion {
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
+    $self->hook_before_parse_argv($r);
     $self->_parse_argv1($r);
 
     if ($r->{read_env}) {
