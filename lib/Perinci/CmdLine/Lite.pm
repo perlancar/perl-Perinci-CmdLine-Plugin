@@ -576,8 +576,13 @@ All those supported by L<Perinci::CmdLine::Base>.
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=head2 validate_args => bool (default: 1)
+=over
 
+=item * validate_args => bool (default: 1)
+
+Validate arguments using schema from metadata.
+
+=back
 
 =head1 METHODS
 
