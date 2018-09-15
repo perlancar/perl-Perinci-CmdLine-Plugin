@@ -570,12 +570,7 @@ backend on the fly.
 
 =head1 REQUEST KEYS
 
-All those supported by L<Perinci::CmdLine::Base>, plus:
-
-=over
-
-=back
-
+All those supported by L<Perinci::CmdLine::Base>.
 
 =head1 ATTRIBUTES
 
