@@ -1672,6 +1672,7 @@ sub run {
 
 =head1 DESCRIPTION
 
+#RENDER_TEMPLATE: file=>"share/templates/description.txt"
 
 =head1 PROGRAM FLOW (NORMAL)
 
