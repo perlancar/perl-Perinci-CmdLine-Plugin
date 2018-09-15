@@ -2110,7 +2110,12 @@ command-line argument even though there is C<default_subcommand> defined).
 
 =head2 description => str
 
+A short description of the application.
+
 =head2 exit => bool (default: 1)
+
+Define the application exit behaviour.  A false value here allows hook code
+normally run directly before the application exits to be skipped.
 
 =head2 formats => array
 
@@ -2249,7 +2254,12 @@ requested name only.
 
 =head2 summary => str
 
+Optional, displayed in description of the option in help/usage text.
+
 =head2 tags => array of str
+
+For grouping or categorizing subcommands, e.g. when displaying list of
+subcommands.
 
 =head2 url => str
 
@@ -2316,6 +2326,9 @@ does not produce those kinds of data, you can set this to false to produce a
 more lightweight script.
 
 =head2 extra_urls_for_version => array of str
+
+An array of extra URLs for which version information is to be displayed for
+the action being performed.
 
 =head2 skip_format => bool
 
