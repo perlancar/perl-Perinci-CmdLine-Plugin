@@ -958,7 +958,7 @@ sub _parse_argv2 {
             log_trace("[pericmd] Running hook_before_read_config_file ...");
             $self->hook_before_read_config_file($r);
 
-            $self->_read_config($r);
+            $self->_read_config($r) unless $r->{config};
 
             log_trace("[pericmd] Running hook_after_read_config_file ...");
             $self->hook_after_read_config_file($r);
