@@ -547,6 +547,10 @@ sub do_dump {
     # added in hook_after_get_meta().
     my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
 
+    # additional information, because scripts often put their metadata in 'main'
+    # package
+    $self->{'x.main.spec'} = \%main::SPEC;
+
     my $dump = join(
         "",
         "# BEGIN DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
