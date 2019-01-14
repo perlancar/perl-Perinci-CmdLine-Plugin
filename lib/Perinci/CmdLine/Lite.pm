@@ -387,6 +387,16 @@ sub hook_after_get_meta {
     require Perinci::Object;
     my $metao = Perinci::Object::risub($r->{meta});
 
+    # delete --format, --json, --naked-res if function does not want its output
+    # to be formatted
+    {
+        last if $self->skip_format; # already doesn't have those copts
+        last unless $r->{meta}{'cmdline.skip_format'};
+        delete $copts->{format};
+        delete $copts->{json};
+        delete $copts->{naked_res};
+    }
+
     # add --dry-run (and -n shortcut, if no conflict)
     {
         last unless $metao->can_dry_run;
