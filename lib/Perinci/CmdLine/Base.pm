@@ -1437,7 +1437,7 @@ sub display_result {
 
     my $handle = $r->{output_handle};
 
-    my $sch = $resmeta->{schema} // $meta->{result}{schema};
+    my $sch = $meta->{result}{schema} // $resmeta->{schema};
     my $type = Data::Sah::Util::Type::get_type($sch) // '';
 
     if ($resmeta->{stream} // $meta->{result}{stream}) {
