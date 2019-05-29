@@ -567,6 +567,30 @@ sub do_dump_object {
      }];
 }
 
+sub do_dump_args {
+    require Data::Dump;
+
+    my ($self, $r) = @_;
+
+    [200, "OK", Data::Dump::dump($r->{args}) . "\n",
+     {
+         stream => 0,
+         "cmdline.skip_format" => 1,
+     }];
+}
+
+sub do_dump_config {
+    require Data::Dump;
+
+    my ($self, $r) = @_;
+
+    [200, "OK", Data::Dump::dump($r->{config}) . "\n",
+     {
+         stream => 0,
+         "cmdline.skip_format" => 1,
+     }];
+}
+
 sub do_completion {
     my ($self, $r) = @_;
 
@@ -1568,6 +1592,12 @@ sub run {
         log_trace("[pericmd] Running hook_after_parse_argv ...");
         $self->hook_after_parse_argv($r);
 
+        if ($ENV{PERINCI_CMDLINE_DUMP_CONFIG}) {
+            log_trace "[pericmd] Dumping config ...";
+            $r->{res} = $self->do_dump_config($r);
+            goto FORMAT;
+        }
+
         $self->parse_cmdline_src($r);
 
         #log_trace("TMP: parse_res: %s", $parse_res);
@@ -1587,6 +1617,11 @@ sub run {
 
         my $meth = "action_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
+        if ($ENV{PERINCI_CMDLINE_DUMP_ARGS}) {
+            log_trace "[pericmd] Dumping arguments ...";
+            $r->{res} = $self->do_dump_args($r);
+            goto FORMAT;
+        }
         log_trace("[pericmd] Running %s() ...", $meth);
         $r->{res} = $self->$meth($r);
         #log_trace("[pericmd] res=%s", $r->{res}); #1
@@ -2609,13 +2644,31 @@ C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
+=head2 PERINCI_CMDLINE_DUMP_ARGS
+
+Boolean. If set to true, instead of running normal action, will instead dump
+arguments that will be passed to function, (after merge with values from
+environment/config files, and validation/coercion), in Perl format (using
+L<Data::Dump>) and exit.
+
+Useful for debugging or information extraction.
+
+=head2 PERINCI_CMDLINE_DUMP_CONFIG
+
+Boolean. If set to true, instead of running normal action, will dump
+configuration that is using C<read_config()>, in Perl format (using
+L<Data::Dump>) and exit.
+
+Useful for debugging or information extraction.
+
 =head2 PERINCI_CMDLINE_DUMP_OBJECT
 
-String. Default undef. If set to a true value, will dump Perinci::CmdLine
-object at the start of run() and exit. Useful to get object's attributes and
-reconstruct the object later. Used in, e.g. L<App::shcompgen> to generate an
-appropriate completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to
-generate POD documentation about the script. See also L<Perinci::CmdLine::Dump>.
+String. Default undef. If set to a true value, instead of running normal action,
+will dump Perinci::CmdLine object at the start of run() in Perl format (using
+L<Data::Dump>) and exit. Useful to get object's attributes and reconstruct the
+object later. Used in, e.g. L<App::shcompgen> to generate an appropriate
+completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to generate POD
+documentation about the script. See also L<Perinci::CmdLine::Dump>.
 
 The value of the this variable will be used as the label in the dump delimiter,
 .e.g:
@@ -2623,6 +2676,8 @@ The value of the this variable will be used as the label in the dump delimiter,
  # BEGIN DUMP foo
  ...
  # END DUMP foo
+
+Useful for debugging or information extraction.
 
 =head2 PERINCI_CMDLINE_OUTPUT_DIR
 
