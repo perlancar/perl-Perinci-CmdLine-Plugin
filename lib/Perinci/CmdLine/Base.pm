@@ -525,12 +525,12 @@ sub _read_env {
     $words;
 }
 
-sub do_dump {
+sub do_dump_object {
     require Data::Dump;
 
     my ($self, $r) = @_;
 
-    local $r->{in_dump} = 1;
+    local $r->{in_dump_object} = 1;
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
@@ -551,11 +551,13 @@ sub do_dump {
     # package
     $self->{'x.main.spec'} = \%main::SPEC;
 
+    my $label = $ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
+        $ENV{PERINCI_CMDLINE_DUMP}; # old name that will be removed
     my $dump = join(
         "",
-        "# BEGIN DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+        "# BEGIN DUMP $label\n",
         Data::Dump::dump($self), "\n",
-        "# END DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+        "# END DUMP $label\n",
     );
 
     [200, "OK", $dump,
@@ -1486,9 +1488,11 @@ sub run {
         common_opts => $co,
     };
 
-    # dump is special case, we delegate to do_dump()
-    if ($ENV{PERINCI_CMDLINE_DUMP}) {
-        $r->{res} = $self->do_dump($r);
+    # dump object is special case, we delegate to do_dump_object()
+    if ($ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
+            $ENV{PERINCI_CMDLINE_DUMP} # old name that will be removed
+        ) {
+        $r->{res} = $self->do_dump_object($r);
         goto FORMAT;
     }
 
@@ -2605,7 +2609,7 @@ C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=head2 PERINCI_CMDLINE_DUMP
+=head2 PERINCI_CMDLINE_DUMP_OBJECT
 
 String. Default undef. If set to a true value, will dump Perinci::CmdLine
 object at the start of run() and exit. Useful to get object's attributes and
