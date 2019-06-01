@@ -1659,8 +1659,15 @@ sub run {
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
     my $restore_orig_result;
     my $orig_result;
-    if (exists $r->{res}[3]{'cmdline.result'}) {
-        # temporarily change the result for formatting
+    if (exists $r->{res}[3]{'cmdline.result.noninteractive'} && !(-t STDOUT)) {
+        $restore_orig_result = 1;
+        $orig_result = $r->{res}[2];
+        $r->{res}[2] = $r->{res}[3]{'cmdline.result.noninteractive'};
+    } elsif (exists $r->{res}[3]{'cmdline.result.interactive'} && -t STDOUT) {
+        $restore_orig_result = 1;
+        $orig_result = $r->{res}[2];
+        $r->{res}[2] = $r->{res}[3]{'cmdline.result.interactive'};
+    } elsif (exists $r->{res}[3]{'cmdline.result'}) {
         $restore_orig_result = 1;
         $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
@@ -2567,6 +2574,14 @@ Replace result. Can be useful for example in this case:
 
 When called as a normal function we return boolean value. But as a CLI, we
 display a more user-friendly message.
+
+=head2 attribute: cmdline.result.interactive => any
+
+Like C<cmdline.result> but when script is run interactively.
+
+=head2 attribute: cmdline.result.noninteractive => any
+
+Like C<cmdline.result> but when script is run non-interactively (in a pipeline).
 
 =head2 attribute: cmdline.default_format => str
 
