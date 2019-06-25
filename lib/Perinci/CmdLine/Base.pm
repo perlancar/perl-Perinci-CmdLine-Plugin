@@ -671,9 +671,14 @@ sub do_completion {
                     $subcommand_name_from ne '--cmd' &&
                          $type eq 'arg' && $args{argpos}==0) {
                 require Complete::Util;
+                my $subcommands    = $self->list_subcommands;
+                my @subc_names     = keys %$subcommands;
+                my @subc_summaries = map { $subcommands->{$_}{summary} }
+                    @subc_names;
                 return Complete::Util::complete_array_elem(
-                    array => [keys %{ $self->list_subcommands }],
-                    word  => $words->[$cword]);
+                    array     => \@subc_names,
+                    summaries => \@subc_summaries,
+                    word      => $words->[$cword]);
             }
 
             # otherwise let periscomp do its thing
