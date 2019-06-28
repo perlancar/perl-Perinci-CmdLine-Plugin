@@ -316,7 +316,8 @@ _
             }
 
             # we are not reading any config file, return empty list
-            return [] unless $r->{config};
+            return {message=>'No completion (not reading any config file)'}
+                unless $r->{config};
 
             my @profiles;
             for my $section (keys %{$r->{config}}) {
