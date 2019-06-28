@@ -249,8 +249,7 @@ _
 
     config_path => {
         getopt  => 'config-path=s@',
-        schema  => ['array*', of => 'str*'],
-        'x.schema.element_entity' => 'filename',
+        schema  => ['array*', of => 'filename*'],
         summary => 'Set path to configuration file',
         handler => sub {
             my ($go, $val, $r) = @_;
