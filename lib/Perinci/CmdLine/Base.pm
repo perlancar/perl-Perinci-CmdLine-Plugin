@@ -294,7 +294,8 @@ _
             # we are not called from cmdline, bail (actually we might want to
             # return list of programs anyway, but we want to read the value of
             # bash_global_dir et al)
-            return undef unless $cmdline;
+            return {message=>'No completion (not called from cmdline)'}
+                unless $cmdline;
 
             # since this is common option, at this point we haven't parsed
             # argument or even read config file. let's parse argv first (argv
