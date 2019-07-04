@@ -1,3 +1,9 @@
+1.824   2019-07-04  Released-By: PERLANCAR; Urgency: low
+
+	- [experimental] Use pre-compiled validator code in
+	  Sah::SchemaV::*.
+
+
 1.823   2019-07-04  Released-By: PERLANCAR; Urgency: medium
 
 	- Observe function feature 'validate_args' and skip validating args
