@@ -242,6 +242,10 @@ sub hook_before_action {
             (grep { $_->{validate_args} }
              @{ $meta->{'x.perinci.sub.wrapper.logs'} });
 
+        # function can validate its args, so we don't have to do validation for
+        # it
+        last if $meta->{features} && $meta->{features}{validate_vars};
+
         require Data::Sah;
 
         # to be cheap, we simply use "$ref" as key as cache key. to be proper,
