@@ -441,7 +441,7 @@
 	- Add use_utf8 to Lite, just like in Classic.
 
 
-1.45    2016-01-14 (PERLANCAR)  Released-By: unreleased
+1.45    2016-01-14  Released-By: PERLANCAR
 
 	- [Lite] Add attribute 'use_utf8' just like in Classic.
 
