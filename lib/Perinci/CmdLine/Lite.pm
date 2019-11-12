@@ -456,9 +456,9 @@ sub hook_after_get_meta {
         my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
         $copts->{dry_run} = {
             getopt  => $default_dry_run ? "$optname!" : $optname,
-            summary => $default_dry_run ?
-                "Disable simulation mode (also via DRY_RUN=0)" :
-                "Run in simulation mode (also via DRY_RUN=1)",
+            summary => "Run in simulation mode (also via DRY_RUN=1)",
+            "summary.alt.bool.not" =>
+                "Disable simulation mode (also via DRY_RUN=0)",
             handler => sub {
                 my ($go, $val, $r) = @_;
                 if ($val) {
@@ -469,6 +469,7 @@ sub hook_after_get_meta {
                     $r->{dry_run} = 0;
                 }
             },
+            default => $default_dry_run,
         };
     }
 
