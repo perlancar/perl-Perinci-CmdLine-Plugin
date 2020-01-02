@@ -111,6 +111,11 @@ has use_utf8 => (
     },
 );
 
+has use_locale => (
+    is=>'rw',
+    default => 0,
+);
+
 has default_dry_run => (
     is=>'rw',
     default => 0,
@@ -2251,8 +2256,12 @@ subcommands.
 
 =item * C<use_utf8> (bool, optional)
 
-Whether to issue L<< binmode(STDOUT, ":utf8") >>. See L</"LOGGING"> for more
-details.
+Whether to issue C<< use open, ":utf8" >>. Alternative: C<use_locale>. Takes
+precedence over C<use_locale>.
+
+=item * C<use_locale> (bool, optional)
+
+Whether to issue C<< use open, ":locale" >>. Alternative: C<use_utf8>.
 
 =item * C<undo> (bool, optional)
 

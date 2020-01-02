@@ -386,20 +386,26 @@ sub hook_display_result {
 
     my $handle = $r->{output_handle};
 
-    # set utf8 flag
-    my $utf8;
+    my $layer;
+  SELECT_LAYER:
     {
-        last if defined($utf8 = $ENV{UTF8});
         if ($resmeta->{'x.hint.result_binary'}) {
             # XXX only when format is text?
-            $utf8 = 0; last;
+            $layer = ":bytes"; last;
         }
-        if ($r->{subcommand_data}) {
-            last if defined($utf8 = $r->{subcommand_data}{use_utf8});
+
+        if ($ENV{UTF8} ||
+                defined($r->{subcommand_data} && $r->{subcommand_data}{use_utf8}) ||
+                $self->use_utf8) {
+            $layer = ":encoding(utf8)"; last;
         }
-        $utf8 = $self->use_utf8;
+
+        if ($self->use_locale) {
+            $layer = ":locale"; last;
+        }
+
     }
-    binmode($handle, ":encoding(utf8)") if $utf8;
+    binmode($handle, $layer) if $layer;
 
     $self->display_result($r);
 }
