@@ -1183,11 +1183,11 @@ sub parse_cmdline_src {
     my $action = $r->{action};
     my $meta   = $r->{meta};
 
-    if ($self->use_utf8) {
-        require open; open->import(":utf8");
-    } elsif ($self->use_locale) {
-        require open; open->import(":locale");
-    }
+    #if ($self->use_utf8) {
+    #    require open; open->import(":utf8");
+    #} elsif ($self->use_locale) {
+    #    require open; open->import(":locale");
+    #}
 
     my $url = $r->{subcommand_data}{url} // $self->{url} // '';
     my $is_network = $url =~ m!^(https?|riap[^:]+):!;
