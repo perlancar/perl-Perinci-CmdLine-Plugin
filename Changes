@@ -1417,12 +1417,12 @@
          - Fix passing $r to common option's handler in parse_argv().
 
 
-0.14     2014-08-16 (SHARYANTO) - Happy 19th CPAN Day!
+0.14     2014-08-16  Released-By: SHARYANTO; Note: Happy 19th CPAN Day!
 
          - Configure Getopt::Long no_ignore_case.
 
 
-0.13     2014-08-16 (SHARYANTO) - Happy 19th CPAN Day!
+0.13     2014-08-16  Released-By: SHARYANTO; Note: Happy 19th CPAN Day!
 
          - A few minor bug fixes.
 
@@ -1518,3 +1518,4 @@
 0.01     2014-07-16  Released-By: SHARYANTO
 
          - First release, early release, completion not yet implemented.
+
