@@ -187,6 +187,18 @@ our %copts = (
         tags => ['category:output'],
     },
 
+    page_result => {
+        getopt  => "page-result:s",
+        summary => "Filter output through a pager",
+        usage   => "--page-result (or --page-result=PROGNAME)",
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{page_result} = 1;
+            $r->{pager} = $val if length $val;
+        },
+        tags => ['category:output'],
+    },
+
     naked_res => {
         getopt  => 'naked-res!',
         summary => 'When outputing as JSON, strip result envelope',
@@ -1368,9 +1380,9 @@ sub select_output_handle {
             $r->{viewer_temp_path} = $filename;
         }
 
-        if ($ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
+        if ($r->{page_result} // $ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
             require File::Which;
-            my $pager = $resmeta->{"cmdline.pager"} //
+            my $pager = $r->{pager} // $resmeta->{"cmdline.pager"} //
                 $ENV{PAGER};
             unless (defined $pager) {
                 $pager = "less -FRSX" if File::Which::which("less");
@@ -2017,6 +2029,10 @@ Program to use as external viewer.
 
 Set to temporary filename created to store the result to view to external viewer
 program.
+
+=item * page_result => bool
+
+=item * pager => str
 
 =back
 

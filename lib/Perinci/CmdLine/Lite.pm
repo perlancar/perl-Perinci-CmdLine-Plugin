@@ -67,8 +67,9 @@ sub BUILD {
                 $_copy->('format'),
                 schema => ['str*' => in => $formats],
             };
-            $copts->{json}      = { $_copy->('json'), };
-            $copts->{naked_res} = { $_copy->('naked_res'), };
+            $copts->{json}        = { $_copy->('json'), };
+            $copts->{naked_res}   = { $_copy->('naked_res'), };
+            $copts->{page_result} = { $_copy->('page_result'), };
         }
         if ($self->subcommands) {
             $copts->{subcommands} = { $_copy->('subcommands'), };
