@@ -49,7 +49,7 @@ sub BUILD {
         };
     }
 
-    my $_t = sub {
+    my $_copy = sub {
         no warnings;
         my $co_name = shift;
         my $href = $Perinci::CmdLine::Base::copts{$co_name};
@@ -59,37 +59,37 @@ sub BUILD {
     if (!$self->{common_opts}) {
         my $copts = {};
 
-        $copts->{version}   = { $_t->('version'), };
-        $copts->{help}      = { $_t->('help'), };
+        $copts->{version}   = { $_copy->('version'), };
+        $copts->{help}      = { $_copy->('help'), };
 
         unless ($self->skip_format) {
             $copts->{format}    = {
-                $_t->('format'),
+                $_copy->('format'),
                 schema => ['str*' => in => $formats],
             };
-            $copts->{json}      = { $_t->('json'), };
-            $copts->{naked_res} = { $_t->('naked_res'), };
+            $copts->{json}      = { $_copy->('json'), };
+            $copts->{naked_res} = { $_copy->('naked_res'), };
         }
         if ($self->subcommands) {
-            $copts->{subcommands} = { $_t->('subcommands'), };
+            $copts->{subcommands} = { $_copy->('subcommands'), };
         }
         if ($self->default_subcommand) {
-            $copts->{cmd} = { $_t->('cmd') };
+            $copts->{cmd} = { $_copy->('cmd') };
         }
         if ($self->read_config) {
-            $copts->{config_path}    = { $_t->('config_path') };
-            $copts->{no_config}      = { $_t->('no_config') };
-            $copts->{config_profile} = { $_t->('config_profile') };
+            $copts->{config_path}    = { $_copy->('config_path') };
+            $copts->{no_config}      = { $_copy->('no_config') };
+            $copts->{config_profile} = { $_copy->('config_profile') };
         }
         if ($self->read_env) {
-            $copts->{no_env} = { $_t->('no_env') };
+            $copts->{no_env} = { $_copy->('no_env') };
         }
         if ($self->log) {
-            $copts->{log_level} = { $_t->('log_level'), };
-            $copts->{trace}     = { $_t->('trace'), };
-            $copts->{debug}     = { $_t->('debug'), };
-            $copts->{verbose}   = { $_t->('verbose'), };
-            $copts->{quiet}     = { $_t->('quiet'), };
+            $copts->{log_level} = { $_copy->('log_level'), };
+            $copts->{trace}     = { $_copy->('trace'), };
+            $copts->{debug}     = { $_copy->('debug'), };
+            $copts->{verbose}   = { $_copy->('verbose'), };
+            $copts->{quiet}     = { $_copy->('quiet'), };
         }
         $self->{common_opts} = $copts;
     }
