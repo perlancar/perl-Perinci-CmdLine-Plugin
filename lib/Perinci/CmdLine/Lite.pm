@@ -572,6 +572,7 @@ sub action_help {
         program_summary => ($scd ? $scd->{summary}:undef ) // $meta->{summary},
         program_description => $scd ? $scd->{description} : undef,
         meta => $meta,
+        meta_is_normalized => 1,
         subcommands => $has_sc_no_sc ? $self->list_subcommands : undef,
         common_opts => $common_opts,
         per_arg_json => $self->per_arg_json,
