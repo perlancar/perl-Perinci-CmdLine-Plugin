@@ -48,7 +48,7 @@ has description => (is=>'rw');
 has exit => (is=>'rw', default=>1);
 has formats => (is=>'rw');
 has default_format => (is=>'rw');
-has allow_unknown_options => (is=>'rw', default=>0);
+has allow_unknown_opts => (is=>'rw', default=>0);
 has pass_cmdline_object => (is=>'rw', default=>0);
 has per_arg_json => (is=>'rw');
 has per_arg_yaml => (is=>'rw');
@@ -1075,7 +1075,7 @@ sub _parse_argv2 {
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
             common_opts         => $copts,
-            strict              => $r->{in_completion} || $self->{allow_unknown_options} ? 0:1,
+            strict              => $r->{in_completion} || $self->{allow_unknown_opts} ? 0:1,
             (ggls_res            => $r->{_ggls_res}) x defined($r->{_ggls_res}),
             on_missing_required_args => sub {
                 my %a = @_;
@@ -2207,7 +2207,7 @@ Available output formats.
 
 Default format.
 
-=head2 allow_unknown_options => bool (default: 0)
+=head2 allow_unknown_opts => bool (default: 0)
 
 Whether to allow unknown options.
 
