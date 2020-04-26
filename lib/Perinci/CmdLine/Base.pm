@@ -191,7 +191,6 @@ our %copts = (
     page_result => {
         getopt  => "page-result:s",
         summary => "Filter output through a pager",
-        usage   => "--page-result (or --page-result=PROGNAME)",
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{page_result} = 1;
