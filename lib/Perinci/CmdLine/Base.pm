@@ -170,6 +170,7 @@ our %copts = (
     format => {
         getopt  => 'format=s',
         summary => 'Choose output format, e.g. json, text',
+        value_label => 'name',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{format} = $val;
@@ -191,6 +192,7 @@ our %copts = (
     page_result => {
         getopt  => "page-result:s",
         summary => "Filter output through a pager",
+        value_label => 'program',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{page_result} = 1;
@@ -247,6 +249,7 @@ _
     cmd => {
         getopt  => "cmd=s",
         summary => 'Select subcommand',
+        value_label => 'subcommand_name',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{subcommand_name} = $val;
@@ -268,6 +271,7 @@ _
         getopt  => 'config-path=s@',
         schema  => ['array*', of => 'filename*'],
         summary => 'Set path to configuration file',
+        value_label=>'path',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{config_paths} //= [];
@@ -296,6 +300,7 @@ _
     config_profile => {
         getopt  => 'config-profile=s',
         summary => 'Set configuration profile to use',
+        value_label=>'profile',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{config_profile} = $val;
@@ -366,6 +371,7 @@ _
         summary => 'Set log level',
         schema  => ['str*' => in => [
             qw/trace debug info warn warning error fatal/]],
+        value_label=>'level',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{log_level} = $val;
