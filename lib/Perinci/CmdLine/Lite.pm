@@ -70,6 +70,7 @@ sub BUILD {
             $copts->{json}        = { $_copy->('json'), };
             $copts->{naked_res}   = { $_copy->('naked_res'), };
             $copts->{page_result} = { $_copy->('page_result'), };
+            $copts->{view_result} = { $_copy->('view_result'), };
         }
         if ($self->subcommands) {
             $copts->{subcommands} = { $_copy->('subcommands'), };

@@ -1,6 +1,8 @@
 package Perinci::CmdLine::Base;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -197,6 +199,18 @@ our %copts = (
             my ($go, $val, $r) = @_;
             $r->{page_result} = 1;
             $r->{pager} = $val if length $val;
+        },
+        tags => ['category:output'],
+    },
+
+    view_result => {
+        getopt  => "view-result:s",
+        summary => "View output using a viewer",
+        value_label => 'program',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{view_result} = 1;
+            $r->{viewer} = $val if length $val;
         },
         tags => ['category:output'],
     },
@@ -1374,9 +1388,9 @@ sub select_output_handle {
   SELECT_HANDLE:
     {
         # view result using external program
-        if ($ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
-            my $viewer = $resmeta->{"cmdline.viewer"} // $ENV{VIEWER} //
-                $ENV{BROWSER};
+        if ($r->{view_result} // $ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
+            my $viewer = $r->{viewer} // $resmeta->{"cmdline.viewer"} //
+                $ENV{VIEWER} // $ENV{BROWSER};
             last if defined $viewer && !$viewer; # ENV{VIEWER} can be set 0/'' to disable viewing result using external program
             die [500, "No VIEWER program set"] unless defined $viewer;
             $r->{viewer} = $viewer;
