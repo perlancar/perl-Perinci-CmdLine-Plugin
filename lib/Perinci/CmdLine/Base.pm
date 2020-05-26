@@ -1389,8 +1389,21 @@ sub select_output_handle {
     {
         # view result using external program
         if ($r->{view_result} // $ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
+
+            # select default viewer & preprocessing based on content_type and
+            # availability. should probably be moved elsewhere later.
+            my $default_viewer;
+          SET_DEFAULT_VIEWER: {
+                require File::Which;
+
+                my $ct = $resmeta->{content_type} // '';
+                if ($ct eq 'text/x-org') {
+                    $default_viewer = 'emacs' if File::Which::which("emacs");
+                }
+            }
+
             my $viewer = $r->{viewer} // $resmeta->{"cmdline.viewer"} //
-                $ENV{VIEWER} // $ENV{BROWSER};
+                $default_viewer // $ENV{VIEWER} // $ENV{BROWSER};
             last if defined $viewer && !$viewer; # ENV{VIEWER} can be set 0/'' to disable viewing result using external program
             die [500, "No VIEWER program set"] unless defined $viewer;
             $r->{viewer} = $viewer;
@@ -1541,8 +1554,19 @@ sub display_result {
             die "Result is a stream but no coderef provided";
         }
     } else {
+        # do preprocessing based on content_type. should probably be moved
+        # elsewhere later.
+      PREPROCESS_RESULT: {
+            last unless defined $r->{viewer};
+
+            my $ct = $resmeta->{content_type} // '';
+            if ($ct eq 'text/x-org') {
+                $fres = "# -*- mode: org -*-\n" . $fres;
+            }
+        }
+
         print $handle $fres;
-        if ($r->{viewer}) {
+        if (defined $r->{viewer}) {
             require ShellQuote::Any::Tiny;
             my $cmd = $r->{viewer} ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
             system $cmd;
