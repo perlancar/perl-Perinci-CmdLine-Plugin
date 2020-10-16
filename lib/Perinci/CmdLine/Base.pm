@@ -1583,6 +1583,7 @@ sub run {
     my $r = {
         orig_argv   => [@ARGV],
         common_opts => $co,
+        cmdline => $self,
     };
 
     # dump object is special case, we delegate to do_dump_object()
