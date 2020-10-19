@@ -1323,6 +1323,20 @@ sub _parse_argv2 {
                 meta_is_normalized => 1,
             );
             die $res unless $res->[0] == 200;
+
+            # interpret special parameters (/^-foo/). these will not be
+            # arguments passed to function but instead treated specially
+          TREAT_SPECIAL_PARAMS: {
+              PLUGINS: {
+                    my $plugins = delete $args{-plugins};
+                    last unless defined $plugins;
+                    __plugin_activate_plugins(
+                        ref $plugins eq 'ARRAY' ? @$plugins :
+                            __plugin_unflatten_import($plugins)
+                        );
+                } # PLUGINS
+            } # TREAT_SPECIAL_PARAMS
+
             log_trace("[pericmd] args after reading config files: %s",
                          \%args);
             my $found = $res->[3]{'func.found'};
@@ -2233,13 +2247,16 @@ plugins. Documentation is currently sparse; please see existing plugins in
 Perinci::CmdLine::Plugin::* as well as ScriptX documentation to get an idea of
 how plugin works.
 
+With plugin support, the hook_*() methods will be phased away. Some features
+will be moved to plugins in subsequent releases.
+
 =head2 Plugin events
 
 =over
 
 =item * activate_plugin
 
-This can be used to disable plugins (see
+This event can be used to disable other plugins (see
 L<Perinci::CmdLine::Plugin::DisablePlugin>) or do things when a plugin is
 loaded.
 
@@ -2253,6 +2270,29 @@ After this event, C<< $r->{args} >> should have already been validated.
 =item * action
 
 After this event, C<< $r->{res} >> should have already been set to the result.
+
+=back
+
+=head2 Activating plugins
+
+=over
+
+=item * From the source code
+
+=item * From configuration file
+
+Special parameters C<-plugins> will activate plugins, e.g.:
+
+ -plugins = -DumpArgs
+
+another example:
+
+ -plugins = ["-DumpArgs", "-DumpRes"]
+
+=item * From environment variable
+
+See L</PERINCI_CMDLINE_PLUGINS> and L</PERINCI_CMDLINE_PLUGINS_JSON> under
+L</ENVIRONMENT>.
 
 
 =head1 REQUEST KEYS
@@ -3031,6 +3071,11 @@ metadata attribute.
 =head2 attribute: x.perinci.cmdline.base.exit_code => int
 
 This is added by this module, so exit code can be tested.
+
+
+=head1 CONFIGURATION FILE SUPPORT
+
+TBD.
 
 
 =head1 ENVIRONMENT
