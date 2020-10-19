@@ -1,6 +1,8 @@
 package Perinci::CmdLine::Lite;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -257,7 +259,7 @@ sub hook_before_action {
         Perinci::CmdLine::Base::__plugin_run_event(
             name => 'validate_args',
             r => $r,
-            code => sub {
+            on_success => sub {
                 no strict 'refs';
 
                 # to be cheap, we simply use "$ref" as key as cache key. to be

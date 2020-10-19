@@ -1975,12 +1975,17 @@ sub run {
             goto FORMAT;
         }
         log_trace("[pericmd] Running %s() ...", $meth);
-        $r->{res} = $self->$meth($r);
-        #log_trace("[pericmd] res=%s", $r->{res}); #1
+        __plugin_run_event(
+            name => 'action',
+            on_success => sub {
+                $r->{res} = $self->$meth($r);
+            },
+        );
 
         log_trace("[pericmd] Running hook_after_action ...");
         $self->hook_after_action($r);
     };
+
     my $err = $@;
     if ($err || !$r->{res}) {
         if ($err) {
@@ -2217,6 +2222,37 @@ L<Perinci::Sub::Complete>'s C<complete_cli_arg>.
 
 The result is then output to STDOUT (resume from Run hook_format_result step in
 the normal program flow).
+
+
+=head1 PLUGINS
+
+My original plan is to develop L<ScriptX> (which is a plugin-oriented framework)
+as a replacement for Perinci::CmdLine. In the mean time, Perinci::CmdLine (as of
+1.830) also gets plugin support. Plugin support is similar to how ScriptX does
+plugins. Documentation is currently sparse; please see existing plugins in
+Perinci::CmdLine::Plugin::* as well as ScriptX documentation to get an idea of
+how plugin works.
+
+=head2 Plugin events
+
+=over
+
+=item * activate_plugin
+
+This can be used to disable plugins (see
+L<Perinci::CmdLine::Plugin::DisablePlugin>) or do things when a plugin is
+loaded.
+
+=item * validate_args
+
+Before this event, C<< $r->{args} >> is already set to the input arguments, but
+they are not validated yet.
+
+After this event, C<< $r->{args} >> should have already been validated.
+
+=item * action
+
+After this event, C<< $r->{res} >> should have already been set to the result.
 
 
 =head1 REQUEST KEYS
