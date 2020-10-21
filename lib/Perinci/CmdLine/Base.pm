@@ -1311,10 +1311,12 @@ sub _parse_argv2 {
             log_trace("[pericmd] Running hook_after_read_config_file ...");
             $self->hook_after_read_config_file($r);
 
+            my @plugins;
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
                 r                  => $r,
                 config             => $r->{config},
                 args               => \%args,
+                plugins            => \@plugins,
                 program_name       => $self->program_name,
                 subcommand_name    => $r->{subcommand_name},
                 config_profile     => $r->{config_profile},
@@ -1327,14 +1329,20 @@ sub _parse_argv2 {
             # interpret special parameters (/^-foo/). these will not be
             # arguments passed to function but instead treated specially
           TREAT_SPECIAL_PARAMS: {
-              PLUGINS: {
+
+              PLUGINS_FROM_DASH_PLUGINS: {
                     my $plugins = delete $args{-plugins};
                     last unless defined $plugins;
                     __plugin_activate_plugins(
                         ref $plugins eq 'ARRAY' ? @$plugins :
                             __plugin_unflatten_import($plugins)
                         );
-                } # PLUGINS
+                } # PLUGINS_FROM_DASH_PLUGINS
+
+              PLUGINS_FROM_CONFIG_SECTIONS: {
+                    last unless @plugins;
+                    __plugin_activate_plugins(@plugins);
+                } # PLUGINS_FROM_CONFIG_SECTIONS
             } # TREAT_SPECIAL_PARAMS
 
             log_trace("[pericmd] args after reading config files: %s",
