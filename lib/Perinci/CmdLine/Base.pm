@@ -2248,15 +2248,22 @@ the normal program flow).
 
 =head1 PLUGINS
 
-My original plan is to develop L<ScriptX> (which is a plugin-oriented framework)
-as a replacement for Perinci::CmdLine. In the mean time, Perinci::CmdLine (as of
-1.830) also gets plugin support. Plugin support is similar to how ScriptX does
-plugins. Documentation is currently sparse; please see existing plugins in
-Perinci::CmdLine::Plugin::* as well as ScriptX documentation to get an idea of
-how plugin works.
+My long-term goal is to have L<ScriptX> (which is a plugin-oriented framework)
+as a replacement for Perinci::CmdLine. Since L<ScriptX> is still in early
+development, I am adding plugin support to Perinci::CmdLine too (as of 1.900).
+Plugin support is similar to how ScriptX does plugins. Documentation is
+currently sparse; please see existing plugins in Perinci::CmdLine::Plugin::*,
+the ScriptX documentation, as well as the source code directly to get an idea of
+how plugin works. These are the characteristics of the plugin system: you can
+customize at which event any plugin runs (flexibility), you can customize the
+priority of each plugin for an event (flexibility), a "before-event-foo" plugin
+can cancel the "foo" event, an "after-event-foo" plugin can repeat the "foo"
+event.
 
-With plugin support, the hook_*() methods will be phased away. Some features
-will be moved to plugins in subsequent releases.
+With plugin support, the hook_*() methods will be phased out eventually. Some
+features will be moved to plugins in subsequent releases. More plugins will be
+added, either in this distribution, or in separate distributions. More events
+will be added to add more "hooks".
 
 =head2 Plugin events
 
@@ -2287,7 +2294,10 @@ After this event, C<< $r->{res} >> should have already been set to the result.
 
 =item * From the source code
 
-=item * From configuration file
+(Currently no public API, but you can see the source code, particularly the
+C<__plugin_activate_plugins()> function).
+
+=item * From configuration file (special parameter C<-plugins>)
 
 Special parameters C<-plugins> will activate plugins, e.g.:
 
@@ -2297,10 +2307,24 @@ another example:
 
  -plugins = ["-DumpArgs", "-DumpRes"]
 
+=item * From configuration file ([plugin=...] sections)
+
+For example:
+
+ [plugin=DumpArgs]
+
+ [plugin=DumpArgs]
+ -event=before_validation
+
+ [plugin=DisablePlugins]
+ plugins = DumpArgs,DumpConfig
+
 =item * From environment variable
 
 See L</PERINCI_CMDLINE_PLUGINS> and L</PERINCI_CMDLINE_PLUGINS_JSON> under
 L</ENVIRONMENT>.
+
+=back
 
 
 =head1 REQUEST KEYS
