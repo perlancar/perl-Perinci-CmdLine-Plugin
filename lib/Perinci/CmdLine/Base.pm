@@ -2314,7 +2314,7 @@ For example:
  [plugin=DumpArgs]
 
  [plugin=DumpArgs]
- -event=before_validation
+ -event=before_validate_args
 
  [plugin=DisablePlugins]
  plugins = DumpArgs,DumpConfig
