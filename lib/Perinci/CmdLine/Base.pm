@@ -1724,7 +1724,7 @@ sub select_output_handle {
                 die [500, "Can't determine PAGER"];
             }
             last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
-            #log_trace("Paging output using %s", $pager);
+            log_trace("Paging output using %s", $pager);
             ## no critic (InputOutput::RequireBriefOpen)
             open $handle, "| $pager";
         }
