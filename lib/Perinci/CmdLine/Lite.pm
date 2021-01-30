@@ -450,10 +450,12 @@ sub hook_after_get_meta {
     );
 
     my $meta_uses_opt_n = 0;
+    my $meta_uses_opt_N = 0;
     {
         last unless $ggls_res->[0] == 200;
         my $opts = $ggls_res->[3]{'func.opts'};
         if (grep { $_ eq '-n' } @$opts) { $meta_uses_opt_n = 1 }
+        if (grep { $_ eq '-N' } @$opts) { $meta_uses_opt_N = 1 }
     }
 
     require Perinci::Object;
@@ -471,29 +473,35 @@ sub hook_after_get_meta {
 
     # add --dry-run (and -n shortcut, if no conflict)
     {
+        last if $copts->{dry_run} || $copts->{no_dry_run}; # sometimes we are run more than once?
         last unless $metao->can_dry_run;
         my $default_dry_run = $metao->default_dry_run // $self->default_dry_run;
         $r->{dry_run} = 1 if $default_dry_run;
         $r->{dry_run} = ($ENV{DRY_RUN} ? 1:0) if defined $ENV{DRY_RUN};
 
-        my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
-        $copts->{dry_run} = {
-            getopt  => $default_dry_run ? "$optname!" : $optname,
-            summary => "Run in simulation mode (also via DRY_RUN=1)",
-            "summary.alt.bool.not" =>
-                "Disable simulation mode (also via DRY_RUN=0)",
-            handler => sub {
-                my ($go, $val, $r) = @_;
-                if ($val) {
-                    log_debug("[pericmd] Dry-run mode is activated");
-                    $r->{dry_run} = 1;
-                } else {
+        if ($default_dry_run) {
+            my $optname = 'no-dry-run' . ($meta_uses_opt_N ? '' : '|N');
+            $copts->{no_dry_run} = {
+                getopt  => $optname,
+                summary => "Disable simulation mode (also via DRY_RUN=0)",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
                     log_debug("[pericmd] Dry-run mode is deactivated");
                     $r->{dry_run} = 0;
+                },
+            };
+        } else {
+            my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
+            $copts->{dry_run} = {
+                getopt  => $optname,
+                summary => "Run in simulation mode (also via DRY_RUN=1)",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    log_debug("[pericmd] Dry-run mode is activated");
+                    $r->{dry_run} = 1;
                 }
-            },
-            default => $default_dry_run,
-        };
+            };
+        }
     }
 
     # check deps property. XXX this should be done only when we don't wrap
