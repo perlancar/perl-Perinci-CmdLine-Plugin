@@ -74,11 +74,11 @@ sub before_activate_plugin {
 
 =head1 SYNOPSIS
 
-In the environment variable:
+To use, either specify in environment variable:
 
  PERINCI_CMDLINE_PLUGINS='-DisablePlugin,plugins,Foo;/^Bar/'
 
-In code instantiating L<Perinci::CmdLine>:
+or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...

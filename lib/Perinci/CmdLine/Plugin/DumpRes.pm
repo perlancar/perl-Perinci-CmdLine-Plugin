@@ -37,11 +37,11 @@ sub after_action {
 
 =head1 SYNOPSIS
 
-In the environment variable:
+To use, either specify in environment variable:
 
  PERINCI_CMDLINE_PLUGINS=-DumpRes
 
-In code instantiating L<Perinci::CmdLine>:
+or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
@@ -56,5 +56,6 @@ If you want to dump at different events:
          'DumpArgs@after_format_res',
      ],
  );
+
 
 =head1 DESCRIPTION
