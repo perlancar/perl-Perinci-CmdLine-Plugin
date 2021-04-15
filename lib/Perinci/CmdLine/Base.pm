@@ -437,6 +437,8 @@ _
 our @Plugin_Instances;
 our %Handlers; # key=event name, val=[ [$label, $prio, $handler, $epoch], ... ]
 
+our $tempfile_opt_suffix = '';
+
 my $r;
 
 sub __plugin_run_event {
@@ -1706,7 +1708,9 @@ sub select_output_handle {
             $r->{viewer} = $viewer;
             require File::Temp;
             my $filename;
-            ($handle, $filename) = File::Temp::tempfile();
+            ($handle, $filename) = File::Temp::tempfile(
+                SUFFIX => $tempfile_opt_suffix,
+            );
             $r->{viewer_temp_path} = $filename;
         }
 

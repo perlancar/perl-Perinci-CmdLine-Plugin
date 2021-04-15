@@ -371,6 +371,8 @@ sub hook_format_result {
     if ($fmt eq 'html+datatables') {
         $fmt = 'text-pretty';
         $ENV{VIEW_RESULT} //= 1;
+        no warnings 'once';
+        $Perinci::CmdLine::Base::tempfile_opt_suffix = '.html';
         $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Text::Table::HTML::DataTables';
     }
 
