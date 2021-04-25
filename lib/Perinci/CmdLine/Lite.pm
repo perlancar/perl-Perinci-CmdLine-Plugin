@@ -31,7 +31,7 @@ has plugins => (
     is => 'rw',
 );
 
-my $formats = [qw/text text-simple text-pretty json json-pretty csv html html+datatables perl/];
+my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -374,6 +374,10 @@ sub hook_format_result {
         no warnings 'once';
         $Perinci::CmdLine::Base::tempfile_opt_suffix = '.html';
         $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Text::Table::HTML::DataTables';
+    } elsif ($fmt eq 'termtable') {
+        $fmt = 'text-pretty';
+        no warnings 'once';
+        $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Term::TablePrint';
     }
 
     my $fres = Perinci::Result::Format::Lite::format(
