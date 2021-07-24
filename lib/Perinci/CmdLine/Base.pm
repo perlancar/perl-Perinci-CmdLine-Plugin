@@ -1892,6 +1892,28 @@ sub display_result {
 
 sub run {
     my ($self) = @_;
+
+  DEBUG_COMPLETION:
+    {
+        last; # disabled
+        last unless $ENV{PERINCI_CMDLINE_DEBUG_COMPLETION};
+        no warnings;
+        open my $fh, ">>", ($ENV{PERINCI_CMDLINE_DEBUG_COMPLETION_FILE} // "/tmp/pericmd-completion.log")
+            or do { warn "Can't open completion log file, skipped: $!"; last };
+        print $fh sprintf(
+            "[%s] [prog %s] [pid %d] [uid %d] COMP_LINE=<%s> (%d char(s)) COMP_POINT=<%s>\n",
+            scalar(localtime),
+            $0,
+            $$,
+            $>,
+            $ENV{COMP_LINE},
+            length($ENV{COMP_LINE}),
+            $ENV{COMP_POINT},
+        );
+        print $fh join("", map {"  $_=$ENV{$_}\n"} sort keys %ENV);
+        close $fh;
+    }
+
     log_trace("[pericmd] -> run(), \@ARGV=%s", \@ARGV);
 
     my $co = $self->common_opts;
