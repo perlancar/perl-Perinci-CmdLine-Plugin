@@ -97,8 +97,8 @@ has cleanser => (
     is => 'rw',
     lazy => 1,
     default => sub {
-        require Data::Clean::JSON;
-        Data::Clean::JSON->get_cleanser;
+        require Data::Clean::ForJSON;
+        Data::Clean::ForJSON->get_cleanser;
     },
 );
 has use_cleanser => (is=>'rw', default=>1);
@@ -2869,13 +2869,13 @@ directory entry.
 =head2 cleanser => obj
 
 Object to cleanse result for JSON output. By default this is an instance of
-L<Data::Clean::JSON> and should not be set to other value in most cases.
+L<Data::Clean::ForJSON> and should not be set to other value in most cases.
 
 =head2 use_cleanser => bool (default: 1)
 
 When a function returns result, and the user wants to display the result as
-JSON, the result might need to be cleansed first (using L<Data::Clean::JSON> by
-default) before it can be encoded to JSON, for example it might contain Perl
+JSON, the result might need to be cleansed first (using L<Data::Clean::ForJSON>
+by default) before it can be encoded to JSON, for example it might contain Perl
 objects or scalar references or other stuffs. If you are sure that your function
 does not produce those kinds of data, you can set this to false to produce a
 more lightweight script.
@@ -3227,7 +3227,7 @@ Output directory must already exist, or Perinci::CmdLine will display a warning
 and then skip saving output.
 
 Data that is not representable as JSON will be cleansed using
-L<Data::Clean::JSON>.
+L<Data::Clean::ForJSON>.
 
 Streaming output will not be saved appropriately, because streaming output
 contains coderef that will be called repeatedly during the normal displaying of
