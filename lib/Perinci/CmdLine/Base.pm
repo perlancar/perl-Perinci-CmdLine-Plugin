@@ -1,3 +1,4 @@
+## no critic: ControlStructures::ProhibitUnreachableCode
 package Perinci::CmdLine::Base;
 
 # AUTHORITY
