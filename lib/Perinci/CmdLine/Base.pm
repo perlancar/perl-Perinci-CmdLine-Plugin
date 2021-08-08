@@ -1,3 +1,4 @@
+## no critic: ControlStructures::ProhibitUnreachableCode
 package Perinci::CmdLine::Base;
 
 # AUTHORITY
@@ -98,8 +99,8 @@ has cleanser => (
     is => 'rw',
     lazy => 1,
     default => sub {
-        require Data::Clean::JSON;
-        Data::Clean::JSON->get_cleanser;
+        require Data::Clean::ForJSON;
+        Data::Clean::ForJSON->get_cleanser;
     },
 );
 has use_cleanser => (is=>'rw', default=>1);
@@ -1893,6 +1894,28 @@ sub display_result {
 
 sub run {
     my ($self) = @_;
+
+  DEBUG_COMPLETION:
+    {
+        last; # disabled
+        last unless $ENV{PERINCI_CMDLINE_DEBUG_COMPLETION};
+        no warnings;
+        open my $fh, ">>", ($ENV{PERINCI_CMDLINE_DEBUG_COMPLETION_FILE} // "/tmp/pericmd-completion.log")
+            or do { warn "Can't open completion log file, skipped: $!"; last };
+        print $fh sprintf(
+            "[%s] [prog %s] [pid %d] [uid %d] COMP_LINE=<%s> (%d char(s)) COMP_POINT=<%s>\n",
+            scalar(localtime),
+            $0,
+            $$,
+            $>,
+            $ENV{COMP_LINE},
+            length($ENV{COMP_LINE}),
+            $ENV{COMP_POINT},
+        );
+        print $fh join("", map {"  $_=$ENV{$_}\n"} sort keys %ENV);
+        close $fh;
+    }
+
     log_trace("[pericmd] -> run(), \@ARGV=%s", \@ARGV);
 
     my $co = $self->common_opts;
@@ -2133,7 +2156,7 @@ If you execute C<run()>, this is what will happen, in order:
 
 =item * Detect if we are running under tab completion mode
 
-This is done by checking the existence of special environment varibles like
+This is done by checking the existence of special environment variables like
 C<COMP_LINE> (bash) or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM
 FLOW (TAB COMPLETION)">. Otherwise, continue.
 
@@ -2174,7 +2197,7 @@ options and strip them. Unknown options at this time will be passed through.
 
 If user specifies common option like C<--help> or C<--version>, then action will
 be set to (respectively) C<help> and C<version> and the second step will be
-skipped. Otherwise we continue the the second step and action by default is set
+skipped. Otherwise we continue the second step and action by default is set
 to C<call>.
 
 At the end of the first step, we already know the subcommand name (of course, if
@@ -2378,7 +2401,7 @@ config file.
 =item * read_env => bool
 
 This is set in run() to signify that we will try to read env for default
-options. This settng can be turned off e.g. in common option C<no_env>. This is
+options. This setting can be turned off e.g. in common option C<no_env>. This is
 never set to true when C<read_env> attribute is set to false, which means that
 we never try to read environment.
 
@@ -2663,7 +2686,7 @@ Whether to allow unknown options.
 =head2 pass_cmdline_object => bool (default: 0)
 
 Whether to pass special argument C<-cmdline> containing the cmdline object to
-function. This can be overriden using the C<pass_cmdline_object> on a
+function. This can be overridden using the C<pass_cmdline_object> on a
 per-subcommand basis.
 
 In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
@@ -2848,13 +2871,13 @@ directory entry.
 =head2 cleanser => obj
 
 Object to cleanse result for JSON output. By default this is an instance of
-L<Data::Clean::JSON> and should not be set to other value in most cases.
+L<Data::Clean::ForJSON> and should not be set to other value in most cases.
 
 =head2 use_cleanser => bool (default: 1)
 
 When a function returns result, and the user wants to display the result as
-JSON, the result might need to be cleansed first (using L<Data::Clean::JSON> by
-default) before it can be encoded to JSON, for example it might contain Perl
+JSON, the result might need to be cleansed first (using L<Data::Clean::ForJSON>
+by default) before it can be encoded to JSON, for example it might contain Perl
 objects or scalar references or other stuffs. If you are sure that your function
 does not produce those kinds of data, you can set this to false to produce a
 more lightweight script.
@@ -2888,7 +2911,7 @@ Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
 
 =head2 log_level => str
 
-Set default log level. Will be overriden by C<< $r->{log_level} >> which is set
+Set default log level. Will be overridden by C<< $r->{log_level} >> which is set
 from command-line options like C<--log-level>, C<--trace>, etc.
 
 
@@ -3206,7 +3229,7 @@ Output directory must already exist, or Perinci::CmdLine will display a warning
 and then skip saving output.
 
 Data that is not representable as JSON will be cleansed using
-L<Data::Clean::JSON>.
+L<Data::Clean::ForJSON>.
 
 Streaming output will not be saved appropriately, because streaming output
 contains coderef that will be called repeatedly during the normal displaying of
