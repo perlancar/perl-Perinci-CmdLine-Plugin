@@ -2155,7 +2155,7 @@ If you execute C<run()>, this is what will happen, in order:
 
 =item * Detect if we are running under tab completion mode
 
-This is done by checking the existence of special environment varibles like
+This is done by checking the existence of special environment variables like
 C<COMP_LINE> (bash) or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM
 FLOW (TAB COMPLETION)">. Otherwise, continue.
 
@@ -2196,7 +2196,7 @@ options and strip them. Unknown options at this time will be passed through.
 
 If user specifies common option like C<--help> or C<--version>, then action will
 be set to (respectively) C<help> and C<version> and the second step will be
-skipped. Otherwise we continue the the second step and action by default is set
+skipped. Otherwise we continue the second step and action by default is set
 to C<call>.
 
 At the end of the first step, we already know the subcommand name (of course, if
@@ -2400,7 +2400,7 @@ config file.
 =item * read_env => bool
 
 This is set in run() to signify that we will try to read env for default
-options. This settng can be turned off e.g. in common option C<no_env>. This is
+options. This setting can be turned off e.g. in common option C<no_env>. This is
 never set to true when C<read_env> attribute is set to false, which means that
 we never try to read environment.
 
@@ -2685,7 +2685,7 @@ Whether to allow unknown options.
 =head2 pass_cmdline_object => bool (default: 0)
 
 Whether to pass special argument C<-cmdline> containing the cmdline object to
-function. This can be overriden using the C<pass_cmdline_object> on a
+function. This can be overridden using the C<pass_cmdline_object> on a
 per-subcommand basis.
 
 In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
@@ -2910,7 +2910,7 @@ Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
 
 =head2 log_level => str
 
-Set default log level. Will be overriden by C<< $r->{log_level} >> which is set
+Set default log level. Will be overridden by C<< $r->{log_level} >> which is set
 from command-line options like C<--log-level>, C<--trace>, etc.
 
 
