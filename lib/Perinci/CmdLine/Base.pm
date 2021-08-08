@@ -1744,7 +1744,7 @@ sub select_output_handle {
             last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
             log_trace("Paging output using %s", $pager);
             ## no critic (InputOutput::RequireBriefOpen)
-            open $handle, "| $pager";
+            open $handle, "|-", $pager;
         }
         $handle //= \*STDOUT;
     }
