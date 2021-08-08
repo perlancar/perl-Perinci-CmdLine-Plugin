@@ -9,6 +9,7 @@ use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+use IO::Interactive qw(is_interactive);
 
 # this class can actually be a role instead of base class for pericmd &
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
@@ -189,7 +190,7 @@ our %copts = (
         summary => 'Set output format to json',
         handler => sub {
             my ($go, $val, $r) = @_;
-            $r->{format} = (-t STDOUT) ? 'json-pretty' : 'json';
+            $r->{format} = is_interactive(*STDOUT) ? 'json-pretty' : 'json';
         },
         tags => ['category:output'],
         key => 'format',
@@ -1416,7 +1417,7 @@ sub _parse_argv2 {
                 my $src = $as->{cmdline_src} // '';
 
                 # we only get from stdin if stdin is piped
-                $src = '' if $src eq 'stdin_or_args' && -t STDIN;
+                $src = '' if $src eq 'stdin_or_args' && is_interactive(*STDIN);
 
                 if ($src && $as->{req}) {
                     # don't complain, we will fill argument from other source
@@ -1591,7 +1592,7 @@ sub parse_cmdline_src {
                     my $prompt = Perinci::Object::rimeta($as)->langprop('cmdline_prompt') //
                         sprintf($self->default_prompt_template, $an);
                     print $prompt;
-                    my $iactive = (-t STDOUT);
+                    my $iactive = is_interactive(*STDOUT);
                     Term::ReadKey::ReadMode('noecho')
                           if $term_readkey_available && $iactive && $as->{is_password};
                     chomp($r->{args}{$an} = <STDIN>);
@@ -1636,7 +1637,7 @@ sub parse_cmdline_src {
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
-                } elsif ($src eq 'stdin_or_args' && !(-t STDIN)) {
+                } elsif ($src eq 'stdin_or_args' && !is_interactive(*STDIN)) {
                     unless (defined($r->{args}{$an})) {
                         $r->{args}{$an} = $do_stream ?
                             __gen_iter(\*STDIN, $as, $an) :
@@ -1925,7 +1926,7 @@ sub run {
     # EXPERIMENTAL, set default format to json if we are running in a pipeline
     # and the right side of the pipe is the 'td' program
     {
-        last if (-t STDOUT) || $r->{format};
+        last if is_interactive(*STDOUT) || $r->{format};
         last unless eval { require Pipe::Find; 1 };
         my $pipeinfo = Pipe::Find::get_stdout_pipe_process();
         last unless $pipeinfo;
@@ -2056,11 +2057,11 @@ sub run {
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
     my $restore_orig_result;
     my $orig_result;
-    if (exists $r->{res}[3]{'cmdline.result.noninteractive'} && !(-t STDOUT)) {
+    if (exists $r->{res}[3]{'cmdline.result.noninteractive'} && !is_interactive(*STDOUT)) {
         $restore_orig_result = 1;
         $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result.noninteractive'};
-    } elsif (exists $r->{res}[3]{'cmdline.result.interactive'} && -t STDOUT) {
+    } elsif (exists $r->{res}[3]{'cmdline.result.interactive'} && is_interactive(*STDOUT)) {
         $restore_orig_result = 1;
         $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result.interactive'};
