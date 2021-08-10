@@ -668,19 +668,19 @@ backend on the fly.
 
 =head1 REQUEST KEYS
 
-All those supported by L<Perinci::CmdLine::Base>, plus:
-
-=over
-
-=back
-
+All those supported by L<Perinci::CmdLine::Base>.
 
 =head1 ATTRIBUTES
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=head2 validate_args => bool (default: 1)
+=over
 
+=item * validate_args => bool (default: 1)
+
+Validate arguments using schema from metadata.
+
+=back
 
 =head1 METHODS
 
