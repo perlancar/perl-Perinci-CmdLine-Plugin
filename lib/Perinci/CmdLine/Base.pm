@@ -2933,8 +2933,8 @@ from command-line options like C<--log-level>, C<--trace>, etc.
 
 =head2 $cmd->run() => ENVRES
 
-The main method to run your application. See L</"PROGRAM FLOW"> for more details
-on what this method does.
+The main method to run your application. See L</"PROGRAM FLOW (NORMAL)"> for
+more details on what this method does.
 
 =head2 $cmd->do_dump() => ENVRES
 
