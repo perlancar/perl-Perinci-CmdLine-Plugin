@@ -1,12 +1,16 @@
+## no critic: ControlStructures::ProhibitUnreachableCode
 package Perinci::CmdLine::Base;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+use IO::Interactive qw(is_interactive);
 
 # this class can actually be a role instead of base class for pericmd &
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
@@ -48,6 +52,7 @@ has description => (is=>'rw');
 has exit => (is=>'rw', default=>1);
 has formats => (is=>'rw');
 has default_format => (is=>'rw');
+has allow_unknown_opts => (is=>'rw', default=>0);
 has pass_cmdline_object => (is=>'rw', default=>0);
 has per_arg_json => (is=>'rw');
 has per_arg_yaml => (is=>'rw');
@@ -94,8 +99,8 @@ has cleanser => (
     is => 'rw',
     lazy => 1,
     default => sub {
-        require Data::Clean::JSON;
-        Data::Clean::JSON->get_cleanser;
+        require Data::Clean::ForJSON;
+        Data::Clean::ForJSON->get_cleanser;
     },
 );
 has use_cleanser => (is=>'rw', default=>1);
@@ -109,6 +114,11 @@ has use_utf8 => (
     default => sub {
         $ENV{UTF8} // 0;
     },
+);
+
+has use_locale => (
+    is=>'rw',
+    default => 0,
 );
 
 has default_dry_run => (
@@ -147,6 +157,7 @@ our %copts = (
             $r->{action} = 'version';
             $r->{skip_parse_subcommand_argv} = 1;
         },
+        key => 'action',
     },
 
     help => {
@@ -159,11 +170,13 @@ our %copts = (
             $r->{skip_parse_subcommand_argv} = 1;
         },
         order => 0, # high
+        key => 'action',
     },
 
     format => {
         getopt  => 'format=s',
         summary => 'Choose output format, e.g. json, text',
+        value_label => 'name',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{format} = $val;
@@ -171,15 +184,43 @@ our %copts = (
         default => undef,
         tags => ['category:output'],
         is_settable_via_config => 1,
+        key => 'format',
     },
     json => {
         getopt  => 'json',
         summary => 'Set output format to json',
         handler => sub {
             my ($go, $val, $r) = @_;
-            $r->{format} = (-t STDOUT) ? 'json-pretty' : 'json';
+            $r->{format} = is_interactive(*STDOUT) ? 'json-pretty' : 'json';
         },
         tags => ['category:output'],
+        key => 'format',
+    },
+
+    page_result => {
+        getopt  => "page-result:s",
+        summary => "Filter output through a pager",
+        value_label => 'program',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{page_result} = 1;
+            $r->{pager} = $val if length $val;
+        },
+        tags => ['category:output'],
+        key => 'send_output',
+    },
+
+    view_result => {
+        getopt  => "view-result:s",
+        summary => "View output using a viewer",
+        value_label => 'program',
+        handler => sub {
+            my ($go, $val, $r) = @_;
+            $r->{view_result} = 1;
+            $r->{viewer} = $val if length $val;
+        },
+        tags => ['category:output'],
+        key => 'send_output',
     },
 
     naked_res => {
@@ -223,6 +264,7 @@ _
             $r->{action} = 'subcommands';
             $r->{skip_parse_subcommand_argv} = 1;
         },
+        key => 'action',
     },
 
     # 'cmd=SUBCOMMAND_NAME' can be used to select other subcommands when
@@ -230,6 +272,7 @@ _
     cmd => {
         getopt  => "cmd=s",
         summary => 'Select subcommand',
+        value_label => 'subcommand_name',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{subcommand_name} = $val;
@@ -249,15 +292,16 @@ _
 
     config_path => {
         getopt  => 'config-path=s@',
-        schema  => ['array*', of => 'str*'],
-        'x.schema.element_entity' => 'filename',
+        schema  => ['array*', of => 'filename*'],
         summary => 'Set path to configuration file',
+        value_label=>'path',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{config_paths} //= [];
             push @{ $r->{config_paths} }, $val;
         },
         tags => ['category:configuration'],
+        key => 'config_path',
     },
     no_config => {
         getopt  => 'no-config',
@@ -267,6 +311,7 @@ _
             $r->{read_config} = 0;
         },
         tags => ['category:configuration'],
+        key => 'config_path',
     },
     no_env => {
         getopt  => 'no-env',
@@ -280,6 +325,7 @@ _
     config_profile => {
         getopt  => 'config-profile=s',
         summary => 'Set configuration profile to use',
+        value_label=>'profile',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{config_profile} = $val;
@@ -295,7 +341,8 @@ _
             # we are not called from cmdline, bail (actually we might want to
             # return list of programs anyway, but we want to read the value of
             # bash_global_dir et al)
-            return undef unless $cmdline;
+            return {message=>'No completion (not called from cmdline)'}
+                unless $cmdline;
 
             # since this is common option, at this point we haven't parsed
             # argument or even read config file. let's parse argv first (argv
@@ -316,7 +363,8 @@ _
             }
 
             # we are not reading any config file, return empty list
-            return [] unless $r->{config};
+            return {message=>'No completion (not reading any config file)'}
+                unless $r->{config};
 
             my @profiles;
             for my $section (keys %{$r->{config}}) {
@@ -348,12 +396,14 @@ _
         summary => 'Set log level',
         schema  => ['str*' => in => [
             qw/trace debug info warn warning error fatal/]],
+        value_label=>'level',
         handler => sub {
             my ($go, $val, $r) = @_;
             $r->{log_level} = $val;
         },
         is_settable_via_config => 1,
         tags => ['category:logging'],
+        key => 'log_level',
     },
     trace => {
         getopt  => "trace",
@@ -363,6 +413,7 @@ _
             $r->{log_level} = 'trace';
         },
         tags => ['category:logging'],
+        key => 'log_level',
     },
     debug => {
         getopt  => "debug",
@@ -372,6 +423,7 @@ _
             $r->{log_level} = 'debug';
         },
         tags => ['category:logging'],
+        key => 'log_level',
     },
     verbose => {
         getopt  => "verbose",
@@ -382,6 +434,7 @@ _
             $r->{_help_verbose} = 1;
         },
         tags => ['category:logging'],
+        key => 'log_level',
     },
     quiet => {
         getopt  => "quiet",
@@ -391,9 +444,284 @@ _
             $r->{log_level} = 'error';
         },
         tags => ['category:logging'],
+        key => 'log_level',
     },
 
 );
+
+# plugin stuffs
+our @Plugin_Instances;
+our %Handlers; # key=event name, val=[ [$label, $prio, $handler, $epoch], ... ]
+
+our $tempfile_opt_suffix = '';
+
+my $r;
+
+sub __plugin_run_event {
+    my %args = @_;
+
+    my $name = $args{name};
+    {
+        local $args{code} = '...';
+        local $args{r} = '...';
+        log_trace "[pericmd] -> run_event(%s)", \%args;
+    }
+    defined $name or die "Please supply 'name'";
+    $Handlers{$name} ||= [];
+
+    my $before_name = "before_$name";
+    $Handlers{$before_name} ||= [];
+
+    my $after_name = "after_$name";
+    $Handlers{$after_name} ||= [];
+
+    my $req_handler                          = $args{req_handler};                          $req_handler                          = 0 unless defined $req_handler;
+    my $run_all_handlers                     = $args{run_all_handlers};                     $run_all_handlers                     = 1 unless defined $run_all_handlers;
+    my $allow_before_handler_to_cancel_event = $args{allow_before_handler_to_cancel_event}; $allow_before_handler_to_cancel_event = 1 unless defined $allow_before_handler_to_cancel_event;
+    my $allow_before_handler_to_skip_rest    = $args{allow_before_handler_to_skip_rest};    $allow_before_handler_to_skip_rest    = 1 unless defined $allow_before_handler_to_skip_rest;
+    my $allow_handler_to_skip_rest           = $args{allow_handler_to_skip_rest};           $allow_handler_to_skip_rest           = 1 unless defined $allow_handler_to_skip_rest;
+    my $allow_handler_to_repeat_event        = $args{allow_handler_to_repeat_event};        $allow_handler_to_repeat_event        = 1 unless defined $allow_handler_to_repeat_event;
+    my $allow_after_handler_to_repeat_event  = $args{allow_after_handler_to_repeat_event};  $allow_after_handler_to_repeat_event  = 1 unless defined $allow_after_handler_to_repeat_event;
+    my $allow_after_handler_to_skip_rest     = $args{allow_after_handler_to_skip_rest};     $allow_after_handler_to_skip_rest     = 1 unless defined $allow_after_handler_to_skip_rest;
+    my $stop_after_first_handler_failure     = $args{stop_after_first_handler_failure};     $stop_after_first_handler_failure     = 1 unless defined $stop_after_first_handler_failure;
+
+    my ($res, $is_success);
+
+  RUN_BEFORE_EVENT_HANDLERS:
+    {
+        last if $name =~ /\A(after|before)_/;
+        local $r->{event} = $before_name;
+        my $i = 0;
+        for my $rec (@{ $Handlers{$before_name} }) {
+            $i++;
+            my ($label, $prio, $handler) = @$rec;
+            log_trace "[pericmd] [event %s] [%d/%d] -> handler %s ...",
+                $before_name, $i, scalar(@{ $Handlers{$before_name} }), $label;
+            $res = $handler->($r);
+            $is_success = $res->[0] =~ /\A[123]/;
+            log_trace "[pericmd] [event %s] [%d/%d] <- handler %s: %s (%s)",
+                $before_name, $i, scalar(@{ $Handlers{$before_name} }), $label,
+                $res, $is_success ? "success" : "fail";
+            if ($res->[0] == 601) {
+                if ($allow_before_handler_to_cancel_event) {
+                    log_trace "[pericmd] Cancelling event $name (status 601)";
+                    goto RETURN;
+                } else {
+                    die "$before_name handler returns 601 when allow_before_handler_to_cancel_event is set to false";
+                }
+            }
+            if ($res->[0] == 201) {
+                if ($allow_before_handler_to_skip_rest) {
+                    log_trace "[pericmd] Skipping the rest of the $before_name handlers (status 201)";
+                    last RUN_BEFORE_EVENT_HANDLERS;
+                } else {
+                    log_trace "[pericmd] $before_name handler returns 201, but we ignore it because allow_before_handler_to_skip_rest is set to false";
+                }
+            }
+        }
+    }
+
+  RUN_EVENT_HANDLERS:
+    {
+        local $r->{event} = $name;
+        my $i = 0;
+        $res = [304, "There is no handler for event $name"];
+        $is_success = 1;
+        if ($req_handler) {
+            die "There is no handler for event $name"
+                unless @{ $Handlers{$name} };
+        }
+
+        for my $rec (@{ $Handlers{$name} }) {
+            $i++;
+            my ($label, $prio, $handler) = @$rec;
+            log_trace "[pericmd] [event %s] [%d/%d] -> handler %s ...",
+                $name, $i, scalar(@{ $Handlers{$name} }), $label;
+            $res = $handler->($r);
+            $is_success = $res->[0] =~ /\A[123]/;
+            log_trace "[pericmd] [event %s] [%d/%d] <- handler %s: %s (%s)",
+                $name, $i, scalar(@{ $Handlers{$name} }), $label,
+                $res, $is_success ? "success" : "fail";
+            last RUN_EVENT_HANDLERS if $is_success && !$run_all_handlers;
+            if ($res->[0] == 601) {
+                die "$name handler is not allowed to return 601";
+            }
+            if ($res->[0] == 602) {
+                if ($allow_handler_to_repeat_event) {
+                    log_trace "[pericmd] Repeating event $name (handler returns 602)";
+                    goto RUN_EVENT_HANDLERS;
+                } else {
+                    die "$name handler returns 602 when allow_handler_to_repeat_event is set to false";
+                }
+            }
+            if ($res->[0] == 201) {
+                if ($allow_handler_to_skip_rest) {
+                    log_trace "[pericmd] Skipping the rest of the $name handlers (status 201)";
+                    last RUN_EVENT_HANDLERS;
+                } else {
+                    log_trace "[pericmd] $name handler returns 201, but we ignore it because allow_handler_to_skip_rest is set to false";
+                }
+            }
+            last RUN_EVENT_HANDLERS if !$is_success && $stop_after_first_handler_failure;
+        }
+    }
+
+    if ($is_success && $args{on_success}) {
+        log_trace "[pericmd] Running on_success ...";
+        $args{on_success}->($r);
+    } elsif (!$is_success && $args{on_failure}) {
+        log_trace "[pericmd] Running on_failure ...";
+        $args{on_failure}->($r);
+    }
+
+  RUN_AFTER_EVENT_HANDLERS:
+    {
+        last if $name =~ /\A(after|before)_/;
+        local $r->{event} = $after_name;
+        my $i = 0;
+        for my $rec (@{ $Handlers{$after_name} }) {
+            $i++;
+            my ($label, $prio, $handler) = @$rec;
+            log_trace "[pericmd] [event %s] [%d/%d] -> handler %s ...",
+                $after_name, $i, scalar(@{ $Handlers{$after_name} }), $label;
+            $res = $handler->($r);
+            $is_success = $res->[0] =~ /\A[123]/;
+            log_trace "[pericmd] [event %s] [%d/%d] <- handler %s: %s (%s)",
+                $after_name, $i, scalar(@{ $Handlers{$after_name} }), $label,
+                $res, $is_success ? "success" : "fail";
+            if ($res->[0] == 602) {
+                if ($allow_after_handler_to_repeat_event) {
+                    log_trace "[pericmd] Repeating event $name (status 602)";
+                    goto RUN_EVENT_HANDLERS;
+                } else {
+                    die "$after_name handler returns 602 when allow_after_handler_to_repeat_event it set to false";
+                }
+            }
+            if ($res->[0] == 201) {
+                if ($allow_after_handler_to_skip_rest) {
+                    log_trace "[pericmd] Skipping the rest of the $after_name handlers (status 201)";
+                    last RUN_AFTER_EVENT_HANDLERS;
+                } else {
+                    log_trace "[pericmd] $after_name handler returns 201, but we ignore it because allow_after_handler_to_skip_rest is set to false";
+                }
+            }
+        }
+    }
+
+  RETURN:
+    log_trace "[pericmd] <- run_event(name=%s)", $name;
+    undef;
+}
+
+my $handler_seq = 0;
+sub __plugin_add_handler {
+    my ($event, $label, $prio, $handler) = @_;
+
+    # XXX check for known events?
+    $Handlers{$event} ||= [];
+
+    # keep sorted
+    splice @{ $Handlers{$event} }, 0, scalar(@{ $Handlers{$event} }),
+        (sort { $a->[1] <=> $b->[1] || $a->[3] <=> $b->[3] } @{ $Handlers{$event} },
+         [$label, $prio, $handler, $handler_seq++]);
+}
+
+sub __plugin_activate_single {
+    my ($plugin_name0, $args) = @_;
+
+    my ($plugin_name, $wanted_event, $wanted_prio) =
+        $plugin_name0 =~ /\A(\w+(?:::\w+)*)(?:\@(\w+)(?:\@(\d+))?)?\z/
+        or die "Invalid plugin name syntax, please use Foo::Bar or ".
+        "Foo::Bar\@event or Foo::Bar\@event\@prio\n";
+
+    local $r->{plugin_name} = $plugin_name;
+    local $r->{plugin_args} = $args;
+
+    __plugin_run_event(
+        name => 'activate_plugin',
+        on_success => sub {
+            my $package = "Perinci::CmdLine::Plugin::$plugin_name";
+            (my $package_pm = "$package.pm") =~ s!::!/!g;
+            log_trace "[pericmd] Loading module $package ...";
+            require $package_pm;
+            my $obj = $package->new(%{ $args || {} });
+            $obj->activate($wanted_event, $wanted_prio);
+        },
+        on_failure => sub {
+            die "Cannot activate plugin $plugin_name";
+        },
+    );
+}
+
+sub __plugin_unflatten_import {
+    my ($env, $what) = @_;
+
+    $what ||= "import";
+    my @imports;
+    my $plugin_name0;
+    my @plugin_args;
+
+    my @elems = ref $env eq 'ARRAY' ? @$env : split /,/, $env;
+    while (@elems) {
+        my $el = shift @elems;
+        # dash prefix to disambiguate between plugin name and arguments, e.g.
+        # '-PluginName,argname,argval,argname2,argval2,-Plugin2Name,...'
+        if ($el =~ /\A-(\w+(?:::\w+)*(?:\@.+)?)\z/) {
+            if (defined $plugin_name0) {
+                push @imports, $plugin_name0;
+                push @imports, {@plugin_args} if @plugin_args;
+            }
+            $plugin_name0 = $1;
+            @plugin_args = ();
+            if (!@elems) {
+                push @imports, $1;
+            }
+        } else {
+            die "Invalid syntax in $what, first element needs to be ".
+                "a plugin name (e.g. -Foo), not '$el'"
+                unless defined $plugin_name0;
+                push @plugin_args, $el;
+            if (!@elems) {
+                push @imports, $plugin_name0;
+                push @imports, {@plugin_args} if @plugin_args;
+            }
+        }
+    }
+    @imports;
+}
+
+sub __plugin_activate_plugins {
+    while (@_) {
+        my $plugin_name0 = shift;
+        my $plugin_args = @_ && ref($_[0]) eq 'HASH' ? shift : {};
+        __plugin_activate_single($plugin_name0, $plugin_args);
+    }
+}
+
+my $has_read_env;
+sub __plugin_activate_plugins_in_env {
+    last if $has_read_env;
+
+  READ_PERINCI_CMDLINE_PLUGINS:
+    {
+        last unless defined $ENV{PERINCI_CMDLINE_PLUGINS};
+        log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS ...";
+        __plugin_activate_plugins(__plugin_unflatten_import($ENV{PERINCI_CMDLINE_PLUGINS}, "PERINCI_CMDLINE_PLUGINS"));
+        $has_read_env++;
+        return;
+    }
+
+  READ_PERINCI_CMDLINE_PLUGINS_JSON:
+    {
+        last unless defined $ENV{PERINCI_CMDLINE_JSON};
+        require JSON::PP;
+        log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS_JSON ...";
+        my $imports = JSON::PP::decode_json($ENV{PERINCI_CMDLINE_PLUGINS_JSON});
+        __plugin_active_plugins(@$imports);
+        $has_read_env++;
+        return;
+    }
+}
 
 sub __default_env_name {
     my ($prog) = @_;
@@ -525,15 +853,16 @@ sub _read_env {
     $words;
 }
 
-sub do_dump {
+sub do_dump_object {
     require Data::Dump;
 
     my ($self, $r) = @_;
 
-    local $r->{in_dump} = 1;
+    local $r->{in_dump_object} = 1;
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
+    $self->hook_before_parse_argv($r);
     $self->_parse_argv1($r);
 
     if ($r->{read_env}) {
@@ -546,14 +875,47 @@ sub do_dump {
     # added in hook_after_get_meta().
     my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
 
+    # additional information, because scripts often put their metadata in 'main'
+    # package
+    {
+        no warnings 'once';
+        $self->{'x.main.spec'} = \%main::SPEC;
+    }
+
+    my $label = $ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
+        $ENV{PERINCI_CMDLINE_DUMP}; # old name that will be removed
     my $dump = join(
         "",
-        "# BEGIN DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+        "# BEGIN DUMP $label\n",
         Data::Dump::dump($self), "\n",
-        "# END DUMP $ENV{PERINCI_CMDLINE_DUMP}\n",
+        "# END DUMP $label\n",
     );
 
     [200, "OK", $dump,
+     {
+         stream => 0,
+         "cmdline.skip_format" => 1,
+     }];
+}
+
+sub do_dump_args {
+    require Data::Dump;
+
+    my ($self, $r) = @_;
+
+    [200, "OK", Data::Dump::dump($r->{args}) . "\n",
+     {
+         stream => 0,
+         "cmdline.skip_format" => 1,
+     }];
+}
+
+sub do_dump_config {
+    require Data::Dump;
+
+    my ($self, $r) = @_;
+
+    [200, "OK", Data::Dump::dump($r->{config}) . "\n",
      {
          stream => 0,
          "cmdline.skip_format" => 1,
@@ -593,6 +955,7 @@ sub do_completion {
 
     # check whether subcommand is defined. try to search from --cmd, first
     # command-line argument, or default_subcommand.
+    $self->hook_before_parse_argv($r);
     $self->_parse_argv1($r);
 
     if ($r->{read_env}) {
@@ -639,9 +1002,14 @@ sub do_completion {
                     $subcommand_name_from ne '--cmd' &&
                          $type eq 'arg' && $args{argpos}==0) {
                 require Complete::Util;
+                my $subcommands    = $self->list_subcommands;
+                my @subc_names     = keys %$subcommands;
+                my @subc_summaries = map { $subcommands->{$_}{summary} }
+                    @subc_names;
                 return Complete::Util::complete_array_elem(
-                    array => [keys %{ $self->list_subcommands }],
-                    word  => $words->[$cword]);
+                    array     => \@subc_names,
+                    summaries => \@subc_summaries,
+                    word      => $words->[$cword]);
             }
 
             # otherwise let periscomp do its thing
@@ -956,15 +1324,17 @@ sub _parse_argv2 {
             log_trace("[pericmd] Running hook_before_read_config_file ...");
             $self->hook_before_read_config_file($r);
 
-            $self->_read_config($r);
+            $self->_read_config($r) unless $r->{config};
 
             log_trace("[pericmd] Running hook_after_read_config_file ...");
             $self->hook_after_read_config_file($r);
 
+            my @plugins;
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
                 r                  => $r,
                 config             => $r->{config},
                 args               => \%args,
+                plugins            => \@plugins,
                 program_name       => $self->program_name,
                 subcommand_name    => $r->{subcommand_name},
                 config_profile     => $r->{config_profile},
@@ -973,6 +1343,26 @@ sub _parse_argv2 {
                 meta_is_normalized => 1,
             );
             die $res unless $res->[0] == 200;
+
+            # interpret special parameters (/^-foo/). these will not be
+            # arguments passed to function but instead treated specially
+          TREAT_SPECIAL_PARAMS: {
+
+              PLUGINS_FROM_DASH_PLUGINS: {
+                    my $plugins = delete $args{-plugins};
+                    last unless defined $plugins;
+                    __plugin_activate_plugins(
+                        ref $plugins eq 'ARRAY' ? @$plugins :
+                            __plugin_unflatten_import($plugins)
+                        );
+                } # PLUGINS_FROM_DASH_PLUGINS
+
+              PLUGINS_FROM_CONFIG_SECTIONS: {
+                    last unless @plugins;
+                    __plugin_activate_plugins(@plugins);
+                } # PLUGINS_FROM_CONFIG_SECTIONS
+            } # TREAT_SPECIAL_PARAMS
+
             log_trace("[pericmd] args after reading config files: %s",
                          \%args);
             my $found = $res->[3]{'func.found'};
@@ -1019,7 +1409,7 @@ sub _parse_argv2 {
             per_arg_json        => $self->{per_arg_json},
             per_arg_yaml        => $self->{per_arg_yaml},
             common_opts         => $copts,
-            strict              => $r->{in_completion} ? 0:1,
+            strict              => $r->{in_completion} || $self->{allow_unknown_opts} ? 0:1,
             (ggls_res            => $r->{_ggls_res}) x defined($r->{_ggls_res}),
             on_missing_required_args => sub {
                 my %a = @_;
@@ -1028,7 +1418,7 @@ sub _parse_argv2 {
                 my $src = $as->{cmdline_src} // '';
 
                 # we only get from stdin if stdin is piped
-                $src = '' if $src eq 'stdin_or_args' && -t STDIN;
+                $src = '' if $src eq 'stdin_or_args' && is_interactive(*STDIN);
 
                 if ($src && $as->{req}) {
                     # don't complain, we will fill argument from other source
@@ -1140,6 +1530,12 @@ sub parse_cmdline_src {
     my $action = $r->{action};
     my $meta   = $r->{meta};
 
+    #if ($self->use_utf8) {
+    #    require open; open->import(":utf8");
+    #} elsif ($self->use_locale) {
+    #    require open; open->import(":locale");
+    #}
+
     my $url = $r->{subcommand_data}{url} // $self->{url} // '';
     my $is_network = $url =~ m!^(https?|riap[^:]+):!;
 
@@ -1197,7 +1593,7 @@ sub parse_cmdline_src {
                     my $prompt = Perinci::Object::rimeta($as)->langprop('cmdline_prompt') //
                         sprintf($self->default_prompt_template, $an);
                     print $prompt;
-                    my $iactive = (-t STDOUT);
+                    my $iactive = is_interactive(*STDOUT);
                     Term::ReadKey::ReadMode('noecho')
                           if $term_readkey_available && $iactive && $as->{is_password};
                     chomp($r->{args}{$an} = <STDIN>);
@@ -1242,7 +1638,7 @@ sub parse_cmdline_src {
                             $is_ary ? [<>] :
                                 do {local $/; ~~<>};
                     $r->{args}{"-cmdline_src_$an"} = $src;
-                } elsif ($src eq 'stdin_or_args' && !(-t STDIN)) {
+                } elsif ($src eq 'stdin_or_args' && !is_interactive(*STDIN)) {
                     unless (defined($r->{args}{$an})) {
                         $r->{args}{$an} = $do_stream ?
                             __gen_iter(\*STDIN, $as, $an) :
@@ -1307,21 +1703,36 @@ sub select_output_handle {
   SELECT_HANDLE:
     {
         # view result using external program
-        if ($ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
-            my $viewer = $resmeta->{"cmdline.viewer"} // $ENV{VIEWER} //
-                $ENV{BROWSER};
+        if ($r->{view_result} // $ENV{VIEW_RESULT} // $resmeta->{"cmdline.view_result"}) {
+
+            # select default viewer & preprocessing based on content_type and
+            # availability. should probably be moved elsewhere later.
+            my $default_viewer;
+          SET_DEFAULT_VIEWER: {
+                require File::Which;
+
+                my $ct = $resmeta->{content_type} // '';
+                if ($ct eq 'text/x-org') {
+                    $default_viewer = 'emacs' if File::Which::which("emacs");
+                }
+            }
+
+            my $viewer = $r->{viewer} // $resmeta->{"cmdline.viewer"} //
+                $default_viewer // $ENV{VIEWER} // $ENV{BROWSER};
             last if defined $viewer && !$viewer; # ENV{VIEWER} can be set 0/'' to disable viewing result using external program
             die [500, "No VIEWER program set"] unless defined $viewer;
             $r->{viewer} = $viewer;
             require File::Temp;
             my $filename;
-            ($handle, $filename) = File::Temp::tempfile();
+            ($handle, $filename) = File::Temp::tempfile(
+                SUFFIX => $tempfile_opt_suffix,
+            );
             $r->{viewer_temp_path} = $filename;
         }
 
-        if ($ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
+        if ($r->{page_result} // $ENV{PAGE_RESULT} // $resmeta->{"cmdline.page_result"}) {
             require File::Which;
-            my $pager = $resmeta->{"cmdline.pager"} //
+            my $pager = $r->{pager} // $resmeta->{"cmdline.pager"} //
                 $ENV{PAGER};
             unless (defined $pager) {
                 $pager = "less -FRSX" if File::Which::which("less");
@@ -1333,21 +1744,22 @@ sub select_output_handle {
                 die [500, "Can't determine PAGER"];
             }
             last unless $pager; # ENV{PAGER} can be set 0/'' to disable paging
-            #log_trace("Paging output using %s", $pager);
+            log_trace("Paging output using %s", $pager);
             ## no critic (InputOutput::RequireBriefOpen)
-            open $handle, "| $pager";
+            open $handle, "|-", $pager;
         }
         $handle //= \*STDOUT;
     }
     $r->{output_handle} = $handle;
 }
 
+# TODO: move to plugins
 sub save_output {
     my ($self, $r, $dir) = @_;
     $dir //= $ENV{PERINCI_CMDLINE_OUTPUT_DIR};
 
     unless (-d $dir) {
-        warn "Can't save output to $dir: doesn't exist or not a directory,skipped saving program output";
+        warn "Can't save output to $dir: doesn't exist or not a directory, skipped saving program output";
         return;
     }
 
@@ -1431,7 +1843,7 @@ sub display_result {
 
     my $handle = $r->{output_handle};
 
-    my $sch = $meta->{result}{schema};
+    my $sch = $meta->{result}{schema} // $resmeta->{schema};
     my $type = Data::Sah::Util::Type::get_type($sch) // '';
 
     if ($resmeta->{stream} // $meta->{result}{stream}) {
@@ -1460,8 +1872,19 @@ sub display_result {
             die "Result is a stream but no coderef provided";
         }
     } else {
+        # do preprocessing based on content_type. should probably be moved
+        # elsewhere later.
+      PREPROCESS_RESULT: {
+            last unless defined $r->{viewer};
+
+            my $ct = $resmeta->{content_type} // '';
+            if ($ct eq 'text/x-org') {
+                $fres = "# -*- mode: org -*-\n" . $fres;
+            }
+        }
+
         print $handle $fres;
-        if ($r->{viewer}) {
+        if (defined $r->{viewer}) {
             require ShellQuote::Any::Tiny;
             my $cmd = $r->{viewer} ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
             system $cmd;
@@ -1471,18 +1894,45 @@ sub display_result {
 
 sub run {
     my ($self) = @_;
+
+  DEBUG_COMPLETION:
+    {
+        last; # disabled
+        last unless $ENV{PERINCI_CMDLINE_DEBUG_COMPLETION};
+        no warnings;
+        open my $fh, ">>", ($ENV{PERINCI_CMDLINE_DEBUG_COMPLETION_FILE} // "/tmp/pericmd-completion.log")
+            or do { warn "Can't open completion log file, skipped: $!"; last };
+        print $fh sprintf(
+            "[%s] [prog %s] [pid %d] [uid %d] COMP_LINE=<%s> (%d char(s)) COMP_POINT=<%s>\n",
+            scalar(localtime),
+            $0,
+            $$,
+            $>,
+            $ENV{COMP_LINE},
+            length($ENV{COMP_LINE}),
+            $ENV{COMP_POINT},
+        );
+        print $fh join("", map {"  $_=$ENV{$_}\n"} sort keys %ENV);
+        close $fh;
+    }
+
     log_trace("[pericmd] -> run(), \@ARGV=%s", \@ARGV);
 
     my $co = $self->common_opts;
 
-    my $r = {
+    $r = {
         orig_argv   => [@ARGV],
         common_opts => $co,
+        plugin_instances => \@Plugin_Instances,
+        handlers => \%Handlers,
+        cmdline => $self,
     };
 
-    # dump is special case, we delegate to do_dump()
-    if ($ENV{PERINCI_CMDLINE_DUMP}) {
-        $r->{res} = $self->do_dump($r);
+    # dump object is special case, we delegate to do_dump_object()
+    if ($ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
+            $ENV{PERINCI_CMDLINE_DUMP} # old name that will be removed
+        ) {
+        $r->{res} = $self->do_dump_object($r);
         goto FORMAT;
     }
 
@@ -1499,7 +1949,7 @@ sub run {
     # EXPERIMENTAL, set default format to json if we are running in a pipeline
     # and the right side of the pipe is the 'td' program
     {
-        last if (-t STDOUT) || $r->{format};
+        last if is_interactive(*STDOUT) || $r->{format};
         last unless eval { require Pipe::Find; 1 };
         my $pipeinfo = Pipe::Find::get_stdout_pipe_process();
         last unless $pipeinfo;
@@ -1558,6 +2008,12 @@ sub run {
         log_trace("[pericmd] Running hook_after_parse_argv ...");
         $self->hook_after_parse_argv($r);
 
+        if ($ENV{PERINCI_CMDLINE_DUMP_CONFIG}) {
+            log_trace "[pericmd] Dumping config ...";
+            $r->{res} = $self->do_dump_config($r);
+            goto FORMAT;
+        }
+
         $self->parse_cmdline_src($r);
 
         #log_trace("TMP: parse_res: %s", $parse_res);
@@ -1577,13 +2033,23 @@ sub run {
 
         my $meth = "action_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->can($meth);
+        if ($ENV{PERINCI_CMDLINE_DUMP_ARGS}) {
+            log_trace "[pericmd] Dumping arguments ...";
+            $r->{res} = $self->do_dump_args($r);
+            goto FORMAT;
+        }
         log_trace("[pericmd] Running %s() ...", $meth);
-        $r->{res} = $self->$meth($r);
-        #log_trace("[pericmd] res=%s", $r->{res}); #1
+        __plugin_run_event(
+            name => 'action',
+            on_success => sub {
+                $r->{res} = $self->$meth($r);
+            },
+        );
 
         log_trace("[pericmd] Running hook_after_action ...");
         $self->hook_after_action($r);
     };
+
     my $err = $@;
     if ($err || !$r->{res}) {
         if ($err) {
@@ -1603,17 +2069,26 @@ sub run {
     } elsif (ref($r->{res}) ne 'ARRAY') {
         log_trace("[pericmd] res=%s", $r->{res}); #2
         $r->{res} = [500, "Bug in program: result not an array"];
-    } elsif (!$r->{res}[0] || $r->{res}[0] < 200 || $r->{res}[0] > 555) {
-        log_trace("[pericmd] res=%s", $r->{res}); #3
-        $r->{res} = [500, "Bug in program: invalid result status, ".
-                         "must be 200 <= x <= 555"];
     }
+
+    if (!$r->{res}[0] || $r->{res}[0] < 200 || $r->{res}[0] > 555) {
+        $r->{res}[3]{'x.orig_status'} = $r->{res}[0];
+        $r->{res}[0] = 555;
+    }
+
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
     my $restore_orig_result;
     my $orig_result;
-    if (exists $r->{res}[3]{'cmdline.result'}) {
-        # temporarily change the result for formatting
+    if (exists $r->{res}[3]{'cmdline.result.noninteractive'} && !is_interactive(*STDOUT)) {
+        $restore_orig_result = 1;
+        $orig_result = $r->{res}[2];
+        $r->{res}[2] = $r->{res}[3]{'cmdline.result.noninteractive'};
+    } elsif (exists $r->{res}[3]{'cmdline.result.interactive'} && is_interactive(*STDOUT)) {
+        $restore_orig_result = 1;
+        $orig_result = $r->{res}[2];
+        $r->{res}[2] = $r->{res}[3]{'cmdline.result.interactive'};
+    } elsif (exists $r->{res}[3]{'cmdline.result'}) {
         $restore_orig_result = 1;
         $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
@@ -1672,6 +2147,7 @@ sub run {
 
 =head1 DESCRIPTION
 
+#RENDER_TEMPLATE: file=>"share/templates/description.txt"
 
 =head1 PROGRAM FLOW (NORMAL)
 
@@ -1681,7 +2157,7 @@ If you execute C<run()>, this is what will happen, in order:
 
 =item * Detect if we are running under tab completion mode
 
-This is done by checking the existence of special environment varibles like
+This is done by checking the existence of special environment variables like
 C<COMP_LINE> (bash) or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM
 FLOW (TAB COMPLETION)">. Otherwise, continue.
 
@@ -1722,7 +2198,7 @@ options and strip them. Unknown options at this time will be passed through.
 
 If user specifies common option like C<--help> or C<--version>, then action will
 be set to (respectively) C<help> and C<version> and the second step will be
-skipped. Otherwise we continue the the second step and action by default is set
+skipped. Otherwise we continue the second step and action by default is set
 to C<call>.
 
 At the end of the first step, we already know the subcommand name (of course, if
@@ -1813,6 +2289,87 @@ The result is then output to STDOUT (resume from Run hook_format_result step in
 the normal program flow).
 
 
+=head1 PLUGINS
+
+My long-term goal is to have L<ScriptX> (which is a plugin-oriented framework)
+as a replacement for Perinci::CmdLine. Since L<ScriptX> is still in early
+development, I am adding plugin support to Perinci::CmdLine too (as of 1.900).
+Plugin support is similar to how ScriptX does plugins. Documentation is
+currently sparse; please see existing plugins in Perinci::CmdLine::Plugin::*,
+the ScriptX documentation, as well as the source code directly to get an idea of
+how plugin works. These are the characteristics of the plugin system: you can
+customize at which event any plugin runs (flexibility), you can customize the
+priority of each plugin for an event (flexibility), a "before-event-foo" plugin
+can cancel the "foo" event, an "after-event-foo" plugin can repeat the "foo"
+event.
+
+With plugin support, the hook_*() methods will be phased out eventually. Some
+features will be moved to plugins in subsequent releases. More plugins will be
+added, either in this distribution, or in separate distributions. More events
+will be added to add more "hooks".
+
+=head2 Plugin events
+
+=over
+
+=item * activate_plugin
+
+This event can be used to disable other plugins (see
+L<Perinci::CmdLine::Plugin::DisablePlugin>) or do things when a plugin is
+loaded.
+
+=item * validate_args
+
+Before this event, C<< $r->{args} >> is already set to the input arguments, but
+they are not validated yet.
+
+After this event, C<< $r->{args} >> should have already been validated.
+
+=item * action
+
+After this event, C<< $r->{res} >> should have already been set to the result.
+
+=back
+
+=head2 Activating plugins
+
+=over
+
+=item * From the source code
+
+(Currently no public API, but you can see the source code, particularly the
+C<__plugin_activate_plugins()> function).
+
+=item * From configuration file (special parameter C<-plugins>)
+
+Special parameters C<-plugins> will activate plugins, e.g.:
+
+ -plugins = -DumpArgs
+
+another example:
+
+ -plugins = ["-DumpArgs", "-DumpRes"]
+
+=item * From configuration file ([plugin=...] sections)
+
+For example:
+
+ [plugin=DumpArgs]
+
+ [plugin=DumpArgs]
+ -event=before_validate_args
+
+ [plugin=DisablePlugins]
+ plugins = DumpArgs,DumpConfig
+
+=item * From environment variable
+
+See L</PERINCI_CMDLINE_PLUGINS> and L</PERINCI_CMDLINE_PLUGINS_JSON> under
+L</ENVIRONMENT>.
+
+=back
+
+
 =head1 REQUEST KEYS
 
 The various values in the C<$r> hash/stash.
@@ -1845,7 +2402,7 @@ config file.
 =item * read_env => bool
 
 This is set in run() to signify that we will try to read env for default
-options. This settng can be turned off e.g. in common option C<no_env>. This is
+options. This setting can be turned off e.g. in common option C<no_env>. This is
 never set to true when C<read_env> attribute is set to false, which means that
 we never try to read environment.
 
@@ -1946,6 +2503,10 @@ Program to use as external viewer.
 
 Set to temporary filename created to store the result to view to external viewer
 program.
+
+=item * page_result => bool
+
+=item * pager => str
 
 =back
 
@@ -2109,7 +2670,12 @@ command-line argument even though there is C<default_subcommand> defined).
 
 =head2 description => str
 
+A short description of the application.
+
 =head2 exit => bool (default: 1)
+
+Define the application exit behaviour.  A false value here allows hook code
+normally run directly before the application exits to be skipped.
 
 =head2 formats => array
 
@@ -2119,10 +2685,14 @@ Available output formats.
 
 Default format.
 
+=head2 allow_unknown_opts => bool (default: 0)
+
+Whether to allow unknown options.
+
 =head2 pass_cmdline_object => bool (default: 0)
 
 Whether to pass special argument C<-cmdline> containing the cmdline object to
-function. This can be overriden using the C<pass_cmdline_object> on a
+function. This can be overridden using the C<pass_cmdline_object> on a
 per-subcommand basis.
 
 In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
@@ -2191,7 +2761,12 @@ subcommands.
 
 =item * C<use_utf8> (bool, optional)
 
-Whether to issue C<< binmode(STDOUT, ":utf8") >>. See L<Perinci::CmdLine::Manual/"LOGGING"> for more details.
+Whether to issue C<< use open, ":utf8" >>. Alternative: C<use_locale>. Takes
+precedence over C<use_locale>.
+
+=item * C<use_locale> (bool, optional)
+
+Whether to issue C<< use open, ":locale" >>. Alternative: C<use_utf8>.
 
 =item * C<undo> (bool, optional)
 
@@ -2247,7 +2822,12 @@ requested name only.
 
 =head2 summary => str
 
+Optional, displayed in description of the option in help/usage text.
+
 =head2 tags => array of str
+
+For grouping or categorizing subcommands, e.g. when displaying list of
+subcommands.
 
 =head2 url => str
 
@@ -2302,18 +2882,21 @@ directory entry.
 =head2 cleanser => obj
 
 Object to cleanse result for JSON output. By default this is an instance of
-L<Data::Clean::JSON> and should not be set to other value in most cases.
+L<Data::Clean::ForJSON> and should not be set to other value in most cases.
 
 =head2 use_cleanser => bool (default: 1)
 
 When a function returns result, and the user wants to display the result as
-JSON, the result might need to be cleansed first (using L<Data::Clean::JSON> by
-default) before it can be encoded to JSON, for example it might contain Perl
+JSON, the result might need to be cleansed first (using L<Data::Clean::ForJSON>
+by default) before it can be encoded to JSON, for example it might contain Perl
 objects or scalar references or other stuffs. If you are sure that your function
 does not produce those kinds of data, you can set this to false to produce a
 more lightweight script.
 
 =head2 extra_urls_for_version => array of str
+
+An array of extra URLs for which version information is to be displayed for
+the action being performed.
 
 =head2 skip_format => bool
 
@@ -2342,7 +2925,7 @@ Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
 
 =head2 log_level => str
 
-Set default log level. Will be overriden by C<< $r->{log_level} >> which is set
+Set default log level. Will be overridden by C<< $r->{log_level} >> which is set
 from command-line options like C<--log-level>, C<--trace>, etc.
 
 
@@ -2520,6 +3103,14 @@ Replace result. Can be useful for example in this case:
 When called as a normal function we return boolean value. But as a CLI, we
 display a more user-friendly message.
 
+=head2 attribute: cmdline.result.interactive => any
+
+Like C<cmdline.result> but when script is run interactively.
+
+=head2 attribute: cmdline.result.noninteractive => any
+
+Like C<cmdline.result> but when script is run non-interactively (in a pipeline).
+
 =head2 attribute: cmdline.default_format => str
 
 Default format to use. Can be useful when you want to display the result using a
@@ -2570,6 +3161,11 @@ metadata attribute.
 This is added by this module, so exit code can be tested.
 
 
+=head1 CONFIGURATION FILE SUPPORT
+
+TBD.
+
+
 =head1 ENVIRONMENT
 
 =head2 BROWSER
@@ -2596,13 +3192,31 @@ C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=head2 PERINCI_CMDLINE_DUMP
+=head2 PERINCI_CMDLINE_DUMP_ARGS
 
-String. Default undef. If set to a true value, will dump Perinci::CmdLine
-object at the start of run() and exit. Useful to get object's attributes and
-reconstruct the object later. Used in, e.g. L<App::shcompgen> to generate an
-appropriate completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to
-generate POD documentation about the script. See also L<Perinci::CmdLine::Dump>.
+Boolean. If set to true, instead of running normal action, will instead dump
+arguments that will be passed to function, (after merge with values from
+environment/config files, and validation/coercion), in Perl format (using
+L<Data::Dump>) and exit.
+
+Useful for debugging or information extraction.
+
+=head2 PERINCI_CMDLINE_DUMP_CONFIG
+
+Boolean. If set to true, instead of running normal action, will dump
+configuration that is using C<read_config()>, in Perl format (using
+L<Data::Dump>) and exit.
+
+Useful for debugging or information extraction.
+
+=head2 PERINCI_CMDLINE_DUMP_OBJECT
+
+String. Default undef. If set to a true value, instead of running normal action,
+will dump Perinci::CmdLine object at the start of run() in Perl format (using
+L<Data::Dump>) and exit. Useful to get object's attributes and reconstruct the
+object later. Used in, e.g. L<App::shcompgen> to generate an appropriate
+completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to generate POD
+documentation about the script. See also L<Perinci::CmdLine::Dump>.
 
 The value of the this variable will be used as the label in the dump delimiter,
 .e.g:
@@ -2610,6 +3224,8 @@ The value of the this variable will be used as the label in the dump delimiter,
  # BEGIN DUMP foo
  ...
  # END DUMP foo
+
+Useful for debugging or information extraction.
 
 =head2 PERINCI_CMDLINE_OUTPUT_DIR
 
@@ -2627,11 +3243,30 @@ Output directory must already exist, or Perinci::CmdLine will display a warning
 and then skip saving output.
 
 Data that is not representable as JSON will be cleansed using
-L<Data::Clean::JSON>.
+L<Data::Clean::ForJSON>.
 
 Streaming output will not be saved appropriately, because streaming output
 contains coderef that will be called repeatedly during the normal displaying of
 result.
+
+=head2 PERINCI_CMDLINE_PLUGINS
+
+String. A list of plugins to load at the start of program. Format:
+
+ -PluginName1,arg1name,arg1val,arg2name,arg2val,...,-PluginName2,...
+
+Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
+argument list can be skipped if you don't want to pass arguments to a plugin.
+
+=head2 PERINCI_CMDLINE_PLUGINS_JSON
+
+String. Like L</PERINCI_CMDLINE_PLUGINS> but assumed to be in JSON encoding, to
+be able to encode data structure (for complex arguments). Syntax:
+
+ ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
+
+Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
+hash can be skipped if you don't want to pass arguments to a plugin.
 
 =head2 PERINCI_CMDLINE_PROGRAM_NAME
 

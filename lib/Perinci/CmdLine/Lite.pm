@@ -1,6 +1,8 @@
 package Perinci::CmdLine::Lite;
 
+# AUTHORITY
 # DATE
+# DIST
 # VERSION
 
 use 5.010001;
@@ -25,8 +27,11 @@ has validate_args => (
     is=>'rw',
     default => 1,
 );
+has plugins => (
+    is => 'rw',
+);
 
-my $formats = [qw/text text-simple text-pretty json json-pretty csv html html+datatables perl/];
+my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -49,7 +54,7 @@ sub BUILD {
         };
     }
 
-    my $_t = sub {
+    my $_copy = sub {
         no warnings;
         my $co_name = shift;
         my $href = $Perinci::CmdLine::Base::copts{$co_name};
@@ -59,37 +64,39 @@ sub BUILD {
     if (!$self->{common_opts}) {
         my $copts = {};
 
-        $copts->{version}   = { $_t->('version'), };
-        $copts->{help}      = { $_t->('help'), };
+        $copts->{version}   = { $_copy->('version'), };
+        $copts->{help}      = { $_copy->('help'), };
 
         unless ($self->skip_format) {
             $copts->{format}    = {
-                $_t->('format'),
+                $_copy->('format'),
                 schema => ['str*' => in => $formats],
             };
-            $copts->{json}      = { $_t->('json'), };
-            $copts->{naked_res} = { $_t->('naked_res'), };
+            $copts->{json}        = { $_copy->('json'), };
+            $copts->{naked_res}   = { $_copy->('naked_res'), };
+            $copts->{page_result} = { $_copy->('page_result'), };
+            $copts->{view_result} = { $_copy->('view_result'), };
         }
         if ($self->subcommands) {
-            $copts->{subcommands} = { $_t->('subcommands'), };
+            $copts->{subcommands} = { $_copy->('subcommands'), };
         }
         if ($self->default_subcommand) {
-            $copts->{cmd} = { $_t->('cmd') };
+            $copts->{cmd} = { $_copy->('cmd') };
         }
         if ($self->read_config) {
-            $copts->{config_path}    = { $_t->('config_path') };
-            $copts->{no_config}      = { $_t->('no_config') };
-            $copts->{config_profile} = { $_t->('config_profile') };
+            $copts->{config_path}    = { $_copy->('config_path') };
+            $copts->{no_config}      = { $_copy->('no_config') };
+            $copts->{config_profile} = { $_copy->('config_profile') };
         }
         if ($self->read_env) {
-            $copts->{no_env} = { $_t->('no_env') };
+            $copts->{no_env} = { $_copy->('no_env') };
         }
         if ($self->log) {
-            $copts->{log_level} = { $_t->('log_level'), };
-            $copts->{trace}     = { $_t->('trace'), };
-            $copts->{debug}     = { $_t->('debug'), };
-            $copts->{verbose}   = { $_t->('verbose'), };
-            $copts->{quiet}     = { $_t->('quiet'), };
+            $copts->{log_level} = { $_copy->('log_level'), };
+            $copts->{trace}     = { $_copy->('trace'), };
+            $copts->{debug}     = { $_copy->('debug'), };
+            $copts->{verbose}   = { $_copy->('verbose'), };
+            $copts->{quiet}     = { $_copy->('quiet'), };
         }
         $self->{common_opts} = $copts;
     }
@@ -97,6 +104,10 @@ sub BUILD {
     $self->{formats} //= $formats;
 
     $self->{per_arg_json} //= 1;
+
+    Perinci::CmdLine::Base::__plugin_activate_plugins_in_env();
+    Perinci::CmdLine::Base::__plugin_activate_plugins(@{ $self->{plugins} })
+          if $self->{plugins};
 }
 
 my $setup_progress;
@@ -224,11 +235,10 @@ sub hook_before_parse_argv {
 }
 
 sub hook_before_action {
+
     my ($self, $r) = @_;
 
-    # validate arguments using schema from metadata
-  VALIDATE_ARGS:
-    {
+  VALIDATE_ARGS: {
         last unless $self->validate_args;
 
         # unless we're feeding the arguments to function, don't bother
@@ -238,62 +248,118 @@ sub hook_before_action {
         my $meta = $r->{meta};
 
         # function is probably already wrapped
-        last if $meta->{'x.perinci.sub.wrapper.logs'} &&
+        return if $meta->{'x.perinci.sub.wrapper.logs'} &&
             (grep { $_->{validate_args} }
              @{ $meta->{'x.perinci.sub.wrapper.logs'} });
 
-        require Data::Sah;
+        # function can validate its args, so we don't have to do validation for
+        # it
+        last if $meta->{features} && $meta->{features}{validate_vars};
 
-        # to be cheap, we simply use "$ref" as key as cache key. to be proper,
-        # it should be hash of serialized content.
-        my %validators; # key = "$schema"
+        Perinci::CmdLine::Base::__plugin_run_event(
+            name => 'validate_args',
+            r => $r,
+            on_success => sub {
+                no strict 'refs';
 
-        for my $arg (sort keys %{ $meta->{args} // {} }) {
-            next unless exists($r->{args}{$arg});
+                # to be cheap, we simply use "$ref" as key as cache key. to be
+                # proper, it should be hash of serialized content.
+                my %validators_by_arg; # key = argname
 
-            # we don't support validation of input stream because this must be
-            # done after each 'get item' (but periswrap does)
-            next if $meta->{args}{$arg}{stream};
+              USE_VALIDATORS_FROM_SCHEMA_V: {
+                    my $url = $r->{subcommand_data}{url};
+                    $url =~ m!\A/(.+)/(\w+)\z! or last;
+                    my $func = $2;
+                    (my $mod = $1) =~ s!/!::!g;
+                    my $schemav_mod = "Sah::SchemaV::$mod";
+                    (my $schemav_mod_pm = "$schemav_mod.pm") =~ s!::!/!g;
+                    eval { require $schemav_mod_pm };
+                    last if $@;
 
-            my $schema = $meta->{args}{$arg}{schema};
-            next unless $schema;
-            unless ($validators{"$schema"}) {
-                my $v = Data::Sah::gen_validator($schema, {
-                    return_type => 'str+val',
-                    schema_is_normalized => 1,
-                });
-                $validators{"$schema"} = $v;
-            }
-            my $res = $validators{"$schema"}->($r->{args}{$arg});
-            if ($res->[0]) {
-                die [400, "Argument '$arg' fails validation: $res->[0]"];
-            }
-            my $val0 = $r->{args}{$arg};
-            my $coerced_val = $res->[1];
-            $r->{args}{$arg} = $coerced_val;
-            $r->{args}{"-orig_$arg"} = $val0 unless equal2($val0, $coerced_val);
-        }
+                    #say "D:we have pre-compiled validator codes";
 
-        if ($meta->{args_rels}) {
-            my $schema = [hash => $meta->{args_rels}];
-            my $sah = Data::Sah->new;
-            my $hc  = $sah->get_compiler("human");
-            my $cd  = $hc->init_cd;
-            $cd->{args}{lang} //= $cd->{default_lang};
-            my $v = Data::Sah::gen_validator($schema, {
-                return_type => 'str',
-                human_hash_values => {
-                    field  => $hc->_xlt($cd, "argument"),
-                    fields => $hc->_xlt($cd, "arguments"),
-                },
-            });
-            my $res = $v->($r->{args});
-            if ($res) {
-                die [400, $res];
-            }
-        }
+                    for my $arg (sort keys %{ $meta->{args} // {} }) {
+                        next unless exists($r->{args}{$arg});
 
-    }
+                        # we don't support validation of input stream because
+                        # this must be done after each 'get item' (but periswrap
+                        # does)
+                        next if $meta->{args}{$arg}{stream};
+
+                        my $v = ${"$schemav_mod\::Args_Validators"}{$func}{$arg}
+                            or next;
+                        #say "D:using precompiled validator for arg $arg";
+                        $validators_by_arg{$arg} = $v;
+                    }
+                }
+
+              GEN_VALIDATORS: {
+                    my %validators_by_schema; # key = "$schema"
+                    require Data::Sah;
+                    for my $arg (sort keys %{ $meta->{args} // {} }) {
+                        next unless exists($r->{args}{$arg});
+
+                        # we don't support validation of input stream because
+                        # this must be done after each 'get item' (but periswrap
+                        # does)
+                        next if $meta->{args}{$arg}{stream};
+
+                        my $schema = $meta->{args}{$arg}{schema};
+                        next unless $schema;
+
+                        unless ($validators_by_schema{"$schema"}) {
+                            my $v = Data::Sah::gen_validator($schema, {
+                                return_type => 'str+val',
+                                schema_is_normalized => 1,
+                            });
+                            $validators_by_schema{"$schema"} = $v;
+                            $validators_by_arg{$arg} = $v;
+                        }
+                    }
+                }
+
+              DO_VALIDATE: {
+                    for my $arg (sort keys %{ $meta->{args} // {} }) {
+                        my $v = $validators_by_arg{$arg} or next;
+                        my $res = $v->($r->{args}{$arg});
+                        if ($res->[0]) {
+                            die [400, "Argument '$arg' fails validation: $res->[0]"];
+                        }
+                        my $val0 = $r->{args}{$arg};
+                        my $coerced_val = $res->[1];
+                        $r->{args}{$arg} = $coerced_val;
+                        $r->{args}{"-orig_$arg"} = $val0
+                            unless equal2($val0, $coerced_val);
+                    }
+                } # DO_VALIDATE
+
+              DO_VALIDATE_ARGS_RELS: {
+                    last unless $meta->{args_rels};
+
+                    # we haven't precompiled validator for args_rels yet
+                    require Data::Sah;
+
+                    my $schema = [hash => $meta->{args_rels}];
+                    my $sah = Data::Sah->new;
+                    my $hc  = $sah->get_compiler("human");
+                    my $cd  = $hc->init_cd;
+                    $cd->{args}{lang} //= $cd->{default_lang};
+                    my $v = Data::Sah::gen_validator($schema, {
+                        return_type => 'str',
+                        human_hash_values => {
+                            field  => $hc->_xlt($cd, "argument"),
+                            fields => $hc->_xlt($cd, "arguments"),
+                        },
+                    });
+                    my $res = $v->($r->{args});
+                    if ($res) {
+                        die [400, $res];
+                    }
+                } # DO_VALIDATE_ARGS_RELS
+
+            },
+        );
+    } # VALIDATE_ARGS
 }
 
 sub hook_format_result {
@@ -305,7 +371,13 @@ sub hook_format_result {
     if ($fmt eq 'html+datatables') {
         $fmt = 'text-pretty';
         $ENV{VIEW_RESULT} //= 1;
+        no warnings 'once';
+        $Perinci::CmdLine::Base::tempfile_opt_suffix = '.html';
         $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Text::Table::HTML::DataTables';
+    } elsif ($fmt eq 'termtable') {
+        $fmt = 'text-pretty';
+        no warnings 'once';
+        $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Term::TablePrint';
     }
 
     my $fres = Perinci::Result::Format::Lite::format(
@@ -337,20 +409,26 @@ sub hook_display_result {
 
     my $handle = $r->{output_handle};
 
-    # set utf8 flag
-    my $utf8;
+    my $layer;
+  SELECT_LAYER:
     {
-        last if defined($utf8 = $ENV{UTF8});
         if ($resmeta->{'x.hint.result_binary'}) {
             # XXX only when format is text?
-            $utf8 = 0; last;
+            $layer = ":bytes"; last;
         }
-        if ($r->{subcommand_data}) {
-            last if defined($utf8 = $r->{subcommand_data}{use_utf8});
+
+        if ($ENV{UTF8} ||
+                defined($r->{subcommand_data} && $r->{subcommand_data}{use_utf8}) ||
+                $self->use_utf8) {
+            $layer = ":encoding(utf8)"; last;
         }
-        $utf8 = $self->use_utf8;
+
+        if ($self->use_locale) {
+            $layer = ":locale"; last;
+        }
+
     }
-    binmode($handle, ":encoding(utf8)") if $utf8;
+    binmode($handle, $layer) if $layer;
 
     $self->display_result($r);
 }
@@ -378,45 +456,64 @@ sub hook_after_get_meta {
     );
 
     my $meta_uses_opt_n = 0;
+    my $meta_uses_opt_N = 0;
     {
         last unless $ggls_res->[0] == 200;
         my $opts = $ggls_res->[3]{'func.opts'};
         if (grep { $_ eq '-n' } @$opts) { $meta_uses_opt_n = 1 }
+        if (grep { $_ eq '-N' } @$opts) { $meta_uses_opt_N = 1 }
     }
 
     require Perinci::Object;
     my $metao = Perinci::Object::risub($r->{meta});
 
+    # delete --format, --json, --naked-res if function does not want its output
+    # to be formatted
+    {
+        last if $self->skip_format; # already doesn't have those copts
+        last unless $r->{meta}{'cmdline.skip_format'};
+        delete $copts->{format};
+        delete $copts->{json};
+        delete $copts->{naked_res};
+    }
+
     # add --dry-run (and -n shortcut, if no conflict)
     {
+        last if $copts->{dry_run} || $copts->{no_dry_run}; # sometimes we are run more than once?
         last unless $metao->can_dry_run;
         my $default_dry_run = $metao->default_dry_run // $self->default_dry_run;
         $r->{dry_run} = 1 if $default_dry_run;
         $r->{dry_run} = ($ENV{DRY_RUN} ? 1:0) if defined $ENV{DRY_RUN};
 
-        my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
-        $copts->{dry_run} = {
-            getopt  => $default_dry_run ? "$optname!" : $optname,
-            summary => $default_dry_run ?
-                "Disable simulation mode (also via DRY_RUN=0)" :
-                "Run in simulation mode (also via DRY_RUN=1)",
-            handler => sub {
-                my ($go, $val, $r) = @_;
-                if ($val) {
-                    log_debug("[pericmd] Dry-run mode is activated");
-                    $r->{dry_run} = 1;
-                } else {
+        if ($default_dry_run) {
+            my $optname = 'no-dry-run' . ($meta_uses_opt_N ? '' : '|N');
+            $copts->{no_dry_run} = {
+                getopt  => $optname,
+                summary => "Disable simulation mode (also via DRY_RUN=0)",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
                     log_debug("[pericmd] Dry-run mode is deactivated");
                     $r->{dry_run} = 0;
+                },
+            };
+        } else {
+            my $optname = 'dry-run' . ($meta_uses_opt_n ? '' : '|n');
+            $copts->{dry_run} = {
+                getopt  => $optname,
+                summary => "Run in simulation mode (also via DRY_RUN=1)",
+                handler => sub {
+                    my ($go, $val, $r) = @_;
+                    log_debug("[pericmd] Dry-run mode is activated");
+                    $r->{dry_run} = 1;
                 }
-            },
-        };
+            };
+        }
     }
 
     # check deps property. XXX this should be done only when we don't wrap
     # subroutine, because Perinci::Sub::Wrapper already checks the deps
     # property.
-    if ($r->{meta}{deps} && !$r->{in_dump} && !$r->{in_completion}) {
+    if ($r->{meta}{deps} && !$r->{in_dump_object} && !$r->{in_completion}) {
         require Perinci::Sub::DepChecker;
         my $res = Perinci::Sub::DepChecker::check_deps($r->{meta}{deps});
         if ($res) {
@@ -505,6 +602,7 @@ sub action_help {
         program_summary => ($scd ? $scd->{summary}:undef ) // $meta->{summary},
         program_description => $scd ? $scd->{description} : undef,
         meta => $meta,
+        meta_is_normalized => 1,
         subcommands => $has_sc_no_sc ? $self->list_subcommands : undef,
         common_opts => $common_opts,
         per_arg_json => $self->per_arg_json,
@@ -570,19 +668,19 @@ backend on the fly.
 
 =head1 REQUEST KEYS
 
-All those supported by L<Perinci::CmdLine::Base>, plus:
-
-=over
-
-=back
-
+All those supported by L<Perinci::CmdLine::Base>.
 
 =head1 ATTRIBUTES
 
 All the attributes of L<Perinci::CmdLine::Base>, plus:
 
-=head2 validate_args => bool (default: 1)
+=over
 
+=item * validate_args => bool (default: 1)
+
+Validate arguments using schema from metadata.
+
+=back
 
 =head1 METHODS
 
