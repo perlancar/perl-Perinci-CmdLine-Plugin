@@ -1,17 +1,18 @@
 package Perinci::CmdLine::Plugin::DisablePlugin;
 
+# put pragmas + Log::ger here
+use strict;
+use warnings;
+use parent 'Perinci::CmdLine::PluginBase';
+use Log::ger;
+
+# put other modules alphabetically here
+
+# put global variables alphabetically here
 # AUTHORITY
 # DATE
 # DIST
 # VERSION
-
-# IFUNBUILT
-use strict;
-use warnings;
-# END IFUNBUILT
-use Log::ger;
-
-use parent 'Perinci::CmdLine::PluginBase';
 
 sub meta {
     return {

@@ -1,16 +1,20 @@
 ## no critic: ControlStructures::ProhibitUnreachableCode
 package Perinci::CmdLine::Base;
 
-# AUTHORITY
-# DATE
-# DIST
-# VERSION
-
+# put pragmas + Log::ger here
 use 5.010001;
 use strict;
 use warnings;
 use Log::ger;
+
+# put other modules alphabetically here
 use IO::Interactive qw(is_interactive);
+
+# put global variables alphabetically here
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 # this class can actually be a role instead of base class for pericmd &
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't

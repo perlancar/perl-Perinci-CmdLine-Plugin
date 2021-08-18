@@ -1,16 +1,17 @@
 package Perinci::CmdLine::PluginBase;
 
+# put pragmas + Log::ger here
+use strict 'subs', 'vars';
+use warnings;
+
+# put other modules alphabetically here
+#require Perinci::CmdLine::Base;
+
+# put global variables alphabetically here
 # AUTHORITY
 # DATE
 # DIST
 # VERSION
-
-# IFUNBUILT
-use strict 'subs', 'vars';
-use warnings;
-# END IFUNBUILT
-
-#require Perinci::CmdLine::Base;
 
 sub new {
     my ($class, %args) = (shift, @_);

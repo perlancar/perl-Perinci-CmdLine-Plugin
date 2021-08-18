@@ -1,19 +1,23 @@
 package Perinci::CmdLine::Lite;
 
-# AUTHORITY
-# DATE
-# DIST
-# VERSION
-
+# put pragmas + Log::ger here
 use 5.010001;
 # use strict; # already enabled by Mo
 # use warnings; # already enabled by Mo
 use Log::ger;
 
+# put other modules alphabetically here
+use IO::Interactive qw(is_interactive);
 use List::Util qw(first);
 use Mo qw(build default);
 #use Moo;
 extends 'Perinci::CmdLine::Base';
+
+# put global variables alphabetically here
+# AUTHORITY
+# DATE
+# DIST
+# VERSION
 
 # when debugging, use this instead of the above because Mo doesn't give clear
 # error message if base class has errors.
@@ -114,7 +118,7 @@ my $setup_progress;
 sub _setup_progress_output {
     my $self = shift;
 
-    return unless $ENV{PROGRESS} // (-t STDOUT);
+    return unless $ENV{PROGRESS} // is_interactive(*STDOUT);
 
     require Progress::Any::Output;
     Progress::Any::Output->set("TermProgressBarColor");
@@ -260,7 +264,7 @@ sub hook_before_action {
             name => 'validate_args',
             r => $r,
             on_success => sub {
-                no strict 'refs';
+                no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
 
                 # to be cheap, we simply use "$ref" as key as cache key. to be
                 # proper, it should be hash of serialized content.
@@ -542,7 +546,7 @@ sub action_subcommands {
 }
 
 sub action_version {
-    no strict 'refs';
+    no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
 
     my ($self, $r) = @_;
 
