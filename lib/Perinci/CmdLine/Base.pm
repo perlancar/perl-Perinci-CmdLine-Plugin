@@ -2307,12 +2307,17 @@ priority of each plugin for an event (flexibility), a "before-event-foo" plugin
 can cancel the "foo" event, an "after-event-foo" plugin can repeat the "foo"
 event.
 
-With plugin support, the hook_*() methods will be phased out eventually. Some
+With plugin support, the C<hook_*()> methods will be phased out eventually. Some
 features will be moved to plugins in subsequent releases. More plugins will be
 added, either in this distribution, or in separate distributions. More events
 will be added to add more "hooks".
 
 =head2 Plugin events
+
+Currently only a few events have been added, as not all C<hook_*()> methods have
+been converted to plugin events yet. More events will be added in the future.
+Also note that for all events there are the two additional C<before_$event> and
+C<after_$event> (included below for ease of search).
 
 =over
 
@@ -2322,6 +2327,10 @@ This event can be used to disable other plugins (see
 L<Perinci::CmdLine::Plugin::DisablePlugin>) or do things when a plugin is
 loaded.
 
+=item * before_activate_plugin
+
+=item * after_activate_plugin
+
 =item * validate_args
 
 Before this event, C<< $r->{args} >> is already set to the input arguments, but
@@ -2329,9 +2338,17 @@ they are not validated yet.
 
 After this event, C<< $r->{args} >> should have already been validated.
 
+=item * before_validate_args
+
+=item * after_validate_args
+
 =item * action
 
 After this event, C<< $r->{res} >> should have already been set to the result.
+
+=item * before_action
+
+=item * after_action
 
 =back
 
