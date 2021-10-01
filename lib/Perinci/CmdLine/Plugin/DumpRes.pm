@@ -49,7 +49,8 @@ or in code instantiating L<Perinci::CmdLine>:
      plugins => ["DumpRes"],
  );
 
-If you want to dump at different events:
+By default this plugin acts after the C<action> event. If you want to dump at a
+different event:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
