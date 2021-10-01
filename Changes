@@ -1,3 +1,11 @@
+1.910   2021-10-01  Released-By: PERLANCAR; Urgency: medium
+
+	- [bugfix] Do not use Complete::Bash::parse_cmdline() et al to
+	  parse command-line options from environment variable as they are
+	  indeed not suitable and will split e.g. a=b into three separate
+	  words; use core-module Text::ParseWords instead.
+
+
 1.909   2021-10-01  Released-By: PERLANCAR; Urgency: medium
 
 	- Add plugin: Exit.
