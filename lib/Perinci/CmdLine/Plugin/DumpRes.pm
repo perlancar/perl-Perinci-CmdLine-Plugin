@@ -58,5 +58,8 @@ If you want to dump at different events:
      ],
  );
 
+For list of plugin events available, see L<Perinci::CmdLine::Base/"Plugin
+events">.
+
 
 =head1 DESCRIPTION

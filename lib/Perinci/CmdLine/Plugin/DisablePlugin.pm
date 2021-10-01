@@ -86,5 +86,8 @@ or in code instantiating L<Perinci::CmdLine>:
      plugins => [DisablePlugin => {plugins=>["Foo", qr/^Bar/]}],
  );
 
+For list of plugin events available, see L<Perinci::CmdLine::Base/"Plugin
+events">.
+
 
 =head1 DESCRIPTION

@@ -1,3 +1,16 @@
+1.908   2021-10-01  Released-By: PERLANCAR; Urgency: low
+
+        - No functional changes.
+
+        - [doc] Tweak documentation about plugin (list before_ & after_ events,
+          add note about currently only a few events have been added)
+
+        - [dist][committer Paul Cochrane] Add initial GitHub Actions
+          configuration.
+
+        - [internal] Make code pass standard perlcritic configuration.
+
+
 1.907   2021-08-06  Released-By: PERLANCAR; Urgency: medium
 
 	- Rename dependency Data::Clean::JSON -> Data::Clean::ForJSON
