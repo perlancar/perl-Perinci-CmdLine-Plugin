@@ -19,6 +19,7 @@ sub meta {
         summary => 'Dump request stash ($r), by default after action',
         conf => {
         },
+        tags => ['category:debugging'],
     };
 }
 

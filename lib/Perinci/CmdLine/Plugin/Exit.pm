@@ -18,12 +18,14 @@ use parent 'Perinci::CmdLine::PluginBase';
 sub meta {
     return {
         summary => 'Exit program',
+        prio => 99, # by default very low, run after other plugins
         conf => {
             exit_code => {
                 schema => 'byte*',
                 default => 1,
             },
         },
+        tags => ['category:debugging'],
     };
 }
 

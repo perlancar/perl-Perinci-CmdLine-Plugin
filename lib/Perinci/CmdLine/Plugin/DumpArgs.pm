@@ -19,6 +19,7 @@ sub meta {
         summary => 'Dump command-line arguments ($r->{args}), by default after argument validation',
         conf => {
         },
+        tags => ['category:debugging'],
     };
 }
 

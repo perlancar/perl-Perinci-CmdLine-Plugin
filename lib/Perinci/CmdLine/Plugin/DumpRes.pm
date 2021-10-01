@@ -19,6 +19,7 @@ sub meta {
         summary => 'Dump result ($r->{res}), by default after action',
         conf => {
         },
+        tags => ['category:debugging'],
     };
 }
 

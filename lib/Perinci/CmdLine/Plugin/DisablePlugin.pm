@@ -40,6 +40,7 @@ _
                 req => 1,
             },
         },
+        tags => ['category:plugin'],
     };
 }
 
