@@ -835,26 +835,10 @@ sub _read_env {
     log_trace("[pericmd] Checking env %s: %s", $env_name, $env);
     return [] unless defined $env;
 
-    # XXX is it "proper" to use Complete::* modules to parse cmdline, outside
-    # the context of completion?
-
-    my $words;
-    if ($r->{shell} eq 'bash') {
-        require Complete::Bash;
-        ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0) };
-    } elsif ($r->{shell} eq 'fish') {
-        ($words, undef) = @{ Complete::Base::parse_cmdline($env) };
-    } elsif ($r->{shell} eq 'tcsh') {
-        require Complete::Tcsh;
-        ($words, undef) = @{ Complete::Tcsh::parse_cmdline($env) };
-    } elsif ($r->{shell} eq 'zsh') {
-        require Complete::Bash;
-        ($words, undef) = @{ Complete::Bash::parse_cmdline($env) };
-    } else {
-        die "Unsupported shell '$r->{shell}'";
-    }
-    log_trace("[pericmd] Words from env: %s", $words);
-    $words;
+    require Text::ParseWords;
+    my @words = Text::ParseWords::shellwords($env);
+    log_trace("[pericmd] Words from env: %s", \@words);
+    \@words;
 }
 
 sub do_dump_object {
