@@ -1,3 +1,10 @@
+1.911   2021-10-02  Released-By: PERLANCAR; Urgency: low
+
+	- No functional changes.
+
+	- Edit previous Changes for clarity.
+
+
 1.910   2021-10-01  Released-By: PERLANCAR; Urgency: medium
 
 	- [bugfix] Do not use Complete::Bash::parse_cmdline() et al to parse
