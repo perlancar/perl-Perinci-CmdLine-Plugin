@@ -9,7 +9,8 @@ use Log::ger;
 # put other modules alphabetically here
 use IO::Interactive qw(is_interactive);
 use List::Util qw(first);
-use Mo qw(build default);
+use Moo;
+
 #use Moo;
 extends 'Perinci::CmdLine::Base';
 
@@ -108,10 +109,6 @@ sub BUILD {
     $self->{formats} //= $formats;
 
     $self->{per_arg_json} //= 1;
-
-    Perinci::CmdLine::Base::__plugin_activate_plugins_in_env();
-    Perinci::CmdLine::Base::__plugin_activate_plugins(@{ $self->{plugins} })
-          if $self->{plugins};
 }
 
 my $setup_progress;

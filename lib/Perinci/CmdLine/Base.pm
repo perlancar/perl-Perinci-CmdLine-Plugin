@@ -20,13 +20,7 @@ use IO::Interactive qw(is_interactive);
 # pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
 # have attributes), Role::Basic, or Moo::Role.
 
-BEGIN {
-    if ($INC{'Perinci/CmdLine/Classic.pm'}) {
-        require Moo; Moo->import;
-    } else {
-        require Mo; Mo->import(qw(build default));
-    }
-}
+use Moo;
 
 # BEGIN taken from Array::Iter
 sub __array_iter {
@@ -452,6 +446,14 @@ _
     },
 
 );
+
+sub BUILD {
+    my ($self, $args) = @_;
+
+    __plugin_activate_plugins_in_env();
+    __plugin_activate_plugins(@{ $self->{plugins} })
+          if $self->{plugins};
+}
 
 # plugin stuffs
 our @Plugin_Instances;
