@@ -1,4 +1,4 @@
-package Perinci::CmdLine::Plugin::DumpArgs;
+package Perinci::CmdLine::Plugin::Debugging::DumpRes;
 
 # put pragmas + Log::ger here
 use strict;
@@ -16,19 +16,19 @@ use parent 'Perinci::CmdLine::PluginBase';
 
 sub meta {
     return {
-        summary => 'Dump command-line arguments ($r->{args}), by default after argument validation',
+        summary => 'Dump result ($r->{res}), by default after action',
         conf => {
         },
         tags => ['category:debugging'],
     };
 }
 
-sub after_validate_args {
+sub after_action {
     require Data::Dump::Color;
 
     my ($self, $r) = @_;
 
-    Data::Dump::Color::dd($r->{args});
+    Data::Dump::Color::dd($r->{res});
     [200, "OK"];
 }
 
@@ -41,23 +41,22 @@ sub after_validate_args {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-DumpArgs
+ PERINCI_CMDLINE_PLUGINS=-Debugging::DumpRes
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => ["DumpArgs"],
+     plugins => ["Debugging::DumpRes"],
  );
 
-By default this plugin acts after the C<validate_args> event. If you want to
-use at different event(s):
+By default this plugin acts after the C<action> event. If you want to dump at a
+different event:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
      plugins => [
-         'DumpArgs@before_validate_args',
-         'DumpArgs@before_output',
+         'Debugging::DumpArgs@after_format_res',
      ],
  );
 

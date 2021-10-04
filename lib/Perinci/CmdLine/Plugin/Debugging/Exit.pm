@@ -1,6 +1,7 @@
-package Perinci::CmdLine::Plugin::DumpRes;
+package Perinci::CmdLine::Plugin::Debugging::Exit;
 
 # put pragmas + Log::ger here
+use 5.010001; # for defined-or
 use strict;
 use warnings;
 use Log::ger;
@@ -16,8 +17,13 @@ use parent 'Perinci::CmdLine::PluginBase';
 
 sub meta {
     return {
-        summary => 'Dump result ($r->{res}), by default after action',
+        summary => 'Exit program',
+        prio => 99, # by default very low, run after other plugins
         conf => {
+            exit_code => {
+                schema => 'byte*',
+                default => 1,
+            },
         },
         tags => ['category:debugging'],
     };
@@ -27,9 +33,8 @@ sub after_action {
     require Data::Dump::Color;
 
     my ($self, $r) = @_;
-
-    Data::Dump::Color::dd($r->{res});
-    [200, "OK"];
+    my $exit_code = $self->{exit_code} // 1;
+    exit $exit_code;
 }
 
 1;
@@ -41,22 +46,22 @@ sub after_action {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-DumpRes
+ PERINCI_CMDLINE_PLUGINS=-Debugging::Exit
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => ["DumpRes"],
+     plugins => ["Debugging::Exit"],
  );
 
-By default this plugin acts after the C<action> event. If you want to dump at a
-different event:
+By default this plugin acts after the C<action> event. If you want to use at
+a different event:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
      plugins => [
-         'DumpArgs@after_format_res',
+         'Debugging::Exit@after_validate_args',
      ],
  );
 
