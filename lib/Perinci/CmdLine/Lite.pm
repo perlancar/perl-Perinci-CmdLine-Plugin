@@ -32,11 +32,19 @@ has validate_args => (
     is=>'rw',
     default => 1,
 );
-has plugins => (
-    is => 'rw',
-);
 
 my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
+
+around BUILDARGS => sub {
+    my ($orig, $class, @args) = @_;
+    my $attrs = @args == 1 && ref($args[0]) eq 'HASH' ? $args[0] : {@args};
+    $attrs->{plugins} //= [];
+    # always use these plugins
+    push @{ $attrs->{plugins} }, (
+        "RunNormal",
+    );
+    $attrs;
+};
 
 sub BUILD {
     my ($self, $args) = @_;

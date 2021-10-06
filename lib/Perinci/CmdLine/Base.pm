@@ -124,6 +124,10 @@ has default_dry_run => (
     default => 0,
 );
 
+has plugins => (
+    is => 'rw',
+);
+
 # role: requires 'default_prompt_template'
 
 # role: requires 'hook_before_run'
