@@ -35,17 +35,6 @@ has validate_args => (
 
 my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
 
-around BUILDARGS => sub {
-    my ($orig, $class, @args) = @_;
-    my $attrs = @args == 1 && ref($args[0]) eq 'HASH' ? $args[0] : {@args};
-    $attrs->{plugins} //= [];
-    # always use these plugins
-    push @{ $attrs->{plugins} }, (
-        "RunNormal",
-    );
-    $attrs;
-};
-
 sub BUILD {
     my ($self, $args) = @_;
 
@@ -235,7 +224,7 @@ sub hook_before_action {
         # it
         last if $meta->{features} && $meta->{features}{validate_vars};
 
-        Perinci::CmdLine::Base::__plugin_run_event(
+        $self->_plugin_run_event(
             name => 'validate_args',
             r => $r,
             on_success => sub {
