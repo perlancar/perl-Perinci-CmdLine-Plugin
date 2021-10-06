@@ -467,9 +467,11 @@ sub __plugin_run_event {
     my %args = @_;
 
     my $name = $args{name};
-    {
+    if (log_is_trace()) {
         local $args{code} = '...';
         local $args{r} = '...';
+        local $args{on_success} = '...';
+        local $args{on_failure} = '...';
         log_trace "[pericmd] -> run_event(%s)", \%args;
     }
     defined $name or die "Please supply 'name'";
