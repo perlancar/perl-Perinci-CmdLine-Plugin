@@ -53,7 +53,7 @@ sub activate {
 
         (my $event = $k) =~ s/^on_//;
 
-        Perinci::CmdLine::Base::__plugin_add_handler(
+        $self->cmdline->_plugin_add_handler(
             defined $wanted_event ? $wanted_event : $event,
             $plugin_name,
             defined $wanted_prio ? $wanted_prio :
@@ -64,6 +64,10 @@ sub activate {
             },
         );
     }
+}
+
+sub cmdline {
+    $_[0]{cmdline};
 }
 
 1;

@@ -32,9 +32,6 @@ has validate_args => (
     is=>'rw',
     default => 1,
 );
-has plugins => (
-    is => 'rw',
-);
 
 my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
 
@@ -227,7 +224,7 @@ sub hook_before_action {
         # it
         last if $meta->{features} && $meta->{features}{validate_vars};
 
-        Perinci::CmdLine::Base::__plugin_run_event(
+        $self->_plugin_run_event(
             name => 'validate_args',
             r => $r,
             on_success => sub {
