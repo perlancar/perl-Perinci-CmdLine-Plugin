@@ -90,5 +90,4 @@ or in code instantiating L<Perinci::CmdLine>:
 For list of plugin events available, see L<Perinci::CmdLine::Base/"Plugin
 events">.
 
-
-=head1 DESCRIPTION
+=cut
