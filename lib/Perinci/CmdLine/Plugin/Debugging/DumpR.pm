@@ -1,4 +1,4 @@
-package Perinci::CmdLine::Plugin::DumpR;
+package Perinci::CmdLine::Plugin::Debugging::DumpR;
 
 # put pragmas + Log::ger here
 use strict;
@@ -41,13 +41,13 @@ sub after_action {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-DumpR
+ PERINCI_CMDLINE_PLUGINS=-Debugging::DumpR
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => ["DumpR"],
+     plugins => ["Debugging::DumpR"],
  );
 
 By default this plugin acts after the C<action> event. If you want to dump at
@@ -56,7 +56,7 @@ a different event:
  my $app = Perinci::CmdLine::Any->new(
      ...
      plugins => [
-         'DumpArgs@before_end',
+         'Debugging::DumpR@before_end',
      ],
  );
 

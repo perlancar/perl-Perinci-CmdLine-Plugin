@@ -9,7 +9,8 @@ use Log::ger;
 # put other modules alphabetically here
 use IO::Interactive qw(is_interactive);
 use List::Util qw(first);
-use Mo qw(build default);
+use Moo;
+
 #use Moo;
 extends 'Perinci::CmdLine::Base';
 
@@ -30,9 +31,6 @@ has default_prompt_template => (
 has validate_args => (
     is=>'rw',
     default => 1,
-);
-has plugins => (
-    is => 'rw',
 );
 
 my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable html html+datatables perl/];
@@ -108,10 +106,6 @@ sub BUILD {
     $self->{formats} //= $formats;
 
     $self->{per_arg_json} //= 1;
-
-    Perinci::CmdLine::Base::__plugin_activate_plugins_in_env();
-    Perinci::CmdLine::Base::__plugin_activate_plugins(@{ $self->{plugins} })
-          if $self->{plugins};
 }
 
 my $setup_progress;
@@ -153,36 +147,6 @@ sub hook_after_parse_argv {
         }
     }
 }
-
-# BEGIN_BLOCK: equal2
-sub equal2 {
-    state $require = do { require Scalar::Util };
-
-    # for lack of a better name, currently i name this 'equal2'
-    my ($val1, $val2) = @_;
-
-    # here are the rules:
-    # - if both are undef, 1
-    # - undef equals nothing else
-    # - if both are ref, equal if their refaddr() are equal
-    # - if only one is ref, 0
-    # - if none is ref, compare using eq
-
-    if (defined $val1) {
-        return 0 unless defined $val2;
-        if (ref $val1) {
-            return 0 unless ref $val2;
-            return Scalar::Util::refaddr($val1) eq Scalar::Util::refaddr($val2);
-        } else {
-            return 0 if ref $val2;
-            return $val1 eq $val2;
-        }
-    } else {
-        return 0 if defined $val2;
-        return 1;
-    }
-}
-# END_BLOCK: equal2
 
 sub hook_before_parse_argv {
     my ($self, $r) = @_;
@@ -260,7 +224,7 @@ sub hook_before_action {
         # it
         last if $meta->{features} && $meta->{features}{validate_vars};
 
-        Perinci::CmdLine::Base::__plugin_run_event(
+        $self->_plugin_run_event(
             name => 'validate_args',
             r => $r,
             on_success => sub {
@@ -332,8 +296,7 @@ sub hook_before_action {
                         my $val0 = $r->{args}{$arg};
                         my $coerced_val = $res->[1];
                         $r->{args}{$arg} = $coerced_val;
-                        $r->{args}{"-orig_$arg"} = $val0
-                            unless equal2($val0, $coerced_val);
+                        $r->{args}{"-orig_$arg"} = $val0;
                     }
                 } # DO_VALIDATE
 

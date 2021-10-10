@@ -1,4 +1,4 @@
-package Perinci::CmdLine::Plugin::DisablePlugin;
+package Perinci::CmdLine::Plugin::Plugin::DisablePlugin;
 
 # put pragmas + Log::ger here
 use strict;
@@ -63,7 +63,7 @@ sub before_activate_plugin {
         } else {
             next unless $r->{plugin_name} eq $el;
         }
-        log_info "[pericmd DisablePlugin] Disabling loading of Perinci::CmdLine plugin '$r->{plugin_name}'";
+        log_info "[pericmd Plugin::DisablePlugin] Disabling loading of Perinci::CmdLine plugin '$r->{plugin_name}'";
         return [601, "Cancel"];
     }
     [200, "OK"];
@@ -78,13 +78,13 @@ sub before_activate_plugin {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS='-DisablePlugin,plugins,Foo;/^Bar/'
+ PERINCI_CMDLINE_PLUGINS='-Plugin::DisablePlugin,plugins,Foo;/^Bar/'
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => [DisablePlugin => {plugins=>["Foo", qr/^Bar/]}],
+     plugins => ["Plugin::DisablePlugin" => {plugins=>["Foo", qr/^Bar/]}],
  );
 
 For list of plugin events available, see L<Perinci::CmdLine::Base/"Plugin
