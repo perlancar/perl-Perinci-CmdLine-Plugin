@@ -247,7 +247,7 @@ sub hook_before_action {
                     #say "D:we have pre-compiled validator codes";
 
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
-                        next unless exists($r->{args}{$arg});
+                        next unless exists($r->{args}{$arg}) || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'};
 
                         # we don't support validation of input stream because
                         # this must be done after each 'get item' (but periswrap
@@ -265,7 +265,7 @@ sub hook_before_action {
                     my %validators_by_schema; # key = "$schema"
                     require Data::Sah;
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
-                        next unless exists($r->{args}{$arg});
+                        next unless exists($r->{args}{$arg}) || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'};
 
                         # we don't support validation of input stream because
                         # this must be done after each 'get item' (but periswrap
@@ -289,14 +289,23 @@ sub hook_before_action {
               DO_VALIDATE: {
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
                         my $v = $validators_by_arg{$arg} or next;
+
+                        # we want to get default value from schema, but do not
+                        # want to make unspecified args spring into existence
+                        # with 'undef' values. so we record the existence first
+                        # here.
+                        my $arg_exists = exists $r->{args}{$arg};
+
                         my $res = $v->($r->{args}{$arg});
                         if ($res->[0]) {
                             die [400, "Argument '$arg' fails validation: $res->[0]"];
                         }
-                        my $val0 = $r->{args}{$arg};
-                        my $coerced_val = $res->[1];
-                        $r->{args}{$arg} = $coerced_val;
-                        $r->{args}{"-orig_$arg"} = $val0;
+                        if ($arg_exists || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'}) {
+                            my $val0 = $r->{args}{$arg};
+                            my $coerced_val = $res->[1];
+                            $r->{args}{$arg} = $coerced_val;
+                            $r->{args}{"-orig_$arg"} = $val0;
+                        }
                     }
                 } # DO_VALIDATE
 
