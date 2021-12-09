@@ -1,3 +1,10 @@
+1.913   2021-12-09  Released-By: PERLANCAR; Urgency: medium
+
+	- [ux] Add a default 'title' metadata for the result, so result
+	  formatted with Text::Table::HTML or Text::Table::HTML::DataTables
+	  can be more descriptive.
+
+
 1.912   2021-12-01  Released-By: PERLANCAR; Urgency: medium
 
 	- Observe argument specification's attribute:
