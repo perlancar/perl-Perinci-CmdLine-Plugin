@@ -183,6 +183,12 @@ sub on_run {
         $r->{res}[0] = 555;
     }
 
+    $r->{res}[3]{title} //= join(
+        " ",
+        $self->cmdline->program_name,
+        @{ $r->{orig_argv} // \@ARGV },
+    );
+
     $r->{format} //= $r->{res}[3]{'cmdline.default_format'};
     $r->{format} //= $r->{meta}{'cmdline.default_format'};
     my $restore_orig_result;
