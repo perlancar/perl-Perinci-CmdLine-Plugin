@@ -1,7 +1,6 @@
-package Perinci::CmdLine::Plugin::Debugging::Exit;
+package Perinci::CmdLine::Plugin::Debug::DumpArgs;
 
 # put pragmas + Log::ger here
-use 5.010001; # for defined-or
 use strict;
 use warnings;
 use Log::ger;
@@ -17,24 +16,20 @@ use parent 'Perinci::CmdLine::PluginBase';
 
 sub meta {
     return {
-        summary => 'Exit program',
-        prio => 99, # by default very low, run after other plugins
+        summary => 'Dump command-line arguments ($r->{args}), by default after argument validation',
         conf => {
-            exit_code => {
-                schema => 'byte*',
-                default => 1,
-            },
         },
         tags => ['category:debugging'],
     };
 }
 
-sub after_action {
+sub after_validate_args {
     require Data::Dump::Color;
 
     my ($self, $r) = @_;
-    my $exit_code = $self->{exit_code} // 1;
-    exit $exit_code;
+
+    Data::Dump::Color::dd($r->{args});
+    [200, "OK"];
 }
 
 1;
@@ -46,22 +41,23 @@ sub after_action {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-Debugging::Exit
+ PERINCI_CMDLINE_PLUGINS=-Debug::DumpArgs
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => ["Debugging::Exit"],
+     plugins => ["Debug::DumpArgs"],
  );
 
-By default this plugin acts after the C<action> event. If you want to use at
-a different event:
+By default this plugin acts after the C<validate_args> event. If you want to
+use at different event(s):
 
  my $app = Perinci::CmdLine::Any->new(
      ...
      plugins => [
-         'Debugging::Exit@after_validate_args',
+         'Debug::DumpArgs@before_validate_args',
+         'Debug::DumpArgs@before_output',
      ],
  );
 

@@ -49,15 +49,16 @@ sub activate {
         next unless $k =~ /^(before_|on_|after_)(.+)$/;
 
         my $meta_method = "meta_$k";
-        my $meta = $self->can($meta_method) ? $self->$meta_method : {};
+        my $methmeta = $self->can($meta_method) ? $self->$meta_method : {};
 
         (my $event = $k) =~ s/^on_//;
 
         $self->cmdline->_plugin_add_handler(
             defined $wanted_event ? $wanted_event : $event,
             $plugin_name,
-            defined $wanted_prio ? $wanted_prio :
-                (defined $meta->{prio} ? $meta->{prio} : 50),
+            (defined $wanted_prio ? $wanted_prio :
+             defined $methmeta->{prio} ? $methmeta->{prio} :
+             defined $meta->{prio} ? $meta->{prio} : 50),
             sub {
                 my $stash = shift;
                 $self->$k($stash);

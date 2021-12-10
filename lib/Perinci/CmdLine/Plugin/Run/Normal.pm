@@ -33,20 +33,6 @@ _
 sub on_run {
     my ($self, $r) = @_;
 
-    # dump object is special case, we delegate to do_dump_object()
-    if ($ENV{PERINCI_CMDLINE_DUMP_OBJECT} //
-        $ENV{PERINCI_CMDLINE_DUMP} # old name that will be removed
-    ) {
-        $r->{res} = $self->cmdline->do_dump_object($r);
-        goto FORMAT;
-    }
-
-    # completion is special case, we delegate to do_completion()
-    if ($self->cmdline->_detect_completion($r)) {
-        $r->{res} = $self->cmdline->do_completion($r);
-        goto FORMAT;
-    }
-
     my $co = $r->{common_opts};
 
     # set default from common options
@@ -115,12 +101,6 @@ sub on_run {
         log_trace("[pericmd] Running hook_after_parse_argv ...");
         $self->cmdline->hook_after_parse_argv($r);
 
-        if ($ENV{PERINCI_CMDLINE_DUMP_CONFIG}) {
-            log_trace "[pericmd] Dumping config ...";
-            $r->{res} = $self->cmdline->do_dump_config($r);
-            goto FORMAT;
-        }
-
         $self->cmdline->parse_cmdline_src($r);
 
         #log_trace("TMP: parse_res: %s", $parse_res);
@@ -140,11 +120,6 @@ sub on_run {
 
         my $meth = "action_$r->{action}";
         die [500, "Unknown action $r->{action}"] unless $self->cmdline->can($meth);
-        if ($ENV{PERINCI_CMDLINE_DUMP_ARGS}) {
-            log_trace "[pericmd] Dumping arguments ...";
-            $r->{res} = $self->cmdline->do_dump_args($r);
-            goto FORMAT;
-        }
         log_trace("[pericmd] Running %s() ...", $meth);
         $self->cmdline->_plugin_run_event(
             name => 'action',
@@ -206,31 +181,9 @@ sub on_run {
         $orig_result = $r->{res}[2];
         $r->{res}[2] = $r->{res}[3]{'cmdline.result'};
     }
+
   FORMAT:
-    my $is_success = $r->{res}[0] =~ /\A2/ || $r->{res}[0] == 304;
-
-    if (defined $ENV{PERINCI_CMDLINE_OUTPUT_DIR}) {
-        $self->cmdline->save_output($r);
-    }
-
-    if ($is_success &&
-            ($self->cmdline->skip_format ||
-             $r->{meta}{'cmdline.skip_format'} ||
-             $r->{res}[3]{'cmdline.skip_format'})) {
-        $r->{fres} = $r->{res}[2] // '';
-    } elsif ($is_success &&
-                 ($r->{res}[3]{stream} // $r->{meta}{result}{stream})) {
-        # stream will be formatted as displayed by display_result()
-    }else {
-        log_trace("[pericmd] Running hook_format_result ...");
-        $r->{res}[3]{stream} = 0;
-        $r->{fres} = $self->cmdline->hook_format_result($r) // '';
-    }
-    $self->cmdline->select_output_handle($r);
-    log_trace("[pericmd] Running hook_display_result ...");
-    $self->cmdline->hook_display_result($r);
-    log_trace("[pericmd] Running hook_after_run ...");
-    $self->cmdline->hook_after_run($r);
+    $self->cmdline->_format($r);
 
     if ($restore_orig_result) {
         $r->{res}[2] = $orig_result;
@@ -247,10 +200,12 @@ sub on_run {
         exit $exitcode;
     } else {
         # so this can be tested
-        log_trace("[pericmd] <- run(), exitcode=%s", $exitcode);
         $r->{res}[3]{'x.perinci.cmdline.base.exit_code'} = $exitcode;
-        return $r->{res};
     }
+
+    $self->_unsetup_progress_output;
+
+    [201];
 }
 
 1;
@@ -258,4 +213,18 @@ sub on_run {
 
 =for Pod::Coverage ^(.+)$
 
-=cut
+=head1 DESCRIPTION
+
+A C<Run::> plugin is the main plugin that runs at the C<run> event, which is
+fired by Perinci::CmdLine's C<run()> method.
+
+Multiple C<Run::*> plugins can be registered at the C<run> event, but only one
+will actually run because they return C<201> code which instruct
+Perinci::CmdLine to end the event early.
+
+The C<Run::Normal> plugin (this plugin) is the plugin run at normal mode. It
+calls the designated Riap function with arguments from user's command-line
+arguments (and/or configuration file, and/or environment variable), and then
+display the return value. However, instead of calling the function, there are
+also other alternative actions that can be performed instead like C<help>,
+C<meta>, etc.

@@ -1,4 +1,4 @@
-package Perinci::CmdLine::Plugin::Debugging::DumpRes;
+package Perinci::CmdLine::Plugin::Debug::DumpR;
 
 # put pragmas + Log::ger here
 use strict;
@@ -16,7 +16,7 @@ use parent 'Perinci::CmdLine::PluginBase';
 
 sub meta {
     return {
-        summary => 'Dump result ($r->{res}), by default after action',
+        summary => 'Dump request stash ($r), by default after action',
         conf => {
         },
         tags => ['category:debugging'],
@@ -28,7 +28,7 @@ sub after_action {
 
     my ($self, $r) = @_;
 
-    Data::Dump::Color::dd($r->{res});
+    Data::Dump::Color::dd($r);
     [200, "OK"];
 }
 
@@ -41,22 +41,22 @@ sub after_action {
 
 To use, either specify in environment variable:
 
- PERINCI_CMDLINE_PLUGINS=-Debugging::DumpRes
+ PERINCI_CMDLINE_PLUGINS=-Debug::DumpR
 
 or in code instantiating L<Perinci::CmdLine>:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
-     plugins => ["Debugging::DumpRes"],
+     plugins => ["Debug::DumpR"],
  );
 
-By default this plugin acts after the C<action> event. If you want to dump at a
-different event:
+By default this plugin acts after the C<action> event. If you want to dump at
+a different event:
 
  my $app = Perinci::CmdLine::Any->new(
      ...
      plugins => [
-         'Debugging::DumpArgs@after_format_res',
+         'Debug::DumpR@before_end',
      ],
  );
 
