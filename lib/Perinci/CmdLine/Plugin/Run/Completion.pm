@@ -124,7 +124,7 @@ sub on_run {
             }
 
             # otherwise let periscomp do its thing
-            return undef;
+            return undef; ## no critic: Subroutines::ProhibitExplicitReturnUndef
         },
     );
 

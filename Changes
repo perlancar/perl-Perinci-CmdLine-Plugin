@@ -1,3 +1,31 @@
+1.915   2021-12-10  Released-By: PERLANCAR; Urgency: medium; Backward-Incompatible: yes
+
+	- This release continues the pluginizing process.
+
+        [doc]
+
+        - Add more documentation about plugins.
+
+	[plugins]
+
+        - [incompatible change] Rename plugins: Debugging::* -> Debug::* for
+          brevity
+
+        - [incompatible change] Rename plugin: Debugging::Exit -> Flow::Exit for
+          clarity
+
+        - [incompatible change] Rename plugin: Plugin::DisablePlugin ->
+	  Plugin::Disable for brevity.
+
+        - Move main logic of completion mode to plugin Run::Completion.
+
+	- Move main logic of object-dumping mode to plugin Run::DumpObject.
+
+        [removed]
+
+        - [incompatible change] Remove hook_after_run.
+
+
 1.914   2021-12-10  Released-By: PERLANCAR; Urgency: medium
 
 	- [ux] Replace observing x.perinci.cmdline.default_from_schema in
