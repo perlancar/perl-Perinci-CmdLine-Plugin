@@ -217,7 +217,7 @@ sub hook_before_action {
 
         # function says it's already already wrapped and the wrapper adds
         # validator.
-        return if $meta->{'x.perinci.sub.wrapper.logs'} &&
+        last if $meta->{'x.perinci.sub.wrapper.logs'} &&
             (grep { $_->{validate_args} }
              @{ $meta->{'x.perinci.sub.wrapper.logs'} });
 
@@ -248,7 +248,13 @@ sub hook_before_action {
                     #say "D:we have pre-compiled validator codes";
 
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
-                        next unless exists($r->{args}{$arg}) || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'};
+                        ### para1, sync with all others
+                        my $argspec = $meta->{args}{$arg};
+                        my $argschema = $argspec->{schema};
+                        next unless $argschema;
+                        my $schema_has_default = defined $argschema->[1]{default} ||
+                            $argschema->[1]{'x.perl.default_value_rules'} && @{ $argschema->[1]{'x.perl.default_value_rules'} };
+                        next unless exists($r->{args}{$arg}) || $schema_has_default;
 
                         # we don't support validation of input stream because
                         # this must be done after each 'get item' (but periswrap
@@ -266,22 +272,25 @@ sub hook_before_action {
                     my %validators_by_schema; # key = "$schema"
                     require Data::Sah;
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
-                        next unless exists($r->{args}{$arg}) || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'};
+                        ### para1, sync with all others
+                        my $argspec = $meta->{args}{$arg};
+                        my $argschema = $argspec->{schema};
+                        next unless $argschema;
+                        my $schema_has_default = defined $argschema->[1]{default} ||
+                            $argschema->[1]{'x.perl.default_value_rules'} && @{ $argschema->[1]{'x.perl.default_value_rules'} };
+                        next unless exists($r->{args}{$arg}) || $schema_has_default;
 
                         # we don't support validation of input stream because
                         # this must be done after each 'get item' (but periswrap
                         # does)
                         next if $meta->{args}{$arg}{stream};
 
-                        my $schema = $meta->{args}{$arg}{schema};
-                        next unless $schema;
-
-                        unless ($validators_by_schema{"$schema"}) {
-                            my $v = Data::Sah::gen_validator($schema, {
+                        unless ($validators_by_schema{"$argschema"}) {
+                            my $v = Data::Sah::gen_validator($argschema, {
                                 return_type => 'str+val',
                                 schema_is_normalized => 1,
                             });
-                            $validators_by_schema{"$schema"} = $v;
+                            $validators_by_schema{"$argschema"} = $v;
                             $validators_by_arg{$arg} = $v;
                         }
                     }
@@ -291,17 +300,28 @@ sub hook_before_action {
                     for my $arg (sort keys %{ $meta->{args} // {} }) {
                         my $v = $validators_by_arg{$arg} or next;
 
+                        my $argspec = $meta->{args}{$arg};
+                        my $argschema = $argspec->{schema};
+                        my $schema_has_default = defined $argschema->[1]{default} ||
+                            $argschema->[1]{'x.perl.default_value_rules'} && @{ $argschema->[1]{'x.perl.default_value_rules'} };
+
                         # we want to get default value from schema, but do not
                         # want to make unspecified args spring into existence
                         # with 'undef' values. so we record the existence first
                         # here.
-                        my $arg_exists = exists $r->{args}{$arg};
+                        my $arg_exists = $r->{args}{"-set_$arg"} =
+                            exists($r->{args}{$arg}) ? 1:0;
 
-                        my $res = $v->($r->{args}{$arg});
-                        if ($res->[0]) {
-                            die [400, "Argument '$arg' fails validation: $res->[0]"];
+                        if ($schema_has_default) {
+                            my $res = $v->(undef);
+                            $r->{args}{"-default_$arg"} = $res->[1];
                         }
-                        if ($arg_exists || $meta->{args}{$arg}{'x.perinci.cmdline.default_from_schema'}) {
+
+                        if ($arg_exists || $schema_has_default) {
+                            my $res = $v->($r->{args}{$arg});
+                            if ($res->[0]) {
+                                die [400, "Argument '$arg' fails validation: $res->[0]"];
+                            }
                             my $val0 = $r->{args}{$arg};
                             my $coerced_val = $res->[1];
                             $r->{args}{$arg} = $coerced_val;

@@ -2875,11 +2875,6 @@ metadata attribute.
 
 =head2 METADATA'S ARGUMENT SPECIFICATION ATTRIBUTE
 
-=head3 x.perinci.cmdline.default_from_schema
-
-Bool. If set to true, then even when an argument is not specified, the schema
-will be evaluated to get default/coerced value from the schema.
-
 
 =head1 RESULT METADATA
 
