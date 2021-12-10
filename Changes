@@ -25,6 +25,9 @@
 
         - [incompatible change] Remove hook_after_run.
 
+	- [incompatible change] Remove support for PERINCI_CMDLINE_DUMP_ARGS &
+          PERINCI_CMDLINE_DUMP_CONFIG.
+
 
 1.914   2021-12-10  Released-By: PERLANCAR; Urgency: medium
 
