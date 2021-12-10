@@ -430,11 +430,6 @@ sub hook_display_result {
     $self->display_result($r);
 }
 
-sub hook_after_run {
-    my ($self, $r) = @_;
-    $self->_unsetup_progress_output;
-}
-
 sub hook_after_get_meta {
     my ($self, $r) = @_;
 
