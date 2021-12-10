@@ -1904,23 +1904,13 @@ L</ENVIRONMENT>.
 
 =head1 PROGRAM FLOW
 
-If you execute C<run()>, the <Run::Normal
-plugin|Perinci::CmdLine::Plugin::Run::Normal> will be
+If you execute C<run()>, then one of these plugins will run L<Run::Normal
+plugin|Perinci::CmdLine::Plugin::Run::Normal>, L<Run::Completion
+plugin|Perinci::CmdLine::Plugin::Run::Completion>, or L<Run::DumpObject
+plugin|Perinci::CmdLine::Plugin::Run::DumpObject>. Please see the documentation
+of each plugin for more detail.
 
-=item * Detect if we are running under tab completion mode
-
-This is done by checking the existence of special environment variables like
-C<COMP_LINE> (bash) or C<COMMAND_LINE> (tcsh). If yes, then jump to L</"PROGRAM
-FLOW (TAB COMPLETION)">. Otherwise, continue.
-
-=item * Run hook_before_run, if defined
-
-This hook (and every other hook) will be passed a single argument C<$r>, a hash
-that contains request data (see L</"REQUEST KEYS">).
-
-Some ideas that you can do in this hook: XXX.
-
-=item * Parse command-line arguments (@ARGV) and set C<action>
+=head1 COMMAND-LINE ARGUMENTS PARSING
 
 If C<read_env> attribute is set to true, and there is environment variable
 defined to set default options (see documentation on C<read_env> and C<env_name>
@@ -1984,61 +1974,6 @@ We then run C<hook_after_parse_argv>. Some ideas to do in this hook: XXX.
 Function arguments that are still missing can be filled from STDIN or files, if
 the metadata specifies C<cmdline_src> property (see L<Rinci::function> for more
 details).
-
-=item * Delegate to C<action_$action> method
-
-Before running the C<action_$action> method, C<hook_before_action> is called
-e.g. to allow changing/fixing action, last chance to check arguments, etc.
-
-After we get the action from the previous step, we delegate to separate
-C<action_$action> method (so there is C<action_version>, C<action_help>, and so
-on; and also C<action_call>). These methods also receive C<$r> as their argument
-and must return an enveloped result (see L<Rinci::function> for more details).
-
-Result is put in C<< $r->{res} >>.
-
-C<hook_after_action> is then called e.g. to preformat result.
-
-=item * Run hook_format_result
-
-Hook must set C<< $r->{fres} >> (formatted result).
-
-If C<skip_format> attribute is true, or function metadata has
-C<cmdline.skip_format> set to true, or result has C<cmdline.skip_format>
-metadata property set to true, then this step is skipped and C<< $r->{fres} >>
-is simply taken from C<< $r->{res}[2] >>.
-
-=item * Run hook_display_result
-
-This hook is used by XXX.
-
-=item * Run hook_after_run, if defined
-
-Some ideas to do in this hook: XXX.
-
-=item * Exit (or return result)
-
-If C<exit> attribute is true, will C<exit()> with the action's envelope result
-status. If status is 200, exit code is 0. Otherwise exit code is status minus
-300. So, a response C<< [501, "Not implemented"] >> will result in exit code of
-201.
-
-If C<exit> attribute is false, will simply return the action result (C<<
-$r->{res} >>). And will also set exit code in C<<
-$r->{res}[3]{'x.perinci.cmdline.base.exit_code'} >>.
-
-=back
-
-
-=head1 PROGRAM FLOW (TAB COMPLETION)
-
-If program is detected running in tab completion mode, there is some differences
-in the flow. First, C<@ARGV> is set from C<COMP_LINE> (or C<COMMAND_LINE>)
-environment variable. Afterwards, completion is done by calling
-L<Perinci::Sub::Complete>'s C<complete_cli_arg>.
-
-The result is then output to STDOUT (resume from Run hook_format_result step in
-the normal program flow).
 
 
 =head1 REQUEST KEYS
