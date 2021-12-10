@@ -215,7 +215,8 @@ sub hook_before_action {
 
         my $meta = $r->{meta};
 
-        # function is probably already wrapped
+        # function says it's already already wrapped and the wrapper adds
+        # validator.
         return if $meta->{'x.perinci.sub.wrapper.logs'} &&
             (grep { $_->{validate_args} }
              @{ $meta->{'x.perinci.sub.wrapper.logs'} });
