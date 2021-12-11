@@ -203,7 +203,7 @@ sub on_run {
         $r->{res}[3]{'x.perinci.cmdline.base.exit_code'} = $exitcode;
     }
 
-    $self->_unsetup_progress_output;
+    $self->cmdline->_unsetup_progress_output;
 
     [201];
 }
