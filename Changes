@@ -1,3 +1,8 @@
+1.916   2021-12-11  Released-By: PERLANCAR; Urgency: medium
+
+	- [bugfix] Forgot to adjust method call.
+
+
 1.915   2021-12-10  Released-By: PERLANCAR; Urgency: medium; Backward-Incompatible: yes
 
 	- This release continues the pluginizing process.
