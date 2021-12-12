@@ -1,5 +1,5 @@
 ## no critic: ControlStructures::ProhibitUnreachableCode
-package Perinci::CmdLine::Base;
+package Perinci::CmdLine;
 
 # put pragmas + Log::ger here
 use 5.010001;
@@ -16,11 +16,126 @@ use IO::Interactive qw(is_interactive);
 # DIST
 # VERSION
 
-# this class can actually be a role instead of base class for pericmd &
-# pericmd-lite, but Mo is more lightweight than Role::Tiny (also R::T doesn't
-# have attributes), Role::Basic, or Moo::Role.
-
 use Moo;
+
+# BEGIN attributes
+
+has actions => (is=>'rw');
+
+has allow_unknown_opts => (is=>'rw', default=>0);
+
+has auto_abbrev_subcommand => (is=>'rw', default=>1);
+
+has cleanser => (
+    is => 'rw',
+    lazy => 1,
+    default => sub {
+        require Data::Clean::ForJSON;
+        Data::Clean::ForJSON->get_cleanser;
+    },
+);
+
+has common_opts => (is=>'rw');
+
+has completion => (is=>'rw');
+
+has config_dirs => (
+    is=>'rw',
+    default => sub {
+        require Perinci::CmdLine::Util::Config;
+        Perinci::CmdLine::Util::Config::get_default_config_dirs();
+    },
+);
+
+has config_filename => (is=>'rw');
+
+has default_dry_run => (
+    is=>'rw',
+    default => 0,
+);
+
+has default_format => (is=>'rw');
+
+has default_subcommand => (is=>'rw');
+
+has description => (is=>'rw');
+
+has env_name => (
+    is => 'rw',
+    lazy => 1,
+    default => sub {
+        my $self = shift;
+        __default_env_name($self->program_name);
+    },
+);
+
+has exit => (is=>'rw', default=>1);
+
+has extra_urls_for_version => (is=>'rw');
+
+has formats => (is=>'rw');
+
+has get_subcommand_from_arg => (is=>'rw', default=>1);
+
+has log => (is=>'rw', default => 0);
+
+has log_level => (is=>'rw');
+
+has pass_cmdline_object => (is=>'rw', default=>0);
+
+has per_arg_json => (is=>'rw');
+
+has per_arg_yaml => (is=>'rw');
+
+has plugins => (
+    is => 'rw',
+);
+
+has program_name => (
+    is=>'rw',
+    default => sub {
+        my $pn = $ENV{PERINCI_CMDLINE_PROGRAM_NAME};
+        if (!defined($pn)) {
+            $pn = $0; $pn =~ s!.+/!!;
+        }
+        $pn;
+    });
+
+has read_config => (is=>'rw', default=>1);
+
+has read_env => (is=>'rw', default=>1);
+
+has riap_version => (is=>'rw', default=>1.1);
+
+has riap_client => (is=>'rw');
+
+has riap_client_args => (is=>'rw');
+
+has skip_format => (is=>'rw');
+
+has subcommands => (is=>'rw');
+
+has summary => (is=>'rw');
+
+has tags => (is=>'rw');
+
+has url => (is=>'rw');
+
+has use_cleanser => (is=>'rw', default=>1);
+
+has use_locale => (
+    is=>'rw',
+    default => 0,
+);
+
+has use_utf8 => (
+    is=>'rw',
+    default => sub {
+        $ENV{UTF8} // 0;
+    },
+);
+
+# END attributes
 
 # BEGIN taken from Array::Iter
 sub __array_iter {
@@ -38,115 +153,8 @@ sub __array_iter {
 sub __list_iter {
     __array_iter([@_]);
 }
-# END from Array::Iter
+# END taken from Array::Iter
 
-has actions => (is=>'rw');
-has common_opts => (is=>'rw');
-has completion => (is=>'rw');
-has default_subcommand => (is=>'rw');
-has get_subcommand_from_arg => (is=>'rw', default=>1);
-has auto_abbrev_subcommand => (is=>'rw', default=>1);
-has description => (is=>'rw');
-has exit => (is=>'rw', default=>1);
-has formats => (is=>'rw');
-has default_format => (is=>'rw');
-has allow_unknown_opts => (is=>'rw', default=>0);
-has pass_cmdline_object => (is=>'rw', default=>0);
-has per_arg_json => (is=>'rw');
-has per_arg_yaml => (is=>'rw');
-has program_name => (
-    is=>'rw',
-    default => sub {
-        my $pn = $ENV{PERINCI_CMDLINE_PROGRAM_NAME};
-        if (!defined($pn)) {
-            $pn = $0; $pn =~ s!.+/!!;
-        }
-        $pn;
-    });
-has riap_version => (is=>'rw', default=>1.1);
-has riap_client => (is=>'rw');
-has riap_client_args => (is=>'rw');
-has subcommands => (is=>'rw');
-has summary => (is=>'rw');
-has tags => (is=>'rw');
-has url => (is=>'rw');
-has log => (is=>'rw', default => 0);
-has log_level => (is=>'rw');
-
-has read_env => (is=>'rw', default=>1);
-has env_name => (
-    is => 'rw',
-    lazy => 1,
-    default => sub {
-        my $self = shift;
-        __default_env_name($self->program_name);
-    },
-);
-
-has read_config => (is=>'rw', default=>1);
-has config_filename => (is=>'rw');
-has config_dirs => (
-    is=>'rw',
-    default => sub {
-        require Perinci::CmdLine::Util::Config;
-        Perinci::CmdLine::Util::Config::get_default_config_dirs();
-    },
-);
-
-has cleanser => (
-    is => 'rw',
-    lazy => 1,
-    default => sub {
-        require Data::Clean::ForJSON;
-        Data::Clean::ForJSON->get_cleanser;
-    },
-);
-has use_cleanser => (is=>'rw', default=>1);
-
-has extra_urls_for_version => (is=>'rw');
-
-has skip_format => (is=>'rw');
-
-has use_utf8 => (
-    is=>'rw',
-    default => sub {
-        $ENV{UTF8} // 0;
-    },
-);
-
-has use_locale => (
-    is=>'rw',
-    default => 0,
-);
-
-has default_dry_run => (
-    is=>'rw',
-    default => 0,
-);
-
-has plugins => (
-    is => 'rw',
-);
-
-# role: requires 'default_prompt_template'
-
-# role: requires 'hook_before_run'
-# role: requires 'hook_before_parse_argv'
-# role: requires 'hook_before_read_config_file'
-# role: requires 'hook_config_file_section'
-# role: requires 'hook_after_read_config_file'
-# role: requires 'hook_after_get_meta'
-# role: requires 'hook_after_parse_argv'
-# role: requires 'hook_before_action'
-# role: requires 'hook_format_row' (for action=call)
-# role: requires 'hook_after_action'
-# role: requires 'hook_format_result'
-# role: requires 'hook_display_result'
-
-# we put common stuffs here, but PC::Classic's final version will differ from
-# PC::Lite's in several aspects: translation, supported output formats,
-# PC::Classic currently adds some extra keys, some options are not added by
-# PC::Lite (e.g. history/undo stuffs).
 our %copts = (
 
     version => {
@@ -447,26 +455,24 @@ _
         tags => ['category:logging'],
         key => 'log_level',
     },
-
 );
 
 sub BUILD {
     my ($self, $args) = @_;
 
-    $self->{plugins} //= [];
-    # always add these plugins
-    push @{ $self->{plugins} }, (
+    $self->{plugins} //= [
         "Run::Normal",
         "Run::Completion",
         "Run::DumpObject",
-    );
+    ];
 
     $self->_plugin_activate_plugins_in_env();
     $self->_plugin_activate_plugins(@{ $self->{plugins} })
           if $self->{plugins};
 }
 
-# plugin stuffs
+# BEGIN plugin stuffs
+
 our @Plugin_Instances;
 our %Handlers; # key=event name, val=[ [$label, $prio, $handler, $epoch], ... ]
 
@@ -719,32 +725,29 @@ sub _plugin_activate_plugins {
     }
 }
 
-my $has_read_env;
+my $has_read_plugins_env;
 sub _plugin_activate_plugins_in_env {
     my $self = shift;
 
-    last if $has_read_env;
+    last if $has_read_plugins_env;
 
   READ_PERINCI_CMDLINE_PLUGINS:
     {
-        last unless defined $ENV{PERINCI_CMDLINE_PLUGINS};
+        my $env = $ENV{PERINCI_CMDLINE_PLUGINS};
+        last unless defined $env;
         log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS ...";
-        $self->_plugin_activate_plugins($self->_plugin_unflatten_import($ENV{PERINCI_CMDLINE_PLUGINS}, "PERINCI_CMDLINE_PLUGINS"));
-        $has_read_env++;
-        return;
-    }
-
-  READ_PERINCI_CMDLINE_PLUGINS_JSON:
-    {
-        last unless defined $ENV{PERINCI_CMDLINE_JSON};
-        require JSON::PP;
-        log_trace "[pericmd] Reading env variable PERINCI_CMDLINE_PLUGINS_JSON ...";
-        my $imports = JSON::PP::decode_json($ENV{PERINCI_CMDLINE_PLUGINS_JSON});
-        $self->_plugin_active_plugins(@$imports);
-        $has_read_env++;
+        if ($env =~ /\A\[/) {
+            my $imports = JSON::PP::decode_json($env);
+            $self->_plugin_active_plugins(@$imports);
+        } else {
+            $self->_plugin_activate_plugins($self->_plugin_unflatten_import($env, "PERINCI_CMDLINE_PLUGINS"));
+        }
+        $has_read_plugins_env++;
         return;
     }
 }
+
+# END plugin stuffs
 
 sub __default_env_name {
     my ($prog) = @_;
@@ -757,16 +760,6 @@ sub __default_env_name {
     }
     "${prog}_OPT";
 }
-
-sub hook_before_run {}
-
-sub hook_before_read_config_file {}
-
-sub hook_after_read_config_file {}
-
-sub hook_before_action {}
-
-sub hook_after_action {}
 
 sub get_meta {
     my ($self, $r, $url) = @_;
@@ -854,10 +847,31 @@ sub _read_env {
     log_trace("[pericmd] Checking env %s: %s", $env_name, $env);
     return [] unless defined $env;
 
+    # XXX is it "proper" to use Complete::* modules to parse cmdline, outside
+    # the context of completion?
+
     require Text::ParseWords;
     my @words = Text::ParseWords::shellwords($env);
     log_trace("[pericmd] Words from env: %s", \@words);
     \@words;
+
+    my $words;
+    if ($r->{shell} eq 'bash') {
+        require Complete::Bash;
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env, 0) };
+    } elsif ($r->{shell} eq 'fish') {
+        ($words, undef) = @{ Complete::Base::parse_cmdline($env) };
+    } elsif ($r->{shell} eq 'tcsh') {
+        require Complete::Tcsh;
+        ($words, undef) = @{ Complete::Tcsh::parse_cmdline($env) };
+    } elsif ($r->{shell} eq 'zsh') {
+        require Complete::Bash;
+        ($words, undef) = @{ Complete::Bash::parse_cmdline($env) };
+    } else {
+        die "Unsupported shell '$r->{shell}'";
+    }
+    log_trace("[pericmd] Words from env: %s", $words);
+    $words;
 }
 
 sub _read_config {
@@ -2542,10 +2556,6 @@ from command-line options like C<--log-level>, C<--trace>, etc.
 The main method to run your application. See L</"PROGRAM FLOW (NORMAL)"> for
 more details on what this method does.
 
-=head2 $cmd->do_dump() => ENVRES
-
-Called by run().
-
 =head2 $cmd->do_completion() => ENVRES
 
 Called by run().
@@ -2556,8 +2566,7 @@ Called by run().
 
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
-Called by parse_argv() or do_dump() or do_completion(). Subclass has to
-implement this.
+Called by parse_argv() or do_completion(). Subclass has to implement this.
 
 
 =head1 HOOKS
@@ -2801,41 +2810,6 @@ C<cmdline.page_result> result metadata is active). Can also be set to C<''> or
 C<0> to explicitly disable paging even though C<cmd.page_result> result metadata
 is active.
 
-=head2 PERINCI_CMDLINE_DUMP_ARGS
-
-Boolean. If set to true, instead of running normal action, will instead dump
-arguments that will be passed to function, (after merge with values from
-environment/config files, and validation/coercion), in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_CONFIG
-
-Boolean. If set to true, instead of running normal action, will dump
-configuration that is using C<read_config()>, in Perl format (using
-L<Data::Dump>) and exit.
-
-Useful for debugging or information extraction.
-
-=head2 PERINCI_CMDLINE_DUMP_OBJECT
-
-String. Default undef. If set to a true value, instead of running normal action,
-will dump Perinci::CmdLine object at the start of run() in Perl format (using
-L<Data::Dump>) and exit. Useful to get object's attributes and reconstruct the
-object later. Used in, e.g. L<App::shcompgen> to generate an appropriate
-completion script for the CLI, or L<Pod::Weaver::Plugin::Rinci> to generate POD
-documentation about the script. See also L<Perinci::CmdLine::Dump>.
-
-The value of the this variable will be used as the label in the dump delimiter,
-.e.g:
-
- # BEGIN DUMP foo
- ...
- # END DUMP foo
-
-Useful for debugging or information extraction.
-
 =head2 PERINCI_CMDLINE_OUTPUT_DIR
 
 String. If set, then aside from displaying output as usual, the unformatted
@@ -2860,22 +2834,17 @@ result.
 
 =head2 PERINCI_CMDLINE_PLUGINS
 
-String. A list of plugins to load at the start of program. Format:
+String. A list of plugins to load at the start of program. If it begins with a
+C>[> (opening square bracket), it will be assumed to be in JSON encoding:
+
+ ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
+
+otherwise it is assumed to be a comma-separated string in this syntax:
 
  -PluginName1,arg1name,arg1val,arg2name,arg2val,...,-PluginName2,...
 
 Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
 argument list can be skipped if you don't want to pass arguments to a plugin.
-
-=head2 PERINCI_CMDLINE_PLUGINS_JSON
-
-String. Like L</PERINCI_CMDLINE_PLUGINS> but assumed to be in JSON encoding, to
-be able to encode data structure (for complex arguments). Syntax:
-
- ["PluginName1",{"arg1name":"arg1val","arg2name":"arg2val",...},"PluginName2", ...]
-
-Plugin name is module name without the C<Perinci::CmdLine::Plugin::> prefix. The
-hash can be skipped if you don't want to pass arguments to a plugin.
 
 =head2 PERINCI_CMDLINE_PROGRAM_NAME
 
