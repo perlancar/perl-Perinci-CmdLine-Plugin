@@ -1,3 +1,10 @@
+2.000   2021-12-19  Released-By: PERLANCAR; Urgency: medium
+
+        - Rename Perinci-CmdLine-Lite distribution to Perinci-CmdLine-Lite
+          plugin. Merge Perinci::CmdLine::Base and Perinci::CmdLine::Lite to
+          Perinci::CmdLine::Plugin.
+
+
 1.916   2021-12-11  Released-By: PERLANCAR; Urgency: medium
 
 	- [bugfix] Forgot to adjust method call.

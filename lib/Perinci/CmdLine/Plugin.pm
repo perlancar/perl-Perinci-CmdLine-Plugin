@@ -1,5 +1,5 @@
 ## no critic: ControlStructures::ProhibitUnreachableCode
-package Perinci::CmdLine;
+package Perinci::CmdLine::Plugin;
 
 # put pragmas + Log::ger here
 use 5.010001;
@@ -1768,23 +1768,27 @@ sub run {
 }
 
 1;
-# ABSTRACT: Base class for Perinci::CmdLine{::Classic,::Lite}
+# ABSTRACT: A Perinci::CmdLine implementation that supports plugins
 
 =for Pod::Coverage ^(.+)$
 
+=head1 SYNOPSIS
+
+#RENDER_TEMPLATE: file=>"share/templates/synopsis.txt"
+
+
 =head1 DESCRIPTION
 
-#RENDER_TEMPLATE: file=>"share/templates/description.txt"
+L<Perinci::CmdLine> is a command-line application framework. It allows you to
+create full-featured CLI applications easily and quickly.
+
+C<Perinci::CmdLine::Plugin> is an implementation of Perinci::CmdLine that
+supports plugins.
+
+See L<Perinci::CmdLine::Manual> for more details.
 
 
-=head1 PLUGINS
-
-Perinci::CmdLine is plugin-based since 1.900.
-
-My long-term goal is to have L<ScriptX> (which is a plugin-oriented framework)
-as a replacement for Perinci::CmdLine. Since L<ScriptX> is still in early
-development, I am also adding plugin support to Perinci::CmdLine in the mean
-time. Plugin support is similar to how ScriptX does plugins.
+=head1 PLUGIN SYSTEM
 
 These are the characteristics of the plugin system, which make the system a very
 flexible one:
@@ -2138,11 +2142,9 @@ program.
 Contains a list of known actions and their metadata. Keys should be action
 names, values should be metadata. Metadata is a hash containing these keys:
 
-=head2 common_opts => hash
+=head2 allow_unknown_opts => bool (default: 0)
 
-A hash of common options, which are command-line options that are not associated
-with any subcommand. Each option is itself a specification hash containing these
-keys:
+Whether to allow unknown options.
 
 =over
 
@@ -2251,16 +2253,6 @@ equivalent to executing the 'shutdown' subcommand:
 
  % cmd shutdown
 
-=head2 completion => code
-
-Will be passed to L<Perinci::Sub::Complete>'s C<complete_cli_arg()>. See its
-documentation for more details.
-
-=head2 default_subcommand => str
-
-Set subcommand to this if user does not specify which to use (either via first
-command-line argument or C<--cmd> option). See also: C<get_subcommand_from_arg>.
-
 =head2 auto_abbrev_subcommand => bool (default: 1)
 
 If set to yes, then if a partial subcommand name is given on the command-line
@@ -2281,6 +2273,88 @@ C<modify> and C<move>.
 Note that subcommand name in config section must be specified in full. This
 option is about convenience at the command-line only.
 
+=head2 cleanser => obj
+
+Object to cleanse result for JSON output. By default this is an instance of
+L<Data::Clean::ForJSON> and should not be set to other value in most cases.
+
+=head2 common_opts => hash
+
+A hash of common options, which are command-line options that are not associated
+with any subcommand. Each option is itself a specification hash containing these
+keys:
+
+=head2 completion => code
+
+Will be passed to L<Perinci::Sub::Complete>'s C<complete_cli_arg()>. See its
+documentation for more details.
+
+=head2 config_dirs => array of str
+
+Which directories to look for configuration file. The default is to look at the
+user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
+$ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
+directory entry.
+
+=head2 config_filename => str|array[str]|array[hash]
+
+Configuration filename(s). The default is C<< program_name . ".conf" >>. For
+example, if your program is named C<foo-bar>, config_filename will be
+C<foo-bar.conf>.
+
+You can specify an array of filename strings, which will be checked in order,
+e.g.: C<< ["myapp.conf", "myapp.ini"] >>.
+
+You can also specify an array of hashrefs, for more complex scenario. Each hash
+can contain these keys: C<filename>, C<section>. For example:
+
+ [
+     {filename => 'mysuite.conf', section=>'myapp1'},
+     {filename => 'myapp1.conf'}, # section = GLOBAL (default)
+ ]
+
+This means, configuration will be searched in C<mysuite.conf> under the section
+C<myapp1>, and then in C<myapp1.conf> in the default/global section.
+
+=head2 default_dry_run => bool (default: 0)
+
+If set to 1, then dry-mode will be turned on by default unless user uses
+DRY_RUN=0 or C<--no-dry-run>.
+
+=head2 default_format => str
+
+Default format.
+
+=head2 default_subcommand => str
+
+Set subcommand to this if user does not specify which to use (either via first
+command-line argument or C<--cmd> option). See also: C<get_subcommand_from_arg>.
+
+=head2 description => str
+
+A short description of the application.
+
+=head2 env_name => str
+
+Environment name to read default options from. Default is from program name,
+upper-cased, sequences of dashes/nonalphanums replaced with a single underscore,
+plus a C<_OPT> suffix. So if your program name is called C<cpandb-cpanmeta> the
+default environment name is C<CPANDB_CPANMETA_OPT>.
+
+=head2 exit => bool (default: 1)
+
+Define the application exit behaviour.  A false value here allows hook code
+normally run directly before the application exits to be skipped.
+
+=head2 extra_urls_for_version => array of str
+
+An array of extra URLs for which version information is to be displayed for
+the action being performed.
+
+=head2 formats => array
+
+Available output formats.
+
 =head2 get_subcommand_from_arg => int (default: 1)
 
 The default is 1, which is to get subcommand from the first command-line
@@ -2288,77 +2362,14 @@ argument except when there is C<default_subcommand> defined. Other valid values
 are: 0 (not getting from first command-line argument), 2 (get from first
 command-line argument even though there is C<default_subcommand> defined).
 
-=head2 description => str
+=head2 log => bool
 
-A short description of the application.
+Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
 
-=head2 exit => bool (default: 1)
+=head2 log_level => str
 
-Define the application exit behaviour.  A false value here allows hook code
-normally run directly before the application exits to be skipped.
-
-=head2 formats => array
-
-Available output formats.
-
-=head2 default_format => str
-
-Default format.
-
-=head2 allow_unknown_opts => bool (default: 0)
-
-Whether to allow unknown options.
-
-=head2 pass_cmdline_object => bool (default: 0)
-
-Whether to pass special argument C<-cmdline> containing the cmdline object to
-function. This can be overridden using the C<pass_cmdline_object> on a
-per-subcommand basis.
-
-In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
-C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
-
-Passing the cmdline object can be useful, e.g. to call action_help(), to get the
-settings of the Perinci::CmdLine, etc.
-
-=head2 per_arg_json => bool (default: 1 in ::Lite)
-
-This will be passed to L<Perinci::Sub::GetArgs::Argv>.
-
-=head2 per_arg_yaml => bool (default: 0 in ::Lite)
-
-This will be passed to L<Perinci::Sub::GetArgs::Argv>.
-
-=head2 program_name => str
-
-Default is from PERINCI_CMDLINE_PROGRAM_NAME environment or from $0.
-
-=head2 riap_version => float (default: 1.1)
-
-Specify L<Riap> protocol version to use. Will be passed to Riap client
-constructor (unless you already provide a Riap client object, see
-C<riap_client>).
-
-=head2 riap_client => obj
-
-Set to Riap client instance, should you want to create one yourself. Otherwise
-will be set L<Perinci::Access> (in PC:Classic), or L<Perinci::Access::Lite> (in
-PC:Lite).
-
-=head2 riap_client_args => hash
-
-Arguments to pass to Riap client constructor. Will be used unless you create
-your own Riap client object (see C<riap_client>). One of the things this
-attribute is used is to pass HTTP basic authentication to Riap client
-(L<Perinci::Access::HTTP::Client>):
-
- riap_client_args => {handler_args => {user=>$USER, password=>$PASS}}
-
-=head2 subcommands => hash | code
-
-Should be a hash of subcommand specifications or a coderef.
-
-Each subcommand specification is also a hash(ref) and should contain these keys:
+Set default log level. Will be overridden by C<< $r->{log_level} >> which is set
+from command-line options like C<--log-level>, C<--trace>, etc.
 
 =over
 
@@ -2440,6 +2451,76 @@ must return a hashref of subcommand specifications. If called with argument
 C<name> it must return subcommand specification for subcommand with the
 requested name only.
 
+=head2 pass_cmdline_object => bool (default: 0)
+
+Whether to pass special argument C<-cmdline> containing the cmdline object to
+function. This can be overridden using the C<pass_cmdline_object> on a
+per-subcommand basis.
+
+In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
+C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
+
+Passing the cmdline object can be useful, e.g. to call action_help(), to get the
+settings of the Perinci::CmdLine, etc.
+
+=head2 per_arg_json => bool (default: 1 in ::Lite)
+
+This will be passed to L<Perinci::Sub::GetArgs::Argv>.
+
+=head2 per_arg_yaml => bool (default: 0 in ::Lite)
+
+This will be passed to L<Perinci::Sub::GetArgs::Argv>.
+
+=head2 program_name => str
+
+Default is from PERINCI_CMDLINE_PROGRAM_NAME environment or from $0.
+
+=head2 read_config => bool (default: 1)
+
+Whether to read configuration files.
+
+=head2 read_env => bool (default: 1)
+
+Whether to read environment variable for default options.
+
+=head2 riap_client => obj
+
+Set to Riap client instance, should you want to create one yourself. Otherwise
+will be set L<Perinci::Access> (in PC:Classic), or L<Perinci::Access::Lite> (in
+PC:Lite).
+
+=head2 riap_client_args => hash
+
+Arguments to pass to Riap client constructor. Will be used unless you create
+your own Riap client object (see C<riap_client>). One of the things this
+attribute is used is to pass HTTP basic authentication to Riap client
+(L<Perinci::Access::HTTP::Client>):
+
+ riap_client_args => {handler_args => {user=>$USER, password=>$PASS}}
+
+=head2 riap_version => float (default: 1.1)
+
+Specify L<Riap> protocol version to use. Will be passed to Riap client
+constructor (unless you already provide a Riap client object, see
+C<riap_client>).
+
+=head2 skip_format => bool
+
+If set to 1, assume that function returns raw text that need not be translated,
+and so will not offer common command-line options C<--format>, C<--json>, as
+well as C<--naked-res>.
+
+As an alternative to this, can also be done on a per-function level by setting
+function metadata property C<cmdline.skip_format> to true. Or, can also be done
+on a per-function result basis by returning result metadata
+C<cmdline.skip_format> set to true.
+
+=head2 subcommands => hash | code
+
+Should be a hash of subcommand specifications or a coderef.
+
+Each subcommand specification is also a hash(ref) and should contain these keys:
+
 =head2 summary => str
 
 Optional, displayed in description of the option in help/usage text.
@@ -2457,53 +2538,6 @@ entity.
 Alternatively you can provide multiple functions from which the user can select
 using the first argument (see B<subcommands>).
 
-=head2 read_env => bool (default: 1)
-
-Whether to read environment variable for default options.
-
-=head2 env_name => str
-
-Environment name to read default options from. Default is from program name,
-upper-cased, sequences of dashes/nonalphanums replaced with a single underscore,
-plus a C<_OPT> suffix. So if your program name is called C<cpandb-cpanmeta> the
-default environment name is C<CPANDB_CPANMETA_OPT>.
-
-=head2 read_config => bool (default: 1)
-
-Whether to read configuration files.
-
-=head2 config_filename => str|array[str]|array[hash]
-
-Configuration filename(s). The default is C<< program_name . ".conf" >>. For
-example, if your program is named C<foo-bar>, config_filename will be
-C<foo-bar.conf>.
-
-You can specify an array of filename strings, which will be checked in order,
-e.g.: C<< ["myapp.conf", "myapp.ini"] >>.
-
-You can also specify an array of hashrefs, for more complex scenario. Each hash
-can contain these keys: C<filename>, C<section>. For example:
-
- [
-     {filename => 'mysuite.conf', section=>'myapp1'},
-     {filename => 'myapp1.conf'}, # section = GLOBAL (default)
- ]
-
-This means, configuration will be searched in C<mysuite.conf> under the section
-C<myapp1>, and then in C<myapp1.conf> in the default/global section.
-
-=head2 config_dirs => array of str
-
-Which directories to look for configuration file. The default is to look at the
-user's home and then system location. On Unix, it's C<< [ "$ENV{HOME}/.config",
-$ENV{HOME}, "/etc"] >>. If $ENV{HOME} is empty, getpwuid() is used to get home
-directory entry.
-
-=head2 cleanser => obj
-
-Object to cleanse result for JSON output. By default this is an instance of
-L<Data::Clean::ForJSON> and should not be set to other value in most cases.
-
 =head2 use_cleanser => bool (default: 1)
 
 When a function returns result, and the user wants to display the result as
@@ -2513,40 +2547,10 @@ objects or scalar references or other stuffs. If you are sure that your function
 does not produce those kinds of data, you can set this to false to produce a
 more lightweight script.
 
-=head2 extra_urls_for_version => array of str
-
-An array of extra URLs for which version information is to be displayed for
-the action being performed.
-
-=head2 skip_format => bool
-
-If set to 1, assume that function returns raw text that need not be translated,
-and so will not offer common command-line options C<--format>, C<--json>, as
-well as C<--naked-res>.
-
-As an alternative to this, can also be done on a per-function level by setting
-function metadata property C<cmdline.skip_format> to true. Or, can also be done
-on a per-function result basis by returning result metadata
-C<cmdline.skip_format> set to true.
-
 =head2 use_utf8 => bool (default: from env UTF8, or 0)
 
 Whether or not to set utf8 flag on output. If undef, will default to UTF8
 environment. If that is also undef, will default to 0.
-
-=head2 default_dry_run => bool (default: 0)
-
-If set to 1, then dry-mode will be turned on by default unless user uses
-DRY_RUN=0 or C<--no-dry-run>.
-
-=head2 log => bool
-
-Whether to enable logging. Default is off. If true, will load L<Log::ger::App>.
-
-=head2 log_level => str
-
-Set default log level. Will be overridden by C<< $r->{log_level} >> which is set
-from command-line options like C<--log-level>, C<--trace>, etc.
 
 
 =head1 METHODS
@@ -2567,84 +2571,6 @@ Called by run().
 =head2 $cmd->get_meta($r, $url) => ENVRES
 
 Called by parse_argv() or do_completion(). Subclass has to implement this.
-
-
-=head1 HOOKS
-
-All hooks will receive the argument C<$r>, a per-request hash/stash. The list
-below is by order of calling.
-
-=head2 $cmd->hook_before_run($r)
-
-Called at the start of C<run()>. Can be used to set some initial values of other
-C<$r> keys. Or setup the logger.
-
-=head2 $cmd->hook_before_read_config_file($r)
-
-Only called when C<read_config> attribute is true.
-
-=head2 $cmd->hook_after_read_config_file($r)
-
-Only called when C<read_config> attribute is true.
-
-=head2 $cmd->hook_after_get_meta($r)
-
-Called after the C<get_meta> method gets function metadata, which normally
-happens during parsing argument, because parsing function arguments require the
-metadata (list of arguments, etc).
-
-PC:Lite as well as PC:Classic use this hook to insert a common option
-C<--dry-run> if function metadata expresses that function supports dry-run mode.
-
-PC:Lite also checks the C<deps> property here. PC:Classic doesn't do this
-because it uses function wrapper (L<Perinci::Sub::Wrapper>) which does this.
-
-=head2 $cmd->hook_after_parse_argv($r)
-
-Called after C<run()> calls C<parse_argv()> and before it checks the result.
-C<$r->{parse_argv_res}> will contain the result of C<parse_argv()>. The hook
-gets a chance to, e.g. fill missing arguments from other source.
-
-Note that for sources specified in the C<cmdline_src> property, this base class
-will do the filling in after running this hook, so no need to do that here.
-
-PC:Lite uses this hook to give default values to function arguments C<<
-$r->{args} >> from the Rinci metadata. PC:Classic doesn't do this because it
-uses function wrapper (L<Perinci::Sub::Wrapper>) which will do this as well as
-some other stuffs (validate function arguments, etc).
-
-=head2 $cmd->hook_before_action($r)
-
-Called before calling the C<action_ACTION> method. Some ideas to do in this
-hook: modifying action to run (C<< $r->{action} >>), last check of arguments
-(C<< $r->{args} >>) before passing them to function.
-
-PC:Lite uses this hook to validate function arguments. PC:Classic does not do
-this because it uses function wrapper which already does this.
-
-=head2 $cmd->hook_after_action($r)
-
-Called after calling C<action_ACTION> method. Some ideas to do in this hook:
-preformatting result (C<< $r->{res} >>).
-
-=head2 $cmd->hook_format_result($r)
-
-The hook is supposed to format result in C<$res->{res}> (an array).
-
-All direct subclasses of PC:Base do the formatting here.
-
-=head2 $cmd->hook_display_result($r)
-
-The hook is supposed to display the formatted result (stored in C<$r->{fres}>)
-to STDOUT. But in the case of streaming output, this hook can also set it up.
-
-All direct subclasses of PC:Base do the formatting here.
-
-=head2 $cmd->hook_after_run($r)
-
-Called at the end of C<run()>, right before it exits (if C<exit> attribute is
-true) or returns C<$r->{res}>. The hook has a chance to modify exit code or
-result.
 
 
 =head1 SPECIAL ARGUMENTS
@@ -2781,7 +2707,7 @@ This is added by this module, so exit code can be tested.
 
 =head1 CONFIGURATION FILE SUPPORT
 
-TBD.
+See L<Perinci::CmdLine::Manual> for more details.
 
 
 =head1 ENVIRONMENT
