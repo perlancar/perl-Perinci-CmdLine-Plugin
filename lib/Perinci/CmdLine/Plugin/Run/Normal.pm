@@ -64,11 +64,8 @@ sub on_run {
     }
 
     eval {
-        log_trace("[pericmd] Running hook_before_run ...");
-        $self->cmdline->hook_before_run($r);
-
         log_trace("[pericmd] Running hook_before_parse_argv ...");
-        $self->cmdline->hook_before_parse_argv($r);
+        #$self->cmdline->hook_before_parse_argv($r);
 
         my $parse_res = $self->cmdline->parse_argv($r);
         if ($parse_res->[0] == 501) {
@@ -99,7 +96,7 @@ sub on_run {
         }
 
         log_trace("[pericmd] Running hook_after_parse_argv ...");
-        $self->cmdline->hook_after_parse_argv($r);
+        #$self->cmdline->hook_after_parse_argv($r);
 
         $self->cmdline->parse_cmdline_src($r);
 
@@ -115,21 +112,10 @@ sub on_run {
             $r->{args}{-cmdline_r} = $r;
         }
 
-        log_trace("[pericmd] Running hook_before_action ...");
-        $self->cmdline->hook_before_action($r);
-
-        my $meth = "action_$r->{action}";
-        die [500, "Unknown action $r->{action}"] unless $self->cmdline->can($meth);
-        log_trace("[pericmd] Running %s() ...", $meth);
         $self->cmdline->_plugin_run_event(
             name => 'action',
-            on_success => sub {
-                $r->{res} = $self->cmdline->$meth($r);
-            },
+            req_handler => 1,
         );
-
-        log_trace("[pericmd] Running hook_after_action ...");
-        $self->cmdline->hook_after_action($r);
     };
 
     my $err = $@;

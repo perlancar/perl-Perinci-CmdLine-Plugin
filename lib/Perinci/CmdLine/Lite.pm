@@ -38,15 +38,6 @@ my $formats = [qw/text text-simple text-pretty json json-pretty csv termtable ht
 sub BUILD {
     my ($self, $args) = @_;
 
-    if (!$self->{riap_client}) {
-        require Perinci::Access::Lite;
-        my %rcargs = (
-            riap_version => $self->{riap_version} // 1.1,
-            %{ $self->{riap_client_args} // {} },
-        );
-        $self->{riap_client} = Perinci::Access::Lite->new(%rcargs);
-    }
-
     if (!$self->{actions}) {
         $self->{actions} = {
             call => {},
@@ -360,32 +351,6 @@ sub hook_before_action {
 }
 
 sub hook_format_result {
-    require Perinci::Result::Format::Lite;
-    my ($self, $r) = @_;
-
-    my $fmt = $r->{format} // 'text';
-
-    if ($fmt eq 'html+datatables') {
-        $fmt = 'text-pretty';
-        $ENV{VIEW_RESULT} //= 1;
-        no warnings 'once';
-        $Perinci::CmdLine::Base::tempfile_opt_suffix = '.html';
-        $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Text::Table::HTML::DataTables';
-    } elsif ($fmt eq 'termtable') {
-        $fmt = 'text-pretty';
-        no warnings 'once';
-        $ENV{FORMAT_PRETTY_TABLE_BACKEND} //= 'Term::TablePrint';
-    }
-
-    my $fres = Perinci::Result::Format::Lite::format(
-        $r->{res}, $fmt, $r->{naked_res}, $self->{use_cleanser});
-
-    # ux: prefix error message with program name
-    if ($fmt =~ /text/ && $r->{res}[0] =~ /\A[45]/ && defined($r->{res}[1])) {
-        $fres = $self->program_name . ": $fres";
-    }
-
-    $fres;
 }
 
 sub hook_format_row {
@@ -396,38 +361,6 @@ sub hook_format_row {
     } else {
         return ($row // "") . "\n";
     }
-}
-
-sub hook_display_result {
-    my ($self, $r) = @_;
-
-    my $res  = $r->{res};
-    my $resmeta = $res->[3] // {};
-
-    my $handle = $r->{output_handle};
-
-    my $layer;
-  SELECT_LAYER:
-    {
-        if ($resmeta->{'x.hint.result_binary'}) {
-            # XXX only when format is text?
-            $layer = ":bytes"; last;
-        }
-
-        if ($ENV{UTF8} ||
-                defined($r->{subcommand_data} && $r->{subcommand_data}{use_utf8}) ||
-                $self->use_utf8) {
-            $layer = ":encoding(utf8)"; last;
-        }
-
-        if ($self->use_locale) {
-            $layer = ":locale"; last;
-        }
-
-    }
-    binmode($handle, $layer) if $layer;
-
-    $self->display_result($r);
 }
 
 sub hook_after_get_meta {
@@ -514,24 +447,6 @@ sub hook_after_get_meta {
     }
 }
 
-sub action_subcommands {
-    my ($self, $r) = @_;
-
-    if (!$self->subcommands) {
-        say "There are no subcommands.";
-        return 0;
-    }
-
-    say "Available subcommands:";
-    my $scs = $self->list_subcommands;
-    my $longest = 6;
-    for (keys %$scs) { my $l = length; $longest = $l if $l > $longest }
-    [200, "OK",
-     join("",
-          (map { sprintf("  %-${longest}s  %s\n",$_,$scs->{$_}{summary}//"") }
-               sort keys %$scs),
-      )];
-}
 
 sub action_version {
     no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
@@ -569,43 +484,7 @@ sub action_version {
     [200, "OK", join("", @text)];
 }
 
-sub action_help {
-    require Perinci::CmdLine::Help;
-
-    my ($self, $r) = @_;
-
-    my @help;
-    my $scn    = $r->{subcommand_name};
-    my $scd    = $r->{subcommand_data};
-
-    my $meta = $self->get_meta($r, $scd->{url} // $self->{url});
-
-    # XXX use 'delete local' when we bump minimal perl to 5.12
-    my $common_opts = { %{$self->common_opts} };
-
-    # hide usage '--subcommands' if we have subcommands but user has specified a
-    # subcommand to use
-    my $has_sc_no_sc = $self->subcommands &&
-        !length($r->{subcommand_name} // '');
-    delete $common_opts->{subcommands} if $self->subcommands && !$has_sc_no_sc;
-
-    my $res = Perinci::CmdLine::Help::gen_help(
-        program_name => $self->get_program_and_subcommand_name($r),
-        program_summary => ($scd ? $scd->{summary}:undef ) // $meta->{summary},
-        program_description => $scd ? $scd->{description} : undef,
-        meta => $meta,
-        meta_is_normalized => 1,
-        subcommands => $has_sc_no_sc ? $self->list_subcommands : undef,
-        common_opts => $common_opts,
-        per_arg_json => $self->per_arg_json,
-        per_arg_yaml => $self->per_arg_yaml,
-    );
-
-    $res->[3]{"cmdline.skip_format"} = 1;
-    $res;
-}
-
-sub action_call {
+<sub action_call {
     my ($self, $r) = @_;
 
     my %extra;

@@ -461,9 +461,17 @@ sub BUILD {
     my ($self, $args) = @_;
 
     $self->{plugins} //= [
+        "RiapClient::Lite",
+
+        "FormatResult::Default",
+
+        "DisplayResult::Default",
+
         "Run::Normal",
         "Run::Completion",
         "Run::DumpObject",
+
+        "Action::subcommands",
     ];
 
     $self->_plugin_activate_plugins_in_env();
@@ -764,13 +772,16 @@ sub __default_env_name {
 sub get_meta {
     my ($self, $r, $url) = @_;
 
-    my $res = $self->riap_client->request(meta => $url);
-    die $res unless $res->[0] == 200;
-    my $meta = $res->[2];
-    $r->{meta} = $meta;
-    log_trace("[pericmd] Running hook_after_get_meta ...");
-    $self->hook_after_get_meta($r);
-    $meta;
+    local $r->{url} = $url;
+    $self->_plugin_run_event(
+        name => 'get_meta',
+        on_success => sub {
+            my $res = $self->riap_client->request(meta => $r->{url});
+            die $res unless $res->[0] == 200;
+            $r->{meta} = $res->[2];
+        },
+    );
+    $r->{meta};
 }
 
 sub get_program_and_subcommand_name {
@@ -853,7 +864,6 @@ sub _read_env {
     require Text::ParseWords;
     my @words = Text::ParseWords::shellwords($env);
     log_trace("[pericmd] Words from env: %s", \@words);
-    \@words;
 
     my $words;
     if ($r->{shell} eq 'bash') {
@@ -883,8 +893,8 @@ sub _read_config {
     if ($self->can("hook_config_file_section")) {
         $hook_section = sub {
             my ($section_name, $section_content) = @_;
-            $self->hook_config_file_section(
-                $r, $section_name, $section_content);
+            #$self->hook_config_file_section(
+            #    $r, $section_name, $section_content);
         };
     }
 
@@ -1151,12 +1161,12 @@ sub _parse_argv2 {
         if ($r->{read_config}) {
 
             log_trace("[pericmd] Running hook_before_read_config_file ...");
-            $self->hook_before_read_config_file($r);
+            #$self->hook_before_read_config_file($r);
 
             $self->_read_config($r) unless $r->{config};
 
             log_trace("[pericmd] Running hook_after_read_config_file ...");
-            $self->hook_after_read_config_file($r);
+            #$self->hook_after_read_config_file($r);
 
             my @plugins;
             my $res = Perinci::CmdLine::Util::Config::get_args_from_config(
@@ -1660,67 +1670,6 @@ sub save_output {
     print $fh_meta $json->encode($meta);
 }
 
-sub display_result {
-    require Data::Sah::Util::Type;
-
-    my ($self, $r) = @_;
-
-    my $meta = $r->{meta};
-    my $res = $r->{res};
-    my $fres = $r->{fres};
-    my $resmeta = $res->[3] // {};
-
-    my $handle = $r->{output_handle};
-
-    my $sch = $meta->{result}{schema} // $resmeta->{schema};
-    my $type = Data::Sah::Util::Type::get_type($sch) // '';
-
-    if ($resmeta->{stream} // $meta->{result}{stream}) {
-        my $x = $res->[2];
-        if (ref($x) eq 'CODE') {
-            if (Data::Sah::Util::Type::is_simple($sch)) {
-                while (defined(my $l = $x->())) {
-                    print $l;
-                    print "\n" unless $type eq 'buf';
-                }
-            } else {
-                require JSON::MaybeXS;
-                state $json = JSON::MaybeXS->new->allow_nonref;
-                if ($self->use_cleanser) {
-                    while (defined(my $rec = $x->())) {
-                        print $json->encode(
-                            $self->cleanser->clone_and_clean($rec)), "\n";
-                    }
-                } else {
-                    while (defined(my $rec = $x->())) {
-                        print $json->encode($rec), "\n";
-                    }
-                }
-            }
-        } else {
-            die "Result is a stream but no coderef provided";
-        }
-    } else {
-        # do preprocessing based on content_type. should probably be moved
-        # elsewhere later.
-      PREPROCESS_RESULT: {
-            last unless defined $r->{viewer};
-
-            my $ct = $resmeta->{content_type} // '';
-            if ($ct eq 'text/x-org') {
-                $fres = "# -*- mode: org -*-\n" . $fres;
-            }
-        }
-
-        print $handle $fres;
-        if (defined $r->{viewer}) {
-            require ShellQuote::Any::Tiny;
-            my $cmd = $r->{viewer} ." ". ShellQuote::Any::Tiny::shell_quote($r->{viewer_temp_path});
-            system $cmd;
-        }
-    }
-}
-
 sub _format {
     my ($self, $r) = @_;
 
@@ -1738,14 +1687,19 @@ sub _format {
     } elsif ($is_success &&
                  ($r->{res}[3]{stream} // $r->{meta}{result}{stream})) {
         # stream will be formatted as displayed by display_result()
-    }else {
-        log_trace("[pericmd] Running hook_format_result ...");
+    } else {
         $r->{res}[3]{stream} = 0;
-        $r->{fres} = $self->hook_format_result($r) // '';
+
+        # A `format_result` plugin should store the formatted result in the
+        # `fres` result stash key for use by other plugins.
+        $self->_plugin_run_event(
+            name => 'format_result',
+        );
     }
     $self->select_output_handle($r);
-    log_trace("[pericmd] Running hook_display_result ...");
-    $self->hook_display_result($r);
+    $self->_plugin_run_event(
+        name => 'display_result',
+    );
 }
 
 sub run {
@@ -1994,7 +1948,7 @@ the metadata specifies C<cmdline_src> property (see L<Rinci::function> for more
 details).
 
 
-=head1 REQUEST KEYS
+=head1 REQUEST STASH KEYS
 
 The various values in the C<$r> hash/stash.
 
@@ -2104,11 +2058,11 @@ Whether to pass C<-dry_run> special argument to function.
 
 =item * res => array
 
-Enveloped result of C<action_ACTION()>.
+Enveloped result (usually from action handler plugin).
 
 =item * fres => str
 
-Result from C<hook_format_result()>.
+Result (usually from result formatter plugin).
 
 =item * output_handle => handle
 
@@ -2458,16 +2412,16 @@ function. This can be overridden using the C<pass_cmdline_object> on a
 per-subcommand basis.
 
 In addition to C<-cmdline>, C<-cmdline_r> will also be passed, containing the
-C<$r> per-request stash/hash (see L</"REQUEST KEYS">).
+C<$r> per-request stash/hash (see L</"REQUEST STASH KEYS">).
 
-Passing the cmdline object can be useful, e.g. to call action_help(), to get the
-settings of the Perinci::CmdLine, etc.
+Passing the cmdline object can be useful, e.g. to get the settings of the
+Perinci::CmdLine::Plugin, etc.
 
-=head2 per_arg_json => bool (default: 1 in ::Lite)
+=head2 per_arg_json => bool (default: 1)
 
 This will be passed to L<Perinci::Sub::GetArgs::Argv>.
 
-=head2 per_arg_yaml => bool (default: 0 in ::Lite)
+=head2 per_arg_yaml => bool (default: 0)
 
 This will be passed to L<Perinci::Sub::GetArgs::Argv>.
 
